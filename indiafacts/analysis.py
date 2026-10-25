@@ -112,3 +112,39 @@ def growth_yoy(facts: list[Fact], metric: str, period_end: date) -> Fact:
         period_end=period_end, period_type=PeriodType.Q, source=COMPUTED, retrieved_at=ref.retrieved_at,
         status=Status.ok, related_fact_ids=[cur.fact_id, base.fact_id],
     )
+
+
+def reconcile_price(price: Fact, pe: Fact, eps: Fact, tol: float = 0.01) -> Fact:
+    related = [price.fact_id, pe.fact_id, eps.fact_id]
+    name = "price_pe_eps_check"
+
+    def out(status: Status, value: Decimal | None, reason: str = "") -> Fact:
+        return Fact.make(
+            entity_key=price.entity_key, metric=name, value=value, unit="ratio",
+            period_end=price.period_end, period_type=PeriodType.point, source=COMPUTED,
+            retrieved_at=price.retrieved_at, status=status, reason=reason, related_fact_ids=related,
+        )
+
+    if any(f.status not in (Status.ok, Status.unverified) or f.value is None for f in (price, pe, eps)):
+        return out(Status.unavailable, None, "price, P/E or EPS unavailable")
+    if eps.value <= 0:
+        return out(Status.unavailable, None, "EPS not positive; P/E check not meaningful")
+    implied = pe.value * eps.value
+    diff = abs(implied - price.value) / price.value
+    if diff <= Decimal(str(tol)):
+        return out(Status.ok, diff)
+    return out(Status.conflict, diff,
+               f"P/E x EPS implies {implied:.2f} but price is {price.value:.2f} (off {diff:.1%})")
+
+
+def reconcile_sources(a: Fact, b: Fact, tol: float = 0.05) -> list[Fact]:
+    if a.value is None or b.value is None or a.value == 0:
+        return [a, b]
+    spread = abs(b.value - a.value) / abs(a.value)
+    if spread <= Decimal(str(tol)):
+        return [a, b]
+    reason = f"{a.source} {a.value} vs {b.source} {b.value}: sources differ by {spread:.1%}"
+    return [
+        a.with_(status=Status.conflict, reason=reason, related_fact_ids=[b.fact_id]),
+        b.with_(status=Status.conflict, reason=reason, related_fact_ids=[a.fact_id]),
+    ]
