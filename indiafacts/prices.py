@@ -92,3 +92,40 @@ def load_series(symbol: str, client: PriceClient, as_of: date | None = None,
         q.stale_days = lag if lag > STALE_AFTER_WEEKDAYS else None
     sid = hashlib.sha256(f"{symbol}|{dates[:1]}|{dates[-1:]}|{len(dates)}|{close[-3:]}".encode()).hexdigest()[:12]
     return PriceSeries(symbol, dates, close, volume, SOURCE, BASIS, now, q, sid)
+
+
+def chart_data(series: PriceSeries, benchmark: PriceSeries | None, years: int = 5, max_points: int = 260) -> dict:
+    """Window of the stock and Nifty rebased to 100 at the window start, plus the stock's drawdown, thinned for plotting."""
+    from datetime import timedelta
+
+    if not series.usable:
+        return {}
+    end = series.dates[-1]
+    target = end - timedelta(days=365 * years)
+    start_i = max((i for i, d in enumerate(series.dates) if d <= target), default=0)
+    dates = series.dates[start_i:]
+    close = series.close[start_i:]
+    base = close[0]
+    stock = [round(c / base * 100, 4) for c in close]
+    peak, dd = close[0], []
+    for c in close:
+        peak = max(peak, c)
+        dd.append(round(c / peak - 1, 6))
+    bench_vals: list[float] = []
+    if benchmark is not None and benchmark.usable:
+        bmap = dict(zip(benchmark.dates, benchmark.close))
+        first = next((bmap[d] for d in dates if d in bmap), None)
+        if first:
+            last_seen = first
+            for d in dates:
+                last_seen = bmap.get(d, last_seen)
+                bench_vals.append(round(last_seen / first * 100, 4))
+    idx = list(range(len(dates)))
+    if len(idx) > max_points:
+        step = len(idx) / (max_points - 5)
+        keep = {len(dates) - 1, dd.index(min(dd)), stock.index(max(stock)), stock.index(min(stock))}      # never thin away the extremes
+        idx = sorted({int(i * step) for i in range(max_points - 5)} | keep)
+    pick = lambda arr: [arr[i] for i in idx] if arr else []
+    return {"dates": [dates[i].isoformat() for i in idx], "stock": pick(stock), "bench": pick(bench_vals),
+            "drawdown": pick(dd), "series_id": series.series_id, "basis": series.basis,
+            "symbol": series.symbol, "start": dates[0].isoformat(), "years": years}

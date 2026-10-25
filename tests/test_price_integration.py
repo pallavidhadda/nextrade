@@ -93,3 +93,11 @@ def test_live_prices_reliance_and_nifty():
     stock, bench = load_series("RELIANCE.NS", c), load_series("^NSEI", c)
     assert len(stock.dates) > 5000 and len(bench.dates) > 4000
     assert (date.today() - stock.dates[-1]).days <= 7
+
+
+def test_chart_data_attached_to_factset_when_prices_on():
+    fs = build_factset("RELIANCE.NS", as_of=END, client=FakeClient(), prices=True, price_client=long_pair(), **NS)
+    c = fs.charts["price"]
+    assert c["stock"][0] == 100.0 and len(c["dates"]) == len(c["bench"]) and c["symbol"] == "RELIANCE.NS"
+    off = build_factset("RELIANCE.NS", client=FakeClient(), prices=False, **NS)
+    assert off.charts == {}

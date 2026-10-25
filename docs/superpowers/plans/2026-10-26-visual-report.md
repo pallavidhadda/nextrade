@@ -1,0 +1,7 @@
+# Visual HTML report plan (compact; dataviz skill applied)
+Goal: `--html PATH` writes one self-contained HTML file (inline SVG, inline CSS/JS, no network) with charts built only from Facts and score results.
+Palette: categorical slot 1 blue / slot 2 orange (validated light and dark with the skill's script, all checks pass); status colours only with icon + label; text in ink tokens; light/dark both scoped (media query and data-theme toggle).
+Charts: (1) stock vs Nifty 50 rebased to 100 (line, legend, crosshair tooltip); (2) stock drawdown (area wash, single series); (3) quarterly net profit bars and (4) revenue bars, separate charts, missing quarters drawn as visible "no data" slots; (5) factor score bars 0-100 with coverage, unavailable factors explained; (6) 9-point checklist rows with icon + text; (7) peer dot plots for P/E and P/B (peers muted, target emphasised, median tick); (8) segment revenue and segment result bars when a filing is loaded; stat tiles; data-quality and sources tables; table twin for every chart; disclaimer and data age on top.
+Rules: no dual axes; bars <= 24px with 4px rounded data end; 2px lines; hairline solid grid; labels selective (latest bar, line ends); hit targets >= 24px; tooltips via textContent only; all untrusted text HTML-escaped; every plotted mark carries its fact id.
+Data additions: `FactSet.charts` (rebased stock and Nifty series, drawdown; weekly downsample <= 260 points) and `MetricComparison.peer_values`.
+Tests VR1-VR14 in tests/test_htmlreport.py.

@@ -78,3 +78,24 @@ def test_series_id_stable_and_changes_with_data():
     a = series(frame(d, [1.0, 2.0, 3.0]), as_of=date(2026, 10, 5)).series_id
     assert a == series(frame(d, [1.0, 2.0, 3.0]), as_of=date(2026, 10, 5)).series_id
     assert a != series(frame(d, [1.0, 2.0, 4.0]), as_of=date(2026, 10, 5)).series_id
+
+
+def test_chart_data_rebased_downsampled_and_drawdown():
+    import pandas as pd
+
+    from indiafacts.prices import chart_data
+
+    d = list(pd.bdate_range(end=date(2026, 10, 23), periods=1400).date)
+    close = [100.0 + i * 0.1 for i in range(1400)]
+    close[700] = 50.0                                       # a crash for the drawdown series
+    bench = [200.0 + i * 0.05 for i in range(1400)]
+    s = series(frame(d, close), as_of=d[-1])
+    b = series(frame(d, bench), as_of=d[-1], symbol="^NSEI")
+    c = chart_data(s, b, years=5, max_points=260)
+    assert c["stock"][0] == 100.0 and c["bench"][0] == 100.0
+    assert len(c["dates"]) <= 260 and c["dates"][-1] == d[-1].isoformat()
+    assert len(c["dates"]) == len(c["stock"]) == len(c["bench"]) == len(c["drawdown"])
+    assert all(x <= 0 for x in c["drawdown"]) and min(c["drawdown"]) < -0.3
+    assert c["series_id"] == s.series_id and c["basis"] == "split_adjusted_close"
+    assert chart_data(s, None, years=5)["bench"] == []
+    assert chart_data(series(pd.DataFrame()), None, years=5) == {}

@@ -158,3 +158,10 @@ def test_pe17_same_industry_label_but_different_sector_is_not_a_peer(params):
     t = TARGET()                                                   # Energy / Refining
     g = select_peers(t, pool_of(co("X.NS", "Autos", "Refining", 1e13), co("Y.NS", "Energy", "Refining", 1e13)), params=params)
     assert [p.ticker for p in g.picks] == ["Y.NS"]
+
+
+def test_vr2_peer_values_are_exposed_for_plotting(params):
+    cos = [co(f"P{i}.NS", "Energy", "Refining", 1e13, pe=10 + i) for i in range(4)]
+    t = TARGET(pe=20)
+    cmp = {c.metric: c for c in compare_peers(t, select_peers(t, pool_of(*cos), params=params), pool_of(*cos), params=params)}
+    assert cmp["pe_ttm"].peer_values == [("P0.NS", 10.0), ("P1.NS", 11.0), ("P2.NS", 12.0), ("P3.NS", 13.0)]

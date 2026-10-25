@@ -9,7 +9,7 @@ from indiafacts.availability import filter_as_of
 from indiafacts.models import AvailabilityKind, Entity, Fact, FactSet, Identifier, PeriodType, Status
 from indiafacts.nsefiling import facts_from_nse_filing
 from indiafacts.pricemetrics import price_metrics
-from indiafacts.prices import YfinancePriceClient, load_series
+from indiafacts.prices import YfinancePriceClient, chart_data, load_series
 from indiafacts.tej import TejStore, TejUnavailable, isin_for, price_affecting_dates, symbol_changes_from_history
 from indiafacts.securitymaster import Resolution, corporate_action_dates, load_curated, load_symbol_changes, normalize_symbol, resolve_symbol
 from indiafacts.yahoo import fetch_facts
@@ -107,10 +107,11 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
             y = yahoo.get((f.metric, f.period_end))
             if f.source == "nse_filing" and y is not None and y.unit == f.unit:
                 extra.append(cross_check(f, y))
-    price_facts, price_notes = _price_facts(fs.entity.ticker, as_of, prices, price_client, benchmark, notices,
+    price_facts, price_notes, charts = _price_facts(fs.entity.ticker, as_of, prices, price_client, benchmark, notices,
                                             _tej_action_dates(store, tej_hist, fs.entity.ticker, as_of, prices, notices))
     return fs.model_copy(update={"facts": facts + extra + price_facts, "not_yet_public": pending,
-                                 "notices": notices, "price_notes": price_notes})
+                                 "notices": notices, "price_notes": price_notes,
+                                 "charts": ({"price": charts} if charts else {})})
 
 
 def _tej_action_dates(store, hist, ticker: str, as_of: date | None, enabled: bool, notices: list[str]) -> list[date]:
@@ -162,13 +163,13 @@ def _resolve_identity(ticker: str, symbol_changes: Path | None, notices: list[st
 def _price_facts(ticker: str, as_of: date | None, enabled: bool, client, benchmark: str, notices: list[str],
                  extra_action_dates=()):
     if not enabled:
-        return [], []
+        return [], [], {}
     client = client or YfinancePriceClient()
     try:
         series = load_series(ticker, client, as_of=as_of)
     except Exception as exc:  # network/vendor errors must not kill the fundamentals report
         notices.append(f"price history unavailable: {type(exc).__name__}")
-        return [], []
+        return [], [], {}
     try:
         bench = load_series(benchmark, client, as_of=as_of)
     except Exception as exc:
@@ -183,4 +184,5 @@ def _price_facts(ticker: str, as_of: date | None, enabled: bool, client, benchma
                    + (f", last bar {q.stale_days} weekdays old" if q.stale_days else "")]
     notes += [f"event: {e}" for e in q.events]
     actions = sorted(set(corporate_action_dates(ticker, load_curated(strict=False))) | set(extra_action_dates))
-    return price_metrics(series, bench, as_of or date.today(), corporate_actions=actions), notes
+    return (price_metrics(series, bench, as_of or date.today(), corporate_actions=actions), notes,
+            chart_data(series, bench))

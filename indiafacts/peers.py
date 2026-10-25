@@ -49,6 +49,7 @@ class MetricComparison(BaseModel):
     n: int = 0
     reason: str = ""
     peer_fact_ids: list[str] = []
+    peer_values: list[tuple[str, float]] = []      # valid peers only, for plotting
 
 
 def load_peer_params(path: Path | None = None, today: date | None = None, strict: bool = True) -> dict:
@@ -139,12 +140,13 @@ def compare_peers(target: FactSet, group: PeerGroup, pool: dict[str, FactSet], p
     for m in METRICS:
         lo, hi = p["valid_ranges"][m]
         tv, _ = _val(target, m)
-        vals, ids = [], []
+        vals, ids, named = [], [], []
         for pick in group.picks:
             v, fid = _val(pool[pick.ticker], m)
             if v is not None and lo < v <= hi if m in ("pe_ttm", "pb") else v is not None and lo <= v <= hi:
                 vals.append(v)
                 ids.append(fid)
+                named.append((pick.ticker, v))
         n = len(vals)
         if n < p["min_valid_peers"]:
             out.append(MetricComparison(metric=m, status="unavailable", target_value=tv, n=n,
@@ -156,6 +158,6 @@ def compare_peers(target: FactSet, group: PeerGroup, pool: dict[str, FactSet], p
         diff = (tv - med) if not multiple and tv is not None else None
         out.append(MetricComparison(
             metric=m, status="ok", target_value=tv, peer_median=med, premium=prem, diff=diff, n=n,
-            peer_fact_ids=sorted(ids),
+            peer_fact_ids=sorted(ids), peer_values=named,
             higher_than=sum(1 for v in vals if tv is not None and v < tv) if tv is not None else None, of=n))
     return out

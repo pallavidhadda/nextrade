@@ -144,6 +144,7 @@ class FactSet(BaseModel):
     not_yet_public: list[Fact] = Field(default_factory=list)
     notices: list[str] = Field(default_factory=list)
     price_notes: list[str] = Field(default_factory=list)
+    charts: dict = Field(default_factory=dict)           # plotting series for the HTML report (not Facts)
 
     def by_metric(self, name: str) -> list[Fact]:
         return [f for f in self.facts if f.metric == name]
