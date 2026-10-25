@@ -210,3 +210,14 @@ def test_s20_golden_percentiles(tmp_path):
     res = score_universe(fsets, {"value": 1.0}, g, AS_OF, NOW)
     assert [float(res[f"G{i}.NS"].metric_scores["pb"]) for i in range(5)] == [100.0, 75.0, 50.0, 25.0, 0.0]
     assert res["G0.NS"].overall == 100.0 and res["G0.NS"].rank == 1 and res["G4.NS"].rank == 5
+
+
+def test_s14_financial_sector_company_drops_debt_to_equity_with_flag(cfg):
+    u = universe()
+    f = u["A05.NS"]
+    u["A05.NS"] = f.model_copy(update={"entity": f.entity.model_copy(update={"sector": "Financial Services"})})
+    r = run(u, cfg)["A05.NS"]
+    assert "debt_to_equity" not in r.metric_scores
+    assert any("financial company" in x and "debt_to_equity" in x for x in r.flags)
+    assert r.factors["quality"].coverage == pytest.approx(2 / 3, abs=1e-3)
+    assert "debt_to_equity" in run(u, cfg)["A06.NS"].metric_scores

@@ -21,7 +21,7 @@ A public portfolio project: enter an NSE/BSE ticker, get a profile-aware researc
 | 1 | DONE 2026-10-26: Security master (renames from NSE symbolchange.csv, curated TATAMOTORS demerger) | S | equity list CSV optional, not needed yet |
 | 2 | DONE 2026-10-26: Price history and metrics (returns, drawdown, vol, beta vs Nifty 50, corporate-action flags) | M | none |
 | 3 | DONE 2026-10-26: Investor profile (user sets horizon; presets drive weights; simple/pro view) | S | none |
-| 4 | Factor scoring + 9-point checklist + reproducibility/bad-data tests | M | 2, 3 |
+| 4 | DONE 2026-10-26: Factor scoring + 9-point checklist + bad-data tests (sector-relative groups and bank metric set partly deferred) | M | 2, 3 |
 | 5 | Peer groups (deterministic, sector + size) and matched multiples | M | 1 |
 | 6 | Thesis/evidence layer (claims typed fact/inference/hypothesis, invalidation triggers) | M | 4 |
 | 7 | One cached LLM call that explains the numbers (token budget enforced) | S | 6 |
@@ -30,6 +30,10 @@ A public portfolio project: enter an NSE/BSE ticker, get a profile-aware researc
 | 10 | Staleness controls (review_by dates, canary tests, data-age banner) | S | runs through all |
 | 11 | Independent code review, CI, README/licence/disclaimer, push to public repo | S | licence choice |
 | 12 | Web front end (Next.js + thin API), simple and pro views | M | 4-7 |
+
+## Added 2026-10-26
+- HTML report with charts (price vs Nifty 50, quarterly bars with visible gaps, score bars, checklist strip, segment bars); terminal sparklines. Use the dataviz skill.
+- Security-master equity list (ISIN master) importer; sector field exists on Entity; sector-relative scoring groups.
 
 ## Cut line for a first public demo (v0.1)
 Items 1-7 and 9, in the terminal and as a Claude plugin. Backtest (8) and web UI (12) come after; the demo will state plainly that no performance claim is made.

@@ -96,3 +96,8 @@ Needed: deterministic symbol/rename/demerger knowledge (ZOMATO->ETERNAL rename; 
 NPCI/RBI/data.gov.in (macro, free datasets), TigZig (macro/credit/red flags), TejHQ (prices/screening, Rs 599/mo retail), Stoxim (financials/governance/shareholding, Rs 2,999/mo), DalalOS (MCP; Pro Rs 399/mo), IndianAPI.in (free 500 requests/month). Search did find BharatStock (free: 25 requests/day, 1-year history, full endpoint set per its site) and TrueData (sandbox request). Verify coverage, terms and public-use rights one by one before depending on any.
 ## Visuals gap (2026-10-26)
 Report is text/tables only. Add charts (price vs Nifty 50 line, drawdown, quarterly bars, score bars) in an HTML report; terminal gets sparklines. Use the dataviz skill; no invented numbers.
+
+## Source tiers pasted by user 2026-10-26 (leads, UNVERIFIED; check terms and public-use rights before use)
+Tier 1 free primary: NSE/BSE announcements, results, shareholding, corporate actions (already our direction); RBI DBIE (banking/credit/macro: candidate replacement for FRED/World Bank for India macro); NPCI UPI stats; data.gov.in.
+Tier 2 free structured APIs: TigZig (claims unauthenticated, CC0), TejHQ, Stoxim. Not found by web search; verify coverage, limits, licence.
+Tier 3 digital-demand signals (Google Trends, Play Store, careers pages): own time series from repeated observations; no reliable historical DAU/MAU; low priority; check scraping/ToS.

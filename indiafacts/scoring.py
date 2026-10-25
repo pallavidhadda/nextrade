@@ -15,6 +15,7 @@ from indiafacts.models import Fact, FactSet, PeriodType, Status
 
 SCORE_PATH = Path(__file__).parent / "data" / "score_metrics.json"
 COMPUTED = "computed"
+_NOT_FOR_FINANCIALS = {"debt_to_equity"}
 _REQUIRED_PARAMS = ("winsorise_low", "winsorise_high", "winsorise_min_n", "min_universe", "min_factor_coverage",
                     "min_valid_factors", "max_age_days")
 
@@ -99,7 +100,11 @@ def _extract(fs: FactSet, cfg: ScoreConfig, as_of: date, now: datetime):
     flags: list[str] = []
     out: dict[str, tuple[float, str]] = {}
     max_age = timedelta(days=cfg.params["max_age_days"])
+    financial = (fs.entity.sector or "") == "Financial Services"
     for spec in cfg.metrics:
+        if financial and spec.id in _NOT_FOR_FINANCIALS:
+            flags.append(f"financial company: {spec.id} not comparable for banks/lenders; excluded")
+            continue
         cands = [f for f in fs.facts if f.metric == spec.id and f.status == Status.ok and f.value is not None]
         if not cands:
             continue

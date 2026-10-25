@@ -67,3 +67,35 @@ def test_cli_bad_filing_exit_code(capsys, tmp_path):
     p = tmp_path / "bad.html"
     p.write_text("<html><body>nope</body></html>")
     assert main(["RELIANCE.NS", "--filing", str(p)], client=FakeClient(), sleep=lambda s: None) == 2
+
+
+def _pool_file(tmp_path, n=6):
+    p = tmp_path / "pool.txt"
+    p.write_text("\n".join(f"T{i}.NS" for i in range(n)) + "\n")
+    return p
+
+
+def test_cli_score_with_pool_prints_scorecard_and_checklist(capsys, tmp_path):
+    code = main(["T0.NS", "--score", "--universe", str(_pool_file(tmp_path)), "--no-prices"],
+                client=FakeClient(), sleep=lambda s: None)
+    out = capsys.readouterr().out
+    assert code == 0 and "SCORECARD" in out and "of 6" in out and "CHECKLIST" in out
+    assert "percentile" in out and DISCLAIMER in out
+    assert not re.search(r"\b(buy|sell)\b", out.lower())
+
+
+def test_cli_score_lists_failed_pool_members(capsys, tmp_path):
+    class Flaky(FakeClient):
+        pass
+
+    p = _pool_file(tmp_path)
+    p.write_text(p.read_text() + "BAD..NS\n")           # invalid ticker syntax is a hard error
+    code = main(["T0.NS", "--score", "--universe", str(p), "--no-prices"], client=FakeClient(), sleep=lambda s: None)
+    assert code == 2 and "invalid ticker" in capsys.readouterr().err
+
+
+def test_cli_score_too_small_pool_says_so(capsys, tmp_path):
+    code = main(["T0.NS", "--score", "--universe", str(_pool_file(tmp_path, 3)), "--no-prices"],
+                client=FakeClient(), sleep=lambda s: None)
+    out = capsys.readouterr().out
+    assert code == 0 and "universe too small" in out and "abstain" in out.lower()

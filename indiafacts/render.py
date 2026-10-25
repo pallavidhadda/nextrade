@@ -110,8 +110,36 @@ def _profile_block(profile, is_default: bool, view: str) -> list[str]:
     return lines
 
 
+def _scorecard_block(sc: dict) -> list[str]:
+    r = sc["result"]
+    pool = "built-in pool of 30 large NSE names (not an index)" if sc.get("default_pool") else f"pool file {sc['pool']}"
+    lines = ["", f"SCORECARD (percentile ranks inside {sc['n']} companies from the {pool}; ordering within the pool, "
+                 "not absolute quality)"]
+    if r is None:
+        lines.append("this company could not be scored: it is not among the loaded pool members")
+    elif r.status != "ok":
+        lines.append(f"abstain: {r.reason}")
+    else:
+        lines.append(f"overall {r.overall:.1f}/100 | rank {r.rank} of {sc['n']} | config {r.config_hash}")
+    if r is not None:
+        for fac, fs_ in sorted(r.factors.items()):
+            val = f"{fs_.score:.1f}" if fs_.score is not None else f"unav ({fs_.reason})"
+            lines.append(f"  {fac}: {val} (coverage {fs_.coverage:.0%})")
+        lines += [f"  flag: {f}" for f in r.flags]
+    if sc.get("config_overdue"):
+        lines.append("  warning: score metric config review overdue; treat bounds as stale")
+    if sc["failed"]:
+        lines.append("  not loaded: " + "; ".join(f"{t} ({why})" for t, why in sc["failed"].items()))
+    lines += ["", f"CHECKLIST (project-defined, 9 pass/fail tests): {sc['checklist_summary']}"]
+    for c in sc["checklist"]:
+        tag = {"pass": "pass", "fail": "fail", "unavailable": "unav"}[c.result]
+        detail = f"{c.display}, needs {c.threshold}" if c.value is not None else c.reason
+        lines.append(f"  [{tag}] {c.label} ({detail})")
+    return lines
+
+
 def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is_default: bool = False,
-           view: str = "pro") -> str:
+           view: str = "pro", scorecard: dict | None = None) -> str:
     e = factset.entity
     when = as_of or factset.retrieved_at.date()
     head = f"{e.ticker}  |  as of {when}  |  amounts in INR (₹ crore = 10^7)"
@@ -127,6 +155,7 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
     bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified)]
     refs = _Refs()
     parts = [head, *notes, *(_profile_block(profile, profile_is_default, view) if profile else []),
+             *(_scorecard_block(scorecard) if scorecard else []),
              "", f"DATA QUALITY: {len(bad)} item(s) need attention (gaps, unavailable, conflicts, unverified)"]
 
     parts += ["", "QUARTERLY (Yahoo; availability dates are deadline estimates)", render_table([f for f in facts if view == "pro" or not (f.metric in PRO_ONLY or f.metric.startswith("segment_"))], refs)]

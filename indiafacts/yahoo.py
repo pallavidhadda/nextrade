@@ -147,4 +147,6 @@ def fetch_facts(
     pending: list[Fact] = []
     if as_of is not None:
         facts, pending = filter_as_of(facts, as_of)
+    if info.get("sector"):
+        entity = entity.model_copy(update={"sector": str(info["sector"])})
     return FactSet(entity=entity, facts=facts, retrieved_at=now, not_yet_public=pending)
