@@ -112,7 +112,8 @@ def _profile_block(profile, is_default: bool, view: str) -> list[str]:
 
 def _scorecard_block(sc: dict) -> list[str]:
     r = sc["result"]
-    pool = "built-in pool of 30 large NSE names (not an index)" if sc.get("default_pool") else f"pool file {sc['pool']}"
+    pool = ("built-in pool of 30 large NSE names (not an index)" if sc.get("default_pool")
+            else (sc["pool"] if str(sc["pool"]).startswith("TejHQ") else f"pool file {sc['pool']}"))
     lines = ["", f"SCORECARD (percentile ranks inside {sc['n']} companies from the {pool}; ordering within the pool, "
                  "not absolute quality)"]
     if r is None:

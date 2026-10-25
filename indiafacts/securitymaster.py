@@ -23,6 +23,7 @@ class SymbolChange:
 class SymbolChanges(list):
     """List of SymbolChange; `.skipped` counts rows ignored (bad date or old == new)."""
     skipped: int = 0
+    source: str = "NSE symbol-change list"
 
 
 @dataclass(frozen=True)
@@ -151,7 +152,8 @@ def resolve_symbol(raw: str, changes: list[SymbolChange] | None, curated: list[C
         current = hop.new
     if chain:
         last = chain[-1]
-        notice = f"{sym} is now {current} (symbol changed {last.effective.isoformat()} per NSE symbol-change list)"
+        notice = (f"{sym} is now {current} (symbol changed {last.effective.isoformat()} per "
+                  f"{getattr(changes, 'source', 'NSE symbol-change list')})")
         return Resolution(raw, "renamed", [current], notice, chain)
     if sym in events:
         return Resolution(raw, "direct", [sym])

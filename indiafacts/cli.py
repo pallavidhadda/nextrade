@@ -16,7 +16,7 @@ from indiafacts.scoring import load_score_config, score_universe
 from indiafacts.universe import DEFAULT_POOL, build_universe, read_tickers
 
 
-def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_client=None) -> int:
+def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_client=None, tej_store=None) -> int:
     p = argparse.ArgumentParser(prog="indiafacts", description="Source-linked facts for an NSE/BSE ticker.")
     p.add_argument("ticker", help="e.g. RELIANCE.NS")
     p.add_argument("--as-of", type=date.fromisoformat, default=None, help="YYYY-MM-DD")
@@ -34,7 +34,8 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--save-profile", action="store_true", help="save the profile (after any overrides)")
     p.add_argument("--view", choices=["simple", "pro"], help="override the view chosen by experience")
     p.add_argument("--score", action="store_true", help="rank against a comparison pool (default: built-in pool of 30)")
-    p.add_argument("--universe", type=Path, default=None, help="file with one ticker per line; implies --score")
+    p.add_argument("--universe", default=None, help="file with one ticker per line, or tej / tej:N for the top-N liquid names; implies --score")
+    p.add_argument("--no-tej", action="store_true", help="do not use TejHQ open data (identity, corporate actions, universe)")
     args = p.parse_args(argv)
     try:
         profile, is_default = _profile(args)
@@ -44,7 +45,8 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     try:
         fs = build_factset(args.ticker, as_of=args.as_of, client=client, sleep=sleep,
                            filing_path=args.filing, symbol_changes=args.symbol_changes,
-                           prices=not args.no_prices, price_client=price_client)
+                           prices=not args.no_prices, price_client=price_client,
+                           tej=not args.no_tej, tej_store=tej_store)
     except AmbiguousSymbol as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 3
@@ -54,7 +56,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     scorecard = None
     if args.score or args.universe:
         try:
-            scorecard = _scorecard(args, fs, profile, client, sleep, price_client)
+            scorecard = _scorecard(args, fs, profile, client, sleep, price_client, tej_store)
         except ValueError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 2
@@ -92,11 +94,25 @@ class _MemoPrices:
         return self.memo[symbol]
 
 
-def _scorecard(args, fs, profile, client, sleep, price_client) -> dict:
+def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -> dict:
     from indiafacts.profile import weights_for
 
-    path = args.universe or DEFAULT_POOL
-    tickers = read_tickers(path)
+    uni = args.universe
+    if uni and str(uni).startswith("tej"):
+        from indiafacts.tej import TejStore, TejUnavailable, universe_members
+
+        n = int(str(uni).split(":")[1]) if ":" in str(uni) else 100
+        try:
+            members = universe_members((tej_store or TejStore()).load("universe/nse_liquid.parquet"),
+                                       args.as_of or date.today(), n)
+        except TejUnavailable as exc:
+            raise ValueError(f"TejHQ universe unavailable: {exc}") from exc
+        tickers = [m.symbol + ".NS" for m in members]
+        label = f"TejHQ top-{n} by liquidity (point-in-time)"
+    else:
+        path = Path(uni) if uni else DEFAULT_POOL
+        tickers = read_tickers(path)
+        label = path.name
     target = fs.entity.ticker
     if target not in tickers:
         tickers.append(target)
@@ -110,7 +126,7 @@ def _scorecard(args, fs, profile, client, sleep, price_client) -> dict:
         if t == target:
             return fs
         return build_factset(t, as_of=args.as_of, client=client, sleep=sleep, symbol_changes=args.symbol_changes,
-                             prices=prices, price_client=memo)
+                             prices=prices, price_client=memo, tej=not args.no_tej, tej_store=tej_store)
 
     universe, failed = build_universe(tickers, builder)
     cfg = load_score_config(strict=False)
@@ -118,6 +134,6 @@ def _scorecard(args, fs, profile, client, sleep, price_client) -> dict:
     group = select_peers(fs, universe)
     comparisons = compare_peers(fs, group, universe) if group.picks else []
     return {"peers": group, "peer_comparisons": comparisons,
-            "result": results.get(target), "n": len(universe), "failed": failed, "pool": str(path.name),
+            "result": results.get(target), "n": len(universe), "failed": failed, "pool": label,
             "checklist": checklist(fs), "checklist_summary": summarize(checklist(fs)),
-            "config_overdue": cfg.overdue, "default_pool": args.universe is None}
+            "config_overdue": cfg.overdue, "default_pool": args.universe is None, "pool_label": label}

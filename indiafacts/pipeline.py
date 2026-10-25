@@ -6,10 +6,11 @@ from pathlib import Path
 
 from indiafacts.analysis import add_gaps, check_ebitda, cross_check, growth_yoy, margin_latest, prefer_sources, reconcile_price, ttm
 from indiafacts.availability import filter_as_of
-from indiafacts.models import AvailabilityKind, Entity, Fact, FactSet, PeriodType, Status
+from indiafacts.models import AvailabilityKind, Entity, Fact, FactSet, Identifier, PeriodType, Status
 from indiafacts.nsefiling import facts_from_nse_filing
 from indiafacts.pricemetrics import price_metrics
 from indiafacts.prices import YfinancePriceClient, load_series
+from indiafacts.tej import TejStore, TejUnavailable, isin_for, price_affecting_dates, symbol_changes_from_history
 from indiafacts.securitymaster import Resolution, corporate_action_dates, load_curated, load_symbol_changes, normalize_symbol, resolve_symbol
 from indiafacts.yahoo import fetch_facts
 
@@ -37,10 +38,12 @@ def _merge_entity(entity: Entity, filing: Entity) -> Entity:
 
 def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=time.sleep,
                   filing_path: Path | None = None, symbol_changes: Path | None = None,
-                  prices: bool = False, price_client=None, benchmark: str = "^NSEI") -> FactSet:
+                  prices: bool = False, price_client=None, benchmark: str = "^NSEI",
+                  tej: bool = False, tej_store: TejStore | None = None) -> FactSet:
     """Resolve identity, fetch, flag gaps, optionally merge an official NSE filing, then append computed facts."""
     notices: list[str] = []
-    ticker, loaded = _resolve_identity(ticker, symbol_changes, notices)
+    store = (tej_store or TejStore()) if tej else None
+    ticker, loaded, tej_hist = _resolve_identity(ticker, symbol_changes, notices, store)
     filing = facts_from_nse_filing(filing_path) if filing_path else None
     entity = Entity.from_ticker(ticker)
     if filing and entity.ticker.split(".")[0] != filing.entity.nse_symbol.value:
@@ -62,6 +65,10 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
         facts += public
         pending += later
         fs = fs.model_copy(update={"entity": _merge_entity(fs.entity, filing.entity)})
+    if tej_hist is not None and fs.entity.resolution == "resolved" and fs.entity.isin.value is None:
+        isin = isin_for(tej_hist, normalize_symbol(fs.entity.ticker), as_of)
+        if isin:
+            fs = fs.model_copy(update={"entity": fs.entity.model_copy(update={"isin": Identifier(value=isin, status=Status.ok)})})
 
     extra = []
     if filing:
@@ -100,15 +107,43 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
             y = yahoo.get((f.metric, f.period_end))
             if f.source == "nse_filing" and y is not None and y.unit == f.unit:
                 extra.append(cross_check(f, y))
-    price_facts, price_notes = _price_facts(fs.entity.ticker, as_of, prices, price_client, benchmark, notices)
+    price_facts, price_notes = _price_facts(fs.entity.ticker, as_of, prices, price_client, benchmark, notices,
+                                            _tej_action_dates(store, tej_hist, fs.entity.ticker, as_of, prices, notices))
     return fs.model_copy(update={"facts": facts + extra + price_facts, "not_yet_public": pending,
                                  "notices": notices, "price_notes": price_notes})
 
 
-def _resolve_identity(ticker: str, symbol_changes: Path | None, notices: list[str]) -> tuple[str, bool]:
+def _tej_action_dates(store, hist, ticker: str, as_of: date | None, enabled: bool, notices: list[str]) -> list[date]:
+    if store is None or hist is None or not enabled:
+        return []
+    import pandas as pd
+
+    end = (as_of or date.today()).year
+    frames = []
+    for y in range(end - 6, end + 1):
+        try:
+            frames.append(store.load(f"actions/nse_{y}.parquet"))
+        except TejUnavailable:
+            continue
+    if not frames:
+        notices.append("TejHQ data unavailable: corporate actions not loaded, so mergers/demergers are not flagged")
+        return []
+    return price_affecting_dates(pd.concat(frames), hist, normalize_symbol(ticker))
+
+
+def _resolve_identity(ticker: str, symbol_changes: Path | None, notices: list[str], store=None):
     default = default_symbol_changes()
     path = symbol_changes or (default if default.exists() else None)
     changes = load_symbol_changes(path) if path else None
+    tej_hist = None
+    if store is not None:
+        try:
+            tej_hist = store.load("symbol_history/nse.parquet")
+        except TejUnavailable as exc:
+            notices.append(f"TejHQ data unavailable: {exc}")
+        if changes is None and tej_hist is not None:
+            changes = symbol_changes_from_history(tej_hist)
+            changes.source = "TejHQ symbol history"
     curated = load_curated(strict=False)
     if curated.overdue:
         notices.append("security master review overdue: " + ", ".join(curated.overdue))
@@ -118,13 +153,14 @@ def _resolve_identity(ticker: str, symbol_changes: Path | None, notices: list[st
     suffix = ticker.strip().upper()[len(normalize_symbol(ticker)):] or ".NS"
     if res.kind == "renamed":
         notices.append(res.notice)
-        return res.symbols[0] + suffix, changes is not None
-    if changes is None:
+        return res.symbols[0] + suffix, changes is not None, tej_hist
+    if changes is None and store is None:
         notices.append(res.notice)
-    return ticker, changes is not None
+    return ticker, changes is not None, tej_hist
 
 
-def _price_facts(ticker: str, as_of: date | None, enabled: bool, client, benchmark: str, notices: list[str]):
+def _price_facts(ticker: str, as_of: date | None, enabled: bool, client, benchmark: str, notices: list[str],
+                 extra_action_dates=()):
     if not enabled:
         return [], []
     client = client or YfinancePriceClient()
@@ -146,5 +182,5 @@ def _price_facts(ticker: str, as_of: date | None, enabled: bool, client, benchma
                    f"{q.duplicate_conflicts} duplicate conflicts"
                    + (f", last bar {q.stale_days} weekdays old" if q.stale_days else "")]
     notes += [f"event: {e}" for e in q.events]
-    actions = corporate_action_dates(ticker, load_curated(strict=False))
+    actions = sorted(set(corporate_action_dates(ticker, load_curated(strict=False))) | set(extra_action_dates))
     return price_metrics(series, bench, as_of or date.today(), corporate_actions=actions), notes
