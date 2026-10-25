@@ -97,7 +97,10 @@ def _resolve_identity(ticker: str, symbol_changes: Path | None, notices: list[st
     default = default_symbol_changes()
     path = symbol_changes or (default if default.exists() else None)
     changes = load_symbol_changes(path) if path else None
-    res = resolve_symbol(ticker, changes, load_curated())
+    curated = load_curated(strict=False)
+    if curated.overdue:
+        notices.append("security master review overdue: " + ", ".join(curated.overdue))
+    res = resolve_symbol(ticker, changes, curated)
     if res.kind == "split":
         raise AmbiguousSymbol(res)
     suffix = ticker.strip().upper()[len(normalize_symbol(ticker)):] or ".NS"
@@ -131,5 +134,5 @@ def _price_facts(ticker: str, as_of: date | None, enabled: bool, client, benchma
                    f"{q.duplicate_conflicts} duplicate conflicts"
                    + (f", last bar {q.stale_days} weekdays old" if q.stale_days else "")]
     notes += [f"event: {e}" for e in q.events]
-    actions = corporate_action_dates(ticker, load_curated())
+    actions = corporate_action_dates(ticker, load_curated(strict=False))
     return price_metrics(series, bench, as_of or date.today(), corporate_actions=actions), notes

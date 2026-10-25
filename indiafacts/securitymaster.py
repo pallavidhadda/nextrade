@@ -92,16 +92,28 @@ def _reject_cycles(changes: list[SymbolChange]) -> None:
                 on_path.append(child)
 
 
-def load_curated(path: Path | None = None, today: date | None = None) -> list[CuratedChange]:
+class CuratedList(list):
+    """List of CuratedChange; `.overdue` names entries past their review_by (only when loaded non-strict)."""
+    overdue: list[str]
+
+    def __init__(self, *a):
+        super().__init__(*a)
+        self.overdue = []
+
+
+def load_curated(path: Path | None = None, today: date | None = None, strict: bool = True) -> CuratedList:
+    """strict=True (tests/CI): an overdue review raises. strict=False (runtime): it is reported in `.overdue`."""
     today = today or date.today()
     data = json.loads(Path(path or CURATED_PATH).read_text(encoding="utf-8"))
-    out = []
+    out = CuratedList()
     for e in data.get("entries", []):
         if not e.get("source_urls"):
             raise ValueError(f"curated entry {e.get('old_symbol')}: source_urls required")
         review_by = date.fromisoformat(e["review_by"])
         if review_by < today:
-            raise ValueError(f"curated entry {e['old_symbol']}: review overdue (review_by {review_by})")
+            if strict:
+                raise ValueError(f"curated entry {e['old_symbol']}: review overdue (review_by {review_by})")
+            out.overdue.append(f"{e['old_symbol']} (review_by {review_by})")
         out.append(CuratedChange(
             old_symbol=e["old_symbol"].upper(), successors=[s.upper() for s in e["successors"]],
             change_type=e["change_type"], effective_date=e["effective_date"], source_urls=e["source_urls"],

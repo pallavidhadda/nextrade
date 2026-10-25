@@ -93,7 +93,7 @@ PRO_ONLY = {"change_in_inventories", "net_income_nci", "net_income_total", "othe
 
 
 def _profile_block(profile, is_default: bool, view: str) -> list[str]:
-    from indiafacts.profile import weights_for
+    from indiafacts.profile import presets_overdue, weights_for
 
     w = ", ".join(f"{k} {v:.0%}" for k, v in weights_for(profile).items())
     lines = ["", "PROFILE",
@@ -102,6 +102,9 @@ def _profile_block(profile, is_default: bool, view: str) -> list[str]:
              f"{profile.max_single_stock_pct:g}% | view {view} | profile {profile.profile_hash}"]
     if is_default:
         lines.append("default profile (not set by you); set your own with --horizon / --risk-tolerance / --save-profile")
+    late = presets_overdue()
+    if late:
+        lines.append(f"warning: weight presets review overdue (review_by {late}); treat weights as stale")
     lines += [f"scoring weights for this horizon (preset proposal, not evidence-based): {w}",
               "profile fit: not scored yet (scoring layer not built). Research only, not a recommendation."]
     return lines

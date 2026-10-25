@@ -56,3 +56,18 @@ def test_empty_vendor_with_list_loaded_gives_explicit_reason(csv_path):
     fs = build_factset("NOSUCH.NS", client=FakeClient(stmt=None, info={}), symbol_changes=csv_path, **NS)
     assert fs.entity.resolution == "unresolved"
     assert "not in security master" in fs.entity.resolution_reason and "not found at Yahoo" in fs.entity.resolution_reason
+
+
+def test_overdue_curated_table_warns_at_runtime_but_does_not_crash(csv_path, tmp_path, monkeypatch):
+    import json
+
+    import indiafacts.securitymaster as sm
+
+    p = tmp_path / "sm.json"
+    p.write_text(json.dumps({"entries": [dict(
+        old_symbol="OLDCO", successors=["NEWCO"], change_type="merger", effective_date="2020-01-01",
+        source_urls=["https://example.org"], reviewed_on="2020-01-02", review_by="2020-06-01")]}))
+    monkeypatch.setattr(sm, "CURATED_PATH", p)
+    fs = build_factset("RELIANCE.NS", client=FakeClient(), symbol_changes=csv_path, **NS)
+    assert any("security master review overdue" in n for n in fs.notices)
+    assert fs.facts

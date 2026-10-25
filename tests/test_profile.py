@@ -129,3 +129,17 @@ def test_simple_view_hides_pro_only_rows(capsys, tmp_path):
     _, simple = run(capsys, "RELIANCE.NS", "--no-prices", "--profile", str(p), "--filing", str(f))
     _, pro = run(capsys, "RELIANCE.NS", "--no-prices", "--profile", str(p), "--filing", str(f), "--view", "pro")
     assert "segment_revenue_retail" in pro and "segment_revenue_retail" not in simple.split("SOURCES")[0]
+
+
+def test_overdue_presets_warn_at_runtime_but_still_render(capsys, tmp_path, monkeypatch):
+    import indiafacts.profile as pr
+
+    data = json.loads(open("indiafacts/data/weight_presets.json").read())
+    data["review_by"] = "2020-01-01"
+    p = tmp_path / "w.json"
+    p.write_text(json.dumps(data))
+    monkeypatch.setattr(pr, "PRESETS_PATH", p)
+    code, out = run(capsys, "RELIANCE.NS", "--no-prices")
+    assert code == 0 and "weight presets review overdue" in out
+    with pytest.raises(ValueError, match="review"):
+        pr.load_presets(p)                       # strict by default: tests/CI fail once overdue

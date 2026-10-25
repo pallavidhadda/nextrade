@@ -70,9 +70,10 @@ def load_profile(path: Path | None = None) -> InvestorProfile:
         raise ProfileError(f"invalid profile file {path}: {exc}") from exc
 
 
-def load_presets(path: Path | None = None, today: date | None = None) -> dict[str, dict[str, float]]:
+def load_presets(path: Path | None = None, today: date | None = None, strict: bool = True) -> dict[str, dict[str, float]]:
+    """strict=True (tests/CI): overdue review raises. Runtime callers use strict=False and check presets_overdue()."""
     data = json.loads(Path(path or PRESETS_PATH).read_text(encoding="utf-8"))
-    if date.fromisoformat(data["review_by"]) < (today or date.today()):
+    if strict and date.fromisoformat(data["review_by"]) < (today or date.today()):
         raise ValueError(f"weight presets: review overdue (review_by {data['review_by']})")
     for horizon, w in data["presets"].items():
         if abs(sum(w.values()) - 1.0) > 1e-9:
@@ -80,5 +81,10 @@ def load_presets(path: Path | None = None, today: date | None = None) -> dict[st
     return data["presets"]
 
 
+def presets_overdue(path: Path | None = None, today: date | None = None) -> str | None:
+    data = json.loads(Path(path or PRESETS_PATH).read_text(encoding="utf-8"))
+    return data["review_by"] if date.fromisoformat(data["review_by"]) < (today or date.today()) else None
+
+
 def weights_for(p: InvestorProfile, presets: dict | None = None) -> dict[str, float]:
-    return dict((presets or load_presets())[p.horizon])
+    return dict((presets or load_presets(strict=False))[p.horizon])

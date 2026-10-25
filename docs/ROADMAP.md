@@ -18,9 +18,9 @@ A public portfolio project: enter an NSE/BSE ticker, get a profile-aware researc
 ## Not built yet
 | # | Item | Size | Blocked on |
 |---|---|---|---|
-| 1 | Security master (renames, demergers: ZOMATO->ETERNAL, TATAMOTORS->TMPV+TMCV) | S | You download 2 NSE CSVs |
-| 2 | Price history and metrics (returns, drawdown, vol, beta vs Nifty 50) | M | none |
-| 3 | Investor profile (user sets horizon; presets drive weights) | S | none |
+| 1 | DONE 2026-10-26: Security master (renames from NSE symbolchange.csv, curated TATAMOTORS demerger) | S | equity list CSV optional, not needed yet |
+| 2 | DONE 2026-10-26: Price history and metrics (returns, drawdown, vol, beta vs Nifty 50, corporate-action flags) | M | none |
+| 3 | DONE 2026-10-26: Investor profile (user sets horizon; presets drive weights; simple/pro view) | S | none |
 | 4 | Factor scoring + 9-point checklist + reproducibility/bad-data tests | M | 2, 3 |
 | 5 | Peer groups (deterministic, sector + size) and matched multiples | M | 1 |
 | 6 | Thesis/evidence layer (claims typed fact/inference/hypothesis, invalidation triggers) | M | 4 |
