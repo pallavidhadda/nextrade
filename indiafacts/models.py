@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
@@ -37,6 +38,7 @@ class AvailabilityKind(StrEnum):
 
 
 _NO_VALUE = {Status.unavailable, Status.gap}
+_TICKER = re.compile(r"[A-Z0-9&-]{1,20}(\.[A-Z]{1,3})?")
 
 
 class Fact(BaseModel):
@@ -115,6 +117,8 @@ class Entity(BaseModel):
     @classmethod
     def from_ticker(cls, raw: str) -> Entity:
         ticker = raw.strip().upper()
+        if not _TICKER.fullmatch(ticker):
+            raise ValueError(f"invalid ticker {raw!r}: expected letters/digits/&/- plus an optional .NS/.BO suffix")
         nse = Identifier(value=ticker[:-3], status=Status.ok) if ticker.endswith(".NS") else \
             Identifier.missing("ticker is not an NSE (.NS) symbol")
         return cls(
