@@ -152,3 +152,35 @@ def reconcile_sources(a: Fact, b: Fact, tol: float = 0.05) -> list[Fact]:
         a.with_(status=Status.conflict, reason=reason, related_fact_ids=[b.fact_id]),
         b.with_(status=Status.conflict, reason=reason, related_fact_ids=[a.fact_id]),
     ]
+
+
+def cross_check(a: Fact, b: Fact, tol: float = 0.05) -> Fact:
+    """One computed Fact stating whether two sources agree on the same metric and period."""
+    related = [a.fact_id, b.fact_id]
+    spread = abs(b.value - a.value) / abs(a.value) if a.value else None
+    ok = spread is not None and spread <= Decimal(str(tol))
+    reason = "" if ok else (
+        f"{a.source} {a.value} vs {b.source} {b.value}: sources differ by {spread:.1%}"
+        if spread is not None else "reference value is zero")
+    return Fact.make(
+        entity_key=a.entity_key, metric=f"{a.metric}_source_check", value=spread, unit="ratio",
+        period_end=a.period_end, period_type=a.period_type, fiscal_label=a.fiscal_label, source=COMPUTED,
+        retrieved_at=a.retrieved_at, status=Status.ok if ok else (Status.conflict if spread is not None else Status.unavailable),
+        reason=reason, related_fact_ids=related,
+    )
+
+
+SOURCE_RANK = ("nse_filing", "yahoo")
+
+
+def prefer_sources(facts: list[Fact]) -> list[Fact]:
+    """One Fact per (metric, period, type): the best-ranked source wins (official filing over vendor)."""
+    def rank(f: Fact) -> int:
+        return SOURCE_RANK.index(f.source) if f.source in SOURCE_RANK else len(SOURCE_RANK)
+
+    best: dict[tuple, Fact] = {}
+    for f in facts:
+        k = (f.metric, f.period_end, f.period_type)
+        if k not in best or rank(f) < rank(best[k]):
+            best[k] = f
+    return list(best.values())

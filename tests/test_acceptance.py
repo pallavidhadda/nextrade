@@ -51,3 +51,19 @@ def test_live_reliance(capsys):
     code = main(["RELIANCE.NS"])
     out = capsys.readouterr().out
     assert code == 0 and DISCLAIMER in out
+
+
+def test_cli_filing_option(capsys, tmp_path):
+    from tests.test_nsefiling import HTML
+
+    p = tmp_path / "f.html"
+    p.write_text(HTML, encoding="utf-8")
+    code = main(["RELIANCE.NS", "--filing", str(p)], client=FakeClient(), sleep=lambda s: None)
+    out = capsys.readouterr().out
+    assert code == 0 and "ISIN INE002A01018" in out and "net_income_source_check" in out
+
+
+def test_cli_bad_filing_exit_code(capsys, tmp_path):
+    p = tmp_path / "bad.html"
+    p.write_text("<html><body>nope</body></html>")
+    assert main(["RELIANCE.NS", "--filing", str(p)], client=FakeClient(), sleep=lambda s: None) == 2

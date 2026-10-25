@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Sequence
 
+from indiafacts.analysis import prefer_sources
 from indiafacts.calendar import fiscal_label
 from indiafacts.models import Fact, FactSet, PeriodType, Status
 from indiafacts.units import format_inr
@@ -37,8 +38,8 @@ class _Refs:
 
 def _fmt(f: Fact) -> str:
     v: Decimal = f.value
-    if f.metric.endswith("_yoy"):
-        return f"{v:+.1%}"
+    if f.metric.endswith("_yoy") or f.metric.endswith("_source_check"):
+        return f"{v:.1%}" if f.metric.endswith("_source_check") else f"{v:+.1%}"
     if f.unit in ("INR", "INR_per_share"):
         return format_inr(v)
     return f"{v:.2f}"
@@ -65,7 +66,7 @@ def render_table(facts: Sequence[Fact], refs: _Refs | None = None) -> str:
             raise TypeError(f"render_table accepts only Fact objects, got {type(f).__name__}")
     own = refs is None
     refs = refs or _Refs()
-    qs = [f for f in facts if f.period_type == PeriodType.Q and f.source != "computed"]
+    qs = prefer_sources([f for f in facts if f.period_type == PeriodType.Q and f.source != "computed"])
     ends = sorted({f.period_end for f in qs}, reverse=True)
     labels = {f.period_end: f.fiscal_label or fiscal_label(f.period_end, "Q") for f in qs}
     metrics = sorted({f.metric for f in qs})
@@ -87,6 +88,8 @@ def render(factset: FactSet, as_of: date | None = None) -> str:
     facts = factset.facts
     bases = sorted({str(f.basis.value) for f in facts}) or ["unknown"]
     head += f"  |  basis: {', '.join(bases)}"
+    if e.isin.value:
+        head += f"  |  ISIN {e.isin.value}"
 
     bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified)]
     refs = _Refs()

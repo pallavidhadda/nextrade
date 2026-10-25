@@ -69,3 +69,11 @@ Proposed token budgets (to validate against our measured 39k-token / 13-call bas
 - Page: nseindia.com/nse-mcp (could not open directly; details from search + a third-party tutorial). Servers: nse-bhavcopy (5y EOD), cm-market (1-3 min delayed). 15+ price/breadth tools, no fundamentals. Disclaimer: educational, not commercial deployment (confirm wording before public launch).
 - Use as official price source with provenance. Token rule: call it from code (Python MCP client or HTTP), compute indicators in code, pass the LLM a digest. Do not let raw OHLCV tool output flow into the model context. Measure tool-list size and a typical response before adopting inside the Claude plugin.
 - Next: user downloads one Reliance XBRL results file by hand; parse it to prove the fact-model import.
+
+## Findings from the official NSE Q1 FY27 filing (RELIANCE, consolidated, unaudited; board meeting 17-07-2026)
+- Verified: filing net profit to owners (Rs 20,946 cr), finance costs (Rs 8,337 cr), diluted EPS (15.48) equal Yahoo exactly. Revenue: filing Rs 3.12 lakh cr (its own note: Rs 311,850 cr) vs Yahoo Rs 3.09 lakh cr, 0.8% apart (cause unknown).
+- Yahoo's "EBITDA" for this quarter (Rs 38,967 cr) equals profit before tax + finance costs (30,630 + 8,337), i.e. EBIT with no depreciation add-back (filing depreciation Rs 15,100 cr). One company-quarter only; do not use Yahoo EBITDA for Indian names without a check. TODO: compute EBITDA from filing lines and flag the mismatch.
+- Real filing date 17 Jul 2026 vs the 45-day deadline estimate (14 Aug): the estimate is conservative by ~4 weeks here.
+- Filing gives ISIN, BSE scrip code, consolidated flag, audit status, segment revenue/result, company-reported D/E 0.40, DSCR 3.12, ICR 4.67.
+- Sample file had no ix: tags: parsing is label-based and fragile. Ask whether the raw iXBRL (View Source) is obtainable.
+- TODO: only the 3-month column is read; YTD, prior-year columns and balance sheet/cash flow pages not parsed yet. Mixed-source YoY (filing vs Yahoo) is unlabeled.

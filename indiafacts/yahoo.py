@@ -85,6 +85,7 @@ def fetch_facts(
     client: YahooClient | None = None,
     sleep: Callable[[float], None] = time.sleep,
     now: datetime | None = None,
+    filing_dates: dict[date, date] | None = None,
 ) -> FactSet:
     entity = Entity.from_ticker(ticker)
     now = now or datetime.now(timezone.utc)
@@ -121,7 +122,7 @@ def fetch_facts(
                                            reason=f"reported in {reported_ccy}, not INR; not converted", **common))
                 else:
                     facts.append(Fact.make(value=Decimal(str(raw)), status=Status.ok, **common))
-        facts = with_availability(facts)
+        facts = with_availability(facts, filing_dates)
 
     today = now.date()
     for yf_key, (metric, unit, ptype, status) in INFO_FIELDS.items():

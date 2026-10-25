@@ -39,3 +39,13 @@ def test_cross_source_within_tolerance_unchanged():
     a, b = pt("revenue", "100", source="yahoo"), pt("revenue", "103", source="other")
     out = reconcile_sources(a, b)
     assert [f.status for f in out] == ["ok", "ok"]
+
+
+def test_cross_check_fact_ok_and_conflict():
+    from indiafacts.analysis import cross_check
+
+    a, b = pt("net_income", "100", source="nse_filing"), pt("net_income", "100.5", source="yahoo")
+    ok = cross_check(a, b)
+    assert ok.status == "ok" and ok.metric == "net_income_source_check" and set(ok.related_fact_ids) == {a.fact_id, b.fact_id}
+    bad = cross_check(a, pt("net_income", "120", source="yahoo"))
+    assert bad.status == "conflict" and "20.0%" in bad.reason
