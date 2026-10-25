@@ -83,8 +83,9 @@ def render(factset: FactSet, as_of: date | None = None) -> str:
     e = factset.entity
     when = as_of or factset.retrieved_at.date()
     head = f"{e.ticker}  |  as of {when}  |  amounts in INR (₹ crore = 10^7)"
+    notes = ["", "NOTICES"] + [f"- {n}" for n in factset.notices] if factset.notices else []
     if e.resolution != "resolved":
-        return "\n".join([head, "", f"No data: {e.resolution_reason}", "", DISCLAIMER])
+        return "\n".join([head, *notes, "", f"No data: {e.resolution_reason}", "", DISCLAIMER])
     facts = factset.facts
     bases = sorted({str(f.basis.value) for f in facts}) or ["unknown"]
     head += f"  |  basis: {', '.join(bases)}"
@@ -93,7 +94,7 @@ def render(factset: FactSet, as_of: date | None = None) -> str:
 
     bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified)]
     refs = _Refs()
-    parts = [head, "", f"DATA QUALITY: {len(bad)} item(s) need attention (gaps, unavailable, conflicts, unverified)"]
+    parts = [head, *notes, "", f"DATA QUALITY: {len(bad)} item(s) need attention (gaps, unavailable, conflicts, unverified)"]
 
     parts += ["", "QUARTERLY (Yahoo; availability dates are deadline estimates)", render_table(facts, refs)]
 
