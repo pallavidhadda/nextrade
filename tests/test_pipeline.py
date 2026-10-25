@@ -91,3 +91,18 @@ def test_no_depreciation_in_filing_means_no_derived_ebitda(tmp_path):
     p.write_text(HTML.replace("Depreciation, depletion and amortisation expense", "Something else"), encoding="utf-8")
     fs = build_factset("RELIANCE.NS", client=FakeClient(), filing_path=p, **NS)
     assert not [f for f in fs.facts if f.metric.startswith("ebitda_derived")]
+
+
+def test_revenue_yoy_and_latest_quarter_net_margin_are_computed():
+    fs = build_factset("RELIANCE.NS", client=FakeClient(), **NS)
+    [g] = [f for f in fs.facts if f.metric == "revenue_yoy"]
+    assert g.status == "ok" and float(g.value) == pytest.approx(3.09 / 2.44 - 1)
+    [m] = [f for f in fs.facts if f.metric == "net_margin_q"]
+    assert m.status == "ok" and float(m.value) == pytest.approx(209460000000 / 3.09e12) and len(m.related_fact_ids) == 2
+
+
+def test_net_margin_unavailable_when_revenue_missing():
+    stmt = QUARTERLY.drop(index="Total Revenue")
+    fs = build_factset("RELIANCE.NS", client=FakeClient(stmt=stmt, info=INFO), **NS)
+    [m] = [f for f in fs.facts if f.metric == "net_margin_q"]
+    assert m.status == "unavailable" and "revenue" in m.reason

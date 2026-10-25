@@ -4,9 +4,9 @@ import time
 from datetime import date
 from pathlib import Path
 
-from indiafacts.analysis import add_gaps, check_ebitda, cross_check, growth_yoy, prefer_sources, reconcile_price, ttm
+from indiafacts.analysis import add_gaps, check_ebitda, cross_check, growth_yoy, margin_latest, prefer_sources, reconcile_price, ttm
 from indiafacts.availability import filter_as_of
-from indiafacts.models import AvailabilityKind, Entity, FactSet, PeriodType, Status
+from indiafacts.models import AvailabilityKind, Entity, Fact, FactSet, PeriodType, Status
 from indiafacts.nsefiling import facts_from_nse_filing
 from indiafacts.pricemetrics import price_metrics
 from indiafacts.prices import YfinancePriceClient, load_series
@@ -78,6 +78,18 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
         extra.append(ttm(primary, metric, latest))
         if metric == "net_income":
             extra.append(growth_yoy(primary, metric, latest))
+    rev_ok = [f for f in primary if f.metric == "revenue" and f.period_type == PeriodType.Q and f.status == Status.ok]
+    if rev_ok:
+        extra.append(growth_yoy(primary, "revenue", max(f.period_end for f in rev_ok)))
+    margin = margin_latest(primary, "net_income", "revenue", "net_margin_q")
+    if margin is not None:
+        extra.append(margin)
+    elif any(f.metric == "net_income" and f.status == Status.ok for f in primary):
+        ref = next(f for f in primary if f.metric == "net_income" and f.status == Status.ok)
+        extra.append(Fact.make(entity_key=ref.entity_key, metric="net_margin_q", value=None, unit="ratio",
+                               period_end=ref.period_end, period_type=PeriodType.Q, source="computed",
+                               retrieved_at=ref.retrieved_at, status=Status.unavailable,
+                               reason="revenue unavailable for the same quarter"))
     pt = {f.metric: f for f in facts if f.period_type == PeriodType.point}
     if all(k in pt for k in ("price", "pe_ttm", "eps_ttm")):
         extra.append(reconcile_price(pt["price"], pt["pe_ttm"], pt["eps_ttm"]))

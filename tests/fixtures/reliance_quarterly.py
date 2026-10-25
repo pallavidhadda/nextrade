@@ -10,6 +10,8 @@ QUARTERLY = pd.DataFrame(
         "EBITDA": [389670000000.0, 337800000000.0, 363100000000.0, 441820000000.0, 352580000000.0],
         "Interest Expense": [83370000000.0, 65850000000.0, 66130000000.0, 70360000000.0, 61550000000.0],
         "Diluted EPS": [15.48, 12.54, 13.78, 19.95, 14.34],
+        # Revenue rounded to Rs 0.01 lakh crore from live Yahoo output on 2026-10-25 (approximate, not exact)
+        "Total Revenue": [3.09e12, 2.94e12, 2.65e12, 2.44e12, 2.61e12],
     },
     index=pd.to_datetime(COLS),
 ).T
@@ -18,5 +20,5 @@ INFO = {
     "trailingPE": 21.550163, "trailingEps": 55.22, "currentPrice": 1190.0,
     "totalRevenue": 11296050249728, "netIncomeToCommon": 747269980160,
     "financialCurrency": "INR", "currency": "INR", "marketCap": 16103642234880,
-    "returnOnEquity": None,
+    "returnOnEquity": None, "priceToBook": 1.7813171, "debtToEquity": 46.278,
 }

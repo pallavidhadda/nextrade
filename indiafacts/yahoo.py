@@ -32,9 +32,12 @@ INFO_FIELDS = {
     "currentPrice": ("price", "INR", PeriodType.point, Status.ok),
     "marketCap": ("market_cap", "INR", PeriodType.point, Status.ok),
     "returnOnEquity": ("roe", "ratio", PeriodType.point, Status.ok),
+    "priceToBook": ("pb", "ratio", PeriodType.point, Status.ok),
+    "debtToEquity": ("debt_to_equity", "ratio", PeriodType.point, Status.ok),
     "totalRevenue": ("revenue_ttm_vendor", "INR", PeriodType.TTM, Status.unverified),
     "netIncomeToCommon": ("net_income_ttm_vendor", "INR", PeriodType.TTM, Status.unverified),
 }
+_PERCENT_TO_RATIO = {"debtToEquity"}      # Yahoo gives 46.278 meaning 46.278%
 _VENDOR_TTM_NOTE = "vendor-stated trailing figure; period end not provided; not reconciled to quarters"
 
 
@@ -138,7 +141,8 @@ def fetch_facts(
                                    reason="not provided by Yahoo", **common))
         else:
             reason = _VENDOR_TTM_NOTE if status is Status.unverified else ""
-            facts.append(Fact.make(value=Decimal(str(raw)), status=status, reason=reason, **common))
+            value = Decimal(str(raw)) / 100 if yf_key in _PERCENT_TO_RATIO else Decimal(str(raw))
+            facts.append(Fact.make(value=value, status=status, reason=reason, **common))
 
     pending: list[Fact] = []
     if as_of is not None:

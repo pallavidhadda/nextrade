@@ -103,3 +103,11 @@ def test_no_secrets_in_facts(monkeypatch):
 
 def test_metric_map_covers_spec_metrics():
     assert set(METRIC_MAP.values()) >= {"net_income", "ebitda", "interest_expense", "eps_diluted"}
+
+
+def test_pb_and_debt_to_equity_facts_with_percent_converted_to_ratio():
+    fs = fetch_facts("RELIANCE.NS", client=FakeClient(), **NO_SLEEP)
+    [pb] = fs.by_metric("pb")
+    [de] = fs.by_metric("debt_to_equity")
+    assert float(pb.value) == pytest.approx(1.7813171)
+    assert de.unit == "ratio" and float(de.value) == pytest.approx(0.46278)      # Yahoo gives 46.278 (percent)

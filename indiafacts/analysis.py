@@ -225,3 +225,20 @@ def check_ebitda(filing_facts: list[Fact], vendor_facts: list[Fact]) -> tuple[li
                     demote[f.fact_id] = f.with_(status=Status.unverified, reason=note)
         new.append(chk)
     return new, demote
+
+
+def margin_latest(facts: list[Fact], numerator: str, denominator: str, name: str) -> Fact | None:
+    """Latest quarter where both inputs are ok: numerator / denominator (e.g. net margin)."""
+    nums = {f.period_end: f for f in _quarters(facts, numerator) if f.status == Status.ok}
+    dens = {f.period_end: f for f in _quarters(facts, denominator) if f.status == Status.ok}
+    common = sorted(set(nums) & set(dens))
+    if not common:
+        return None
+    end = common[-1]
+    n, d = nums[end], dens[end]
+    base = dict(entity_key=n.entity_key, metric=name, unit="ratio", period_end=end, period_type=PeriodType.Q,
+                fiscal_label=n.fiscal_label, source=COMPUTED, retrieved_at=n.retrieved_at,
+                related_fact_ids=[n.fact_id, d.fact_id])
+    if d.value == 0:
+        return Fact.make(value=None, status=Status.unavailable, reason=f"{denominator} is zero", **base)
+    return Fact.make(value=n.value / d.value, status=Status.ok, **base)

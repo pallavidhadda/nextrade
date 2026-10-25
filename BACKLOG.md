@@ -91,3 +91,8 @@ Data-age banner on every report; review_by dates on all assumptions (test fails 
 ## Security master (2026-10-26)
 Needed: deterministic symbol/rename/demerger knowledge (ZOMATO->ETERNAL rename; TATAMOTORS -> TMPV + TMCV demerger). See docs/2026-10-25-price-history-and-profile-spec.md section A0. Ask user for the list of changes they know; verify dates/ISINs against NSE/BSE circulars.
 - Security master data sources found 2026-10-26: NSE "Changes in Symbols (.csv)" + EQUITY_L.csv (ISIN master) on NSE "Securities available for Trading" page; per-change NSE circulars. Needs user to download both CSVs into samples/ (scripted fetch blocked). Seeds: ZOMATO->ETERNAL (rename, ticker change 2025-04-09), TATAMOTORS->TMPV+TMCV (demerger, effective 2025-10-01, CV listed 2025-11-12). Details in the price-history/profile spec section A0.
+
+## Provider leads pasted by user 2026-10-26 (UNVERIFIED: web search found nothing on these by name)
+NPCI/RBI/data.gov.in (macro, free datasets), TigZig (macro/credit/red flags), TejHQ (prices/screening, Rs 599/mo retail), Stoxim (financials/governance/shareholding, Rs 2,999/mo), DalalOS (MCP; Pro Rs 399/mo), IndianAPI.in (free 500 requests/month). Search did find BharatStock (free: 25 requests/day, 1-year history, full endpoint set per its site) and TrueData (sandbox request). Verify coverage, terms and public-use rights one by one before depending on any.
+## Visuals gap (2026-10-26)
+Report is text/tables only. Add charts (price vs Nifty 50 line, drawdown, quarterly bars, score bars) in an HTML report; terminal gets sparklines. Use the dataviz skill; no invented numbers.
