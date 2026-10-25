@@ -54,3 +54,12 @@ PR9 Two profiles with different horizons give different weights but identical fa
 
 ## Next
 On approval: plan A (price history) with tasks and signatures, build test-first, then B.
+
+## Decisions (2026-10-26)
+User said yes to: preset weights as a starting point (editable), Nifty 50 price index ^NSEI labelled as price-only, profile saved locally. Confirmed: the user sets the horizon; the agent picks method and weights.
+
+## Staleness controls (new cross-cutting requirement)
+- Every report prints data age (latest price bar, latest filing, retrieval time); facts older than a configured age are flagged.
+- Every assumption (filing-lag days, NM caps, coverage threshold, cost rates, benchmark, weight presets) lives in a config entry with `reviewed_on` and `review_by`; a test fails once `review_by` has passed.
+- Canary tests per data source: saved real fixtures plus a check that known fields exist; live tests (marked) run on a schedule.
+- Scorecard monitors rolling hit rate / rank IC and warns when it fades. Weights are versioned and hashed.

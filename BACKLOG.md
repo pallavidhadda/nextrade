@@ -84,3 +84,6 @@ Proposed token budgets (to validate against our measured 39k-token / 13-call bas
 - Two views, one engine: Simple (long-term default, fundamentals-led, 1/3/5y return vs Nifty 50, max drawdown, 52-week position, checklist) and Pro (momentum, volatility, beta, rolling returns, valuation vs own history, editable weights).
 - Peer comparison design: deterministic tiered peer group (industry, then sector, size-proximity), matched multiples (EV with EBITDA, equity with earnings; P/B for banks), median not mean, own-history percentile, ROIC vs cost of capital, benchmark-relative returns. Conglomerates (Reliance): sum-of-the-parts using filing segments.
 - Compliance: SEBI requires registered advisers to risk-profile clients before advice. A profile that drives recommendations may look like advice: keep outputs framed as research fit ("matches/doesn't match a long-term profile on these facts"), not buy/sell; verify with a lawyer before a public launch.
+
+## Staleness controls (2026-10-26)
+Data-age banner on every report; review_by dates on all assumptions (test fails when overdue); canary fixtures per source; scheduled live checks; scorecard watches for fading accuracy; cache AI text by input hash; record upstream versions and licences studied.
