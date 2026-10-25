@@ -184,3 +184,44 @@ def prefer_sources(facts: list[Fact]) -> list[Fact]:
         if k not in best or rank(f) < rank(best[k]):
             best[k] = f
     return list(best.values())
+
+
+def check_ebitda(filing_facts: list[Fact], vendor_facts: list[Fact]) -> tuple[list[Fact], dict[str, Fact]]:
+    """Derive EBITDA from filing lines (PBT + finance costs + depreciation) and test the vendor's EBITDA.
+
+    Returns (new computed facts, replacements keyed by fact_id). A vendor series that equals
+    PBT + finance costs (EBIT) is demoted to `unverified` for every period.
+    """
+    def one(metric: str, end: date) -> Fact | None:
+        hits = [f for f in filing_facts if f.metric == metric and f.period_end == end
+                and f.period_type == PeriodType.Q and f.status == Status.ok]
+        return hits[0] if hits else None
+
+    new: list[Fact] = []
+    demote: dict[str, Fact] = {}
+    for end in sorted({f.period_end for f in filing_facts if f.period_type == PeriodType.Q}):
+        pbt, interest, dep = one("profit_before_tax", end), one("interest_expense", end), one("depreciation", end)
+        if not (pbt and interest and dep):
+            continue
+        derived = Fact.make(
+            entity_key=pbt.entity_key, metric="ebitda_derived", value=pbt.value + interest.value + dep.value,
+            unit="INR", period_end=end, period_type=PeriodType.Q, fiscal_label=pbt.fiscal_label, basis=pbt.basis,
+            source=COMPUTED, retrieved_at=pbt.retrieved_at, status=Status.ok,
+            related_fact_ids=[pbt.fact_id, interest.fact_id, dep.fact_id],
+        )
+        new.append(derived)
+        vend = [f for f in vendor_facts if f.metric == "ebitda" and f.period_end == end
+                and f.period_type == PeriodType.Q and f.status == Status.ok]
+        if not vend:
+            continue
+        chk = cross_check(derived, vend[0])
+        ebit = pbt.value + interest.value
+        if chk.status == Status.conflict and abs(vend[0].value - ebit) <= abs(ebit) * Decimal("0.001"):
+            chk = chk.with_(reason=(f"{vend[0].source} 'EBITDA' equals profit before tax + finance costs (EBIT); "
+                                    f"depreciation not added back (derived {derived.value})"))
+            note = f"appears to be EBIT, not EBITDA (checked against {pbt.fiscal_label} filing); series not trusted"
+            for f in vendor_facts:
+                if f.metric == "ebitda" and f.period_type == PeriodType.Q and f.value is not None:
+                    demote[f.fact_id] = f.with_(status=Status.unverified, reason=note)
+        new.append(chk)
+    return new, demote

@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 
 import pytest
 
@@ -26,8 +27,8 @@ def test_filing_identity_replaces_unavailable_identifiers(filing):
 
 def test_matching_sources_pass_cross_check(filing):
     fs = build_factset("RELIANCE.NS", client=FakeClient(), filing_path=filing, **NS)
-    checks = [f for f in fs.facts if f.metric.endswith("_source_check")]
-    assert {f.metric for f in checks} >= {"net_income_source_check", "interest_expense_source_check"}
+    checks = [f for f in fs.facts if f.metric in ("net_income_source_check", "interest_expense_source_check")]
+    assert {f.metric for f in checks} == {"net_income_source_check", "interest_expense_source_check"}
     assert all(f.status == "ok" for f in checks)
 
 
@@ -59,3 +60,34 @@ def test_table_prefers_filing_and_shows_consolidated(filing):
 def test_filing_for_other_company_rejected(filing):
     with pytest.raises(ValueError):
         build_factset("TCS.NS", client=FakeClient(), filing_path=filing, **NS)
+
+
+def test_ebitda_derived_from_filing(filing):
+    fs = build_factset("RELIANCE.NS", client=FakeClient(), filing_path=filing, **NS)
+    [d] = [f for f in fs.facts if f.metric == "ebitda_derived"]
+    assert d.value == Decimal("540670000000") and d.source == "computed" and d.status == "ok"   # PBT + finance costs + depreciation
+    assert len(d.related_fact_ids) == 3
+
+
+def test_yahoo_ebitda_that_equals_ebit_is_flagged_and_demoted(filing):
+    fs = build_factset("RELIANCE.NS", client=FakeClient(), filing_path=filing, **NS)
+    [chk] = [f for f in fs.facts if f.metric == "ebitda_derived_source_check"]
+    assert chk.status == "conflict" and "EBIT" in chk.reason
+    yahoo = [f for f in fs.facts if f.source == "yahoo" and f.metric == "ebitda" and f.period_type == "Q"]
+    assert yahoo and all(f.status == "unverified" and "EBIT" in f.reason for f in yahoo if f.value is not None)
+
+
+def test_plausible_yahoo_ebitda_not_demoted(filing):
+    stmt = QUARTERLY.copy()
+    stmt.loc["EBITDA", stmt.columns[0]] = 540000000000.0
+    fs = build_factset("RELIANCE.NS", client=FakeClient(stmt=stmt, info=INFO), filing_path=filing, **NS)
+    [chk] = [f for f in fs.facts if f.metric == "ebitda_derived_source_check"]
+    assert chk.status == "ok"
+    assert all(f.status == "ok" for f in fs.facts if f.source == "yahoo" and f.metric == "ebitda" and f.value is not None)
+
+
+def test_no_depreciation_in_filing_means_no_derived_ebitda(tmp_path):
+    p = tmp_path / "f.html"
+    p.write_text(HTML.replace("Depreciation, depletion and amortisation expense", "Something else"), encoding="utf-8")
+    fs = build_factset("RELIANCE.NS", client=FakeClient(), filing_path=p, **NS)
+    assert not [f for f in fs.facts if f.metric.startswith("ebitda_derived")]

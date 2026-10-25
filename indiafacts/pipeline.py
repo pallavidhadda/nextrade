@@ -4,7 +4,7 @@ import time
 from datetime import date
 from pathlib import Path
 
-from indiafacts.analysis import add_gaps, cross_check, growth_yoy, prefer_sources, reconcile_price, ttm
+from indiafacts.analysis import add_gaps, check_ebitda, cross_check, growth_yoy, prefer_sources, reconcile_price, ttm
 from indiafacts.availability import filter_as_of
 from indiafacts.models import AvailabilityKind, Entity, FactSet, PeriodType, Status
 from indiafacts.nsefiling import facts_from_nse_filing
@@ -41,8 +41,13 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
         pending += later
         fs = fs.model_copy(update={"entity": _merge_entity(fs.entity, filing.entity)})
 
-    primary = prefer_sources(facts)
     extra = []
+    if filing:
+        new, demote = check_ebitda([f for f in facts if f.source == "nse_filing"],
+                                   [f for f in facts if f.source == "yahoo"])
+        facts = [demote.get(f.fact_id, f) for f in facts]
+        extra += new
+    primary = prefer_sources(facts)
     for metric in FLOW_METRICS:
         ok_q = [f for f in primary if f.metric == metric and f.period_type == PeriodType.Q and f.status == Status.ok]
         if not ok_q:

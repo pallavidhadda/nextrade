@@ -31,6 +31,7 @@ HTML = "<html><body><table>" + "".join([
     row("Revenue from operations", "3,11,85,000.00", "3,11,85,000.00"),
     row("(c)", "Changes in inventories of finished goods, work-in-progress and stock-in-trade", "(1,32,600.00)", "(1,32,600.00)"),
     row("(e)", "Finance costs", "8,33,700.00", "8,33,700.00"),
+    row("(f)", "Depreciation, depletion and amortisation expense", "15,10,000.00", "15,10,000.00"),
     row("5", "Total profit before tax", "30,63,000.00", "30,63,000.00"),
     row("17", "Other comprehensive income net of taxes", "3,26,700.00", "3,26,700.00"),
     row("Profit or loss, attributable to owners of parent", "20,94,600.00", "20,94,600.00"),
