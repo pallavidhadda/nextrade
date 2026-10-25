@@ -37,8 +37,8 @@ A public portfolio project: enter an NSE/BSE ticker, get a profile-aware researc
 - Security-master equity list (ISIN master) importer; sector field exists on Entity; sector-relative scoring groups.
 
 ## Provider-driven additions 2026-10-26
-- 5c: TejHQ adapter (ISIN symbol history, ex-dates, top-500 universe) to replace hand-curated identity data and the 30-name pool.
-- 5d: Stoxim trial for fundamentals/ratios/shareholding (needs user's free key).
+- 5c: DONE 2026-10-26: TejHQ adapter (ISIN symbol history, rename detection, merger/demerger ex-dates, point-in-time top-N universe `--universe tej:N`); curated demerger table kept for successor lists. TejHQ history starts 2010; NSE symbolchange.csv covers older renames.
+- 5d: Stoxim PARKED (signup not working). Dated fundamentals stay: Yahoo + saved NSE results pages.
 - 5e: TigZig RBI macro and red flags (later).
 
 ## Cut line for a first public demo (v0.1)
