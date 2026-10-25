@@ -141,6 +141,7 @@ class FactSet(BaseModel):
     retrieved_at: datetime
     not_yet_public: list[Fact] = Field(default_factory=list)
     notices: list[str] = Field(default_factory=list)
+    price_notes: list[str] = Field(default_factory=list)
 
     def by_metric(self, name: str) -> list[Fact]:
         return [f for f in self.facts if f.metric == name]

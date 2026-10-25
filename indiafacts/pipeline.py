@@ -8,7 +8,9 @@ from indiafacts.analysis import add_gaps, check_ebitda, cross_check, growth_yoy,
 from indiafacts.availability import filter_as_of
 from indiafacts.models import AvailabilityKind, Entity, FactSet, PeriodType, Status
 from indiafacts.nsefiling import facts_from_nse_filing
-from indiafacts.securitymaster import Resolution, load_curated, load_symbol_changes, normalize_symbol, resolve_symbol
+from indiafacts.pricemetrics import price_metrics
+from indiafacts.prices import YfinancePriceClient, load_series
+from indiafacts.securitymaster import Resolution, corporate_action_dates, load_curated, load_symbol_changes, normalize_symbol, resolve_symbol
 from indiafacts.yahoo import fetch_facts
 
 FLOW_METRICS = ("net_income", "ebitda", "interest_expense", "eps_diluted")
@@ -31,7 +33,8 @@ def _merge_entity(entity: Entity, filing: Entity) -> Entity:
 
 
 def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=time.sleep,
-                  filing_path: Path | None = None, symbol_changes: Path | None = None) -> FactSet:
+                  filing_path: Path | None = None, symbol_changes: Path | None = None,
+                  prices: bool = False, price_client=None, benchmark: str = "^NSEI") -> FactSet:
     """Resolve identity, fetch, flag gaps, optionally merge an official NSE filing, then append computed facts."""
     notices: list[str] = []
     ticker, loaded = _resolve_identity(ticker, symbol_changes, notices)
@@ -82,7 +85,9 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
             y = yahoo.get((f.metric, f.period_end))
             if f.source == "nse_filing" and y is not None and y.unit == f.unit:
                 extra.append(cross_check(f, y))
-    return fs.model_copy(update={"facts": facts + extra, "not_yet_public": pending, "notices": notices})
+    price_facts, price_notes = _price_facts(fs.entity.ticker, as_of, prices, price_client, benchmark, notices)
+    return fs.model_copy(update={"facts": facts + extra + price_facts, "not_yet_public": pending,
+                                 "notices": notices, "price_notes": price_notes})
 
 
 def _resolve_identity(ticker: str, symbol_changes: Path | None, notices: list[str]) -> tuple[str, bool]:
@@ -98,3 +103,29 @@ def _resolve_identity(ticker: str, symbol_changes: Path | None, notices: list[st
     if changes is None:
         notices.append(res.notice)
     return ticker, changes is not None
+
+
+def _price_facts(ticker: str, as_of: date | None, enabled: bool, client, benchmark: str, notices: list[str]):
+    if not enabled:
+        return [], []
+    client = client or YfinancePriceClient()
+    try:
+        series = load_series(ticker, client, as_of=as_of)
+    except Exception as exc:  # network/vendor errors must not kill the fundamentals report
+        notices.append(f"price history unavailable: {type(exc).__name__}")
+        return [], []
+    try:
+        bench = load_series(benchmark, client, as_of=as_of)
+    except Exception as exc:
+        bench = None
+        notices.append(f"benchmark {benchmark} unavailable: {type(exc).__name__}")
+    q = series.quality
+    note = (f"{len(series.dates)} daily bars {series.dates[0]} to {series.dates[-1]}; source Yahoo; basis split-adjusted close "
+            f"(levels adjusted to today's share count); benchmark {benchmark} Nifty 50 price index, dividends excluded"
+            if series.dates else "no price bars returned")
+    notes = [note, f"quality: {q.zero_volume_days} zero-volume days, {len(q.gaps)} gaps, {q.dropped_rows} dropped rows, "
+                   f"{q.duplicate_conflicts} duplicate conflicts"
+                   + (f", last bar {q.stale_days} weekdays old" if q.stale_days else "")]
+    notes += [f"event: {e}" for e in q.events]
+    actions = corporate_action_dates(ticker, load_curated())
+    return price_metrics(series, bench, as_of or date.today(), corporate_actions=actions), notes

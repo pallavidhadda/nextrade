@@ -16,6 +16,13 @@ DISCLAIMER = (
 )
 
 
+_PCT_PREFIXES = ("return_", "benchmark_return_", "relative_return_", "max_drawdown_", "pct_from_", "volatility")
+
+
+def _is_price(f: Fact) -> bool:
+    return f.source == "computed" and (f.source_field or "").startswith("series:")
+
+
 class _Refs:
     def __init__(self) -> None:
         self._by_id: dict[str, str] = {}
@@ -38,6 +45,8 @@ class _Refs:
 
 def _fmt(f: Fact) -> str:
     v: Decimal = f.value
+    if f.metric.startswith(_PCT_PREFIXES):
+        return f"{v:+.1%}" if not f.metric.startswith(("volatility", "benchmark_return")) else f"{v:.1%}"
     if f.metric.endswith("_yoy") or f.metric.endswith("_source_check"):
         return f"{v:.1%}" if f.metric.endswith("_source_check") else f"{v:+.1%}"
     if f.unit in ("INR", "INR_per_share"):
@@ -104,7 +113,7 @@ def render(factset: FactSet, as_of: date | None = None) -> str:
         parts += ["", "OVERVIEW (live snapshot)"]
         parts += [f"{f.metric}: {_fmt(f)} [{refs.ref(f)}]" for f in overview]
 
-    computed = [f for f in facts if f.source == "computed"]
+    computed = [f for f in facts if f.source == "computed" and not _is_price(f)]
     if computed:
         parts += ["", "COMPUTED CHECKS"]
         for f in computed:
@@ -112,10 +121,23 @@ def render(factset: FactSet, as_of: date | None = None) -> str:
             parts.append(f"{f.metric} {f.fiscal_label or f.period_end}: {val}"
                          + (f" ({f.reason})" if f.value is not None and f.reason else ""))
 
-    vendor = [f for f in facts if f.status == Status.unverified]
+    vendor = [f for f in facts if f.status == Status.unverified and not _is_price(f)]
     if vendor:
         parts += ["", "UNVERIFIED VENDOR FIGURES"]
         parts += [f"{f.metric}: {_fmt(f)} [{refs.ref(f)}] - {f.reason}" for f in vendor]
+
+    pf = {f.metric: f for f in facts if _is_price(f)}
+    if pf:
+        parts += ["", "PRICE HISTORY (price returns; dividends excluded; Nifty 50 = price index)"]
+        parts += [f"- {n}" for n in factset.price_notes]
+        parts += ["| window | stock | Nifty 50 | relative | max drawdown |", "|---|---|---|---|---|"]
+        for n in (1, 3, 5):
+            cells = [_cell(pf.get(f"{m}_{n}y"), refs) for m in ("return", "benchmark_return", "relative_return", "max_drawdown")]
+            parts.append(f"| {n}y | " + " | ".join(cells) + " |")
+        for m in ("high_52w", "low_52w", "pct_from_52w_high", "volatility_1y", "beta_1y", "beta_3y"):
+            if m in pf:
+                parts.append(f"{m}: {_cell(pf[m], refs)}")
+        parts += [f"note: {pf[m].metric}: {pf[m].reason}" for m in pf if pf[m].status == Status.unverified][:1]
 
     parts += ["", "Could not check"]
     missing = [f for f in facts if f.status == Status.unavailable and f.period_type != PeriodType.Q]

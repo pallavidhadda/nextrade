@@ -144,3 +144,10 @@ def resolve_symbol(raw: str, changes: list[SymbolChange] | None, curated: list[C
     if changes is None:
         return Resolution(raw, "unknown", [sym], "symbol-change list not loaded; no rename check was possible")
     return Resolution(raw, "unknown", [sym], f"{sym}: not in security master (no recorded symbol change)")
+
+
+def corporate_action_dates(symbol: str, curated: list[CuratedChange]) -> list[date]:
+    """Effective dates of curated corporate actions that involve this symbol (old symbol or a successor)."""
+    sym = normalize_symbol(symbol)
+    return sorted(date.fromisoformat(c.effective_date) for c in curated
+                  if sym == c.old_symbol or sym in c.successors)
