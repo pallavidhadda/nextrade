@@ -12,6 +12,7 @@ from indiafacts.models import Entity, FactSet, Identifier, Status
 
 DEFAULT_POOL = Path(__file__).parent / "data" / "pool30.txt"
 CACHE_MAX_AGE = timedelta(days=1)
+CACHE_SCHEMA = 2        # bump when FactSet gains fields the report needs (2: chart data)
 
 
 def default_cache_dir() -> Path:
@@ -92,7 +93,7 @@ def build_universe(tickers: list[str], builder: Callable[[str], FactSet], cache_
         if path.exists():
             try:
                 blob = json.loads(path.read_text(encoding="utf-8"))
-                if now - datetime.fromisoformat(blob["fetched_at"]) < CACHE_MAX_AGE:
+                if blob.get("schema") == CACHE_SCHEMA and now - datetime.fromisoformat(blob["fetched_at"]) < CACHE_MAX_AGE:
                     fs = FactSet.model_validate(blob["factset"])
             except (ValueError, KeyError, TypeError):
                 fs = None                                  # corrupt cache entry: rebuild
@@ -102,7 +103,7 @@ def build_universe(tickers: list[str], builder: Callable[[str], FactSet], cache_
             except Exception as exc:
                 failed[t] = f"{type(exc).__name__}: {exc}"
                 continue
-            path.write_text(json.dumps({"fetched_at": now.isoformat(), "factset": json.loads(fs.model_dump_json())}),
+            path.write_text(json.dumps({"schema": CACHE_SCHEMA, "fetched_at": now.isoformat(), "factset": json.loads(fs.model_dump_json())}),
                             encoding="utf-8")
         if fs.entity.resolution != "resolved":
             failed[t] = fs.entity.resolution_reason or "unresolved"

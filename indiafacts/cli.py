@@ -36,6 +36,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--score", action="store_true", help="rank against a comparison pool (default: built-in pool of 30)")
     p.add_argument("--universe", default=None, help="file with one ticker per line, or tej / tej:N for the top-N liquid names; implies --score")
     p.add_argument("--labels", type=Path, default=None, help="NSE index CSV used only for industry labels and ISINs")
+    p.add_argument("--html", type=Path, default=None, help="also write a self-contained HTML report with charts")
     p.add_argument("--no-tej", action="store_true", help="do not use TejHQ open data (identity, corporate actions, universe)")
     args = p.parse_args(argv)
     try:
@@ -64,6 +65,15 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
             return 2
     print(render(fs, as_of=args.as_of, profile=profile, profile_is_default=is_default,
                  view=args.view or profile.view, scorecard=scorecard))
+    if args.html:
+        from indiafacts.htmlreport import build_html
+
+        page = build_html(fs, profile, is_default, args.view or profile.view, scorecard, args.as_of)
+        args.html.parent.mkdir(parents=True, exist_ok=True)
+        tmp = args.html.with_suffix(args.html.suffix + ".tmp")
+        tmp.write_text(page, encoding="utf-8")
+        tmp.replace(args.html)
+        print(f"wrote {args.html} ({len(page) // 1024} KB, self-contained)")
     return 0
 
 

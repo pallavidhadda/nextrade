@@ -70,3 +70,19 @@ def test_corrupt_cache_file_is_ignored_and_rebuilt(tmp_path):
     calls = []
     build_universe(["A.NS"], builder_factory(calls), tmp_path, now=NOW)
     assert calls == ["A.NS"]
+
+
+def test_cache_written_by_an_older_schema_is_rebuilt(tmp_path):
+    import json
+
+    calls = []
+    b = builder_factory(calls)
+    build_universe(["A.NS"], b, tmp_path, now=NOW)
+    f = tmp_path / "A.NS.json"
+    blob = json.loads(f.read_text())
+    assert blob["schema"] >= 2
+    blob.pop("schema")                                   # what a cache from before the chart data looks like
+    f.write_text(json.dumps(blob))
+    calls.clear()
+    build_universe(["A.NS"], b, tmp_path, now=NOW + timedelta(hours=1))
+    assert calls == ["A.NS"]
