@@ -112,6 +112,7 @@ class Entity(BaseModel):
     isin: Identifier
     name: str | None = None
     sector: str | None = None
+    industry: str | None = None
     resolution: str = "resolved"
     resolution_reason: str = ""
 

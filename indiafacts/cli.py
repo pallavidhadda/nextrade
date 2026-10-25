@@ -7,6 +7,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 from indiafacts.checklist import checklist, summarize
+from indiafacts.peers import compare_peers, select_peers
 from indiafacts.pipeline import AmbiguousSymbol, build_factset
 from indiafacts.profile import InvestorProfile, ProfileError, default_path, default_profile, load_profile, save_profile
 from indiafacts.prices import YfinancePriceClient
@@ -114,6 +115,9 @@ def _scorecard(args, fs, profile, client, sleep, price_client) -> dict:
     universe, failed = build_universe(tickers, builder)
     cfg = load_score_config(strict=False)
     results = score_universe(universe, weights_for(profile), cfg, args.as_of or date.today(), datetime.now(timezone.utc))
-    return {"result": results.get(target), "n": len(universe), "failed": failed, "pool": str(path.name),
+    group = select_peers(fs, universe)
+    comparisons = compare_peers(fs, group, universe) if group.picks else []
+    return {"peers": group, "peer_comparisons": comparisons,
+            "result": results.get(target), "n": len(universe), "failed": failed, "pool": str(path.name),
             "checklist": checklist(fs), "checklist_summary": summarize(checklist(fs)),
             "config_overdue": cfg.overdue, "default_pool": args.universe is None}

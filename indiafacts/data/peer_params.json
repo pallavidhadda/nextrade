@@ -1,0 +1,12 @@
+{
+  "note": "Peer selection parameters. Size band and the positive-P/E member gate follow the FinRobot peer screen; the NM caps follow FinRobot's P/E 75 convention. Project author's choices, not evidence-based.",
+  "reviewed_on": "2026-10-26",
+  "review_by": "2027-04-26",
+  "k": 5,
+  "size_ceiling": 20,
+  "size_floor_tier1": 200,
+  "size_floor_tier2": 20,
+  "min_valid_peers": 3,
+  "valid_ranges": {"pe_ttm": [0, 75], "pb": [0, 50], "roe": [-1, 1.5], "net_margin_q": [-1, 1], "net_income_yoy": [-5, 10]},
+  "lower_is_cheaper": ["pe_ttm", "pb"]
+}

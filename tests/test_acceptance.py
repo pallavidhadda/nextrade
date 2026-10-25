@@ -99,3 +99,22 @@ def test_cli_score_too_small_pool_says_so(capsys, tmp_path):
                 client=FakeClient(), sleep=lambda s: None)
     out = capsys.readouterr().out
     assert code == 0 and "universe too small" in out and "abstain" in out.lower()
+
+
+def test_cli_score_prints_peers_section(capsys, tmp_path):
+    from tests.fixtures.reliance_quarterly import INFO, QUARTERLY
+
+    info = {**INFO, "sector": "Energy", "industry": "Oil & Gas Refining & Marketing"}
+    code = main(["T0.NS", "--score", "--universe", str(_pool_file(tmp_path)), "--no-prices"],
+                client=FakeClient(stmt=QUARTERLY, info=info), sleep=lambda s: None)
+    out = capsys.readouterr().out
+    peers = out.split("PEERS")[1].split("DATA QUALITY")[0]
+    assert code == 0 and "T1.NS" in peers and "tier 1" in peers and "pe_ttm" in peers and "vs median" in peers
+    assert "median" in peers and not re.search(r"\b(buy|sell)\b", out.lower())
+
+
+def test_cli_peers_unavailable_reason_when_target_has_no_industry(capsys, tmp_path):
+    code = main(["T0.NS", "--score", "--universe", str(_pool_file(tmp_path)), "--no-prices"],
+                client=FakeClient(), sleep=lambda s: None)
+    out = capsys.readouterr().out
+    assert code == 0 and "no peer comparison" in out and "industry or sector unknown" in out
