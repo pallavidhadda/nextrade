@@ -4,7 +4,7 @@ Research/education only; not financial, investment or trading advice.
 ## Goal
 A public portfolio project: enter an NSE/BSE ticker, get a profile-aware research report built from source-linked facts; India first; minimum LLM tokens (free API tier or Claude Code plugin); front end later.
 
-## Built (82 offline tests pass, 1 live test, 11 local commits, nothing pushed)
+## Built (82 offline tests pass, 1 live test, 19 local commits, nothing pushed)
 | Area | Status |
 |---|---|
 | Baseline | TradingAgents run on Gemini free tier: 13 calls, ~39k tokens, Hold. Found its gaps (blind fundamentals, shallow debate). |
