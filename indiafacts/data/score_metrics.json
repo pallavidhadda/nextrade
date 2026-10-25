@@ -1,0 +1,22 @@
+{
+  "note": "Metrics, directions and validity bounds for factor scoring. Bounds reject unit errors and not-meaningful values (FinRobot-style NM caps). Reviewed by the project author, not evidence-based; tune and backtest.",
+  "reviewed_on": "2026-10-26",
+  "review_by": "2027-04-26",
+  "params": {"winsorise_low": 0.05, "winsorise_high": 0.95, "winsorise_min_n": 10, "min_universe": 5,
+             "min_factor_coverage": 0.6, "min_valid_factors": 2, "max_age_days": 7},
+  "metrics": [
+    {"id": "pe_ttm", "factor": "value", "direction": "lower", "valid_min": 0, "valid_max": 75, "exclusive_min": true},
+    {"id": "pb", "factor": "value", "direction": "lower", "valid_min": 0, "valid_max": 50, "exclusive_min": true},
+    {"id": "roe", "factor": "quality", "direction": "higher", "valid_min": -1, "valid_max": 1.5},
+    {"id": "net_margin_q", "factor": "quality", "direction": "higher", "valid_min": -1, "valid_max": 1},
+    {"id": "debt_to_equity", "factor": "quality", "direction": "lower", "valid_min": 0, "valid_max": 20},
+    {"id": "net_income_yoy", "factor": "growth", "direction": "higher", "valid_min": -5, "valid_max": 10},
+    {"id": "revenue_yoy", "factor": "growth", "direction": "higher", "valid_min": -1, "valid_max": 5},
+    {"id": "return_1y", "factor": "momentum", "direction": "higher", "valid_min": -0.95, "valid_max": 10},
+    {"id": "relative_return_1y", "factor": "momentum", "direction": "higher", "valid_min": -2, "valid_max": 10},
+    {"id": "pct_from_52w_high", "factor": "momentum", "direction": "higher", "valid_min": -1, "valid_max": 0},
+    {"id": "volatility_1y", "factor": "risk", "direction": "lower", "valid_min": 0, "valid_max": 3, "exclusive_min": true},
+    {"id": "max_drawdown_3y", "factor": "risk", "direction": "higher", "valid_min": -1, "valid_max": 0},
+    {"id": "beta_1y", "factor": "risk", "direction": "lower", "valid_min": 0, "valid_max": 4, "exclusive_min": true}
+  ]
+}
