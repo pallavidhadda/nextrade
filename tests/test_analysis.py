@@ -66,3 +66,12 @@ def test_add_gaps_appends_gap_facts_to_factset():
     gaps = [f for f in fs.facts if f.status == "gap"]
     assert {g.metric for g in gaps} >= {"net_income", "ebitda"}
     assert all(g.period_end == date(2025, 9, 30) for g in gaps)
+
+
+def test_ttm_and_growth_on_empty_facts_raise_value_error():
+    import pytest
+
+    with pytest.raises(ValueError):
+        ttm([], "net_income", date(2026, 6, 30))
+    with pytest.raises(ValueError):
+        growth_yoy([], "net_income", date(2026, 6, 30))

@@ -65,7 +65,7 @@ def render_table(facts: Sequence[Fact], refs: _Refs | None = None) -> str:
             raise TypeError(f"render_table accepts only Fact objects, got {type(f).__name__}")
     own = refs is None
     refs = refs or _Refs()
-    qs = [f for f in facts if f.period_type == PeriodType.Q]
+    qs = [f for f in facts if f.period_type == PeriodType.Q and f.source != "computed"]
     ends = sorted({f.period_end for f in qs}, reverse=True)
     labels = {f.period_end: f.fiscal_label or fiscal_label(f.period_end, "Q") for f in qs}
     metrics = sorted({f.metric for f in qs})
@@ -94,7 +94,8 @@ def render(factset: FactSet, as_of: date | None = None) -> str:
 
     parts += ["", "QUARTERLY (Yahoo; availability dates are deadline estimates)", render_table(facts, refs)]
 
-    overview = [f for f in facts if f.period_type == PeriodType.point and f.status == Status.ok]
+    overview = [f for f in facts if f.period_type == PeriodType.point and f.status == Status.ok
+                and f.source != "computed"]
     if overview:
         parts += ["", "OVERVIEW (live snapshot)"]
         parts += [f"{f.metric}: {_fmt(f)} [{refs.ref(f)}]" for f in overview]

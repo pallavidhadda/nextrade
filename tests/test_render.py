@@ -72,3 +72,20 @@ def test_every_table_number_has_a_ref_in_index():
         if re.search(r"\d", c) and not c.startswith("Q"):
             m = re.search(r"\[(r\d+)\]$", c)
             assert m and m.group(1) in index_ids, c
+
+
+def test_computed_facts_not_in_quarterly_table():
+    from indiafacts.pipeline import build_factset
+
+    out = render(build_factset("RELIANCE.NS", client=FakeClient(), sleep=lambda s: None))
+    table = out.split("QUARTERLY")[1].split("OVERVIEW")[0]
+    assert "net_income_yoy" not in table
+    assert "net_income_yoy" in out.split("COMPUTED CHECKS")[1]
+
+
+def test_computed_check_not_duplicated_in_overview():
+    from indiafacts.pipeline import build_factset
+
+    out = render(build_factset("RELIANCE.NS", client=FakeClient(), sleep=lambda s: None))
+    overview = out.split("OVERVIEW")[1].split("COMPUTED CHECKS")[0]
+    assert "price_pe_eps_check" not in overview

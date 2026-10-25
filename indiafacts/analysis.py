@@ -74,6 +74,8 @@ def _unavailable(ref: Fact, metric: str, period_end: date, ptype: PeriodType, un
 
 
 def ttm(facts: list[Fact], metric: str, as_of_period: date) -> Fact:
+    if not facts:
+        raise ValueError("ttm needs at least one fact")
     qs = [f for f in _quarters(facts, metric) if f.period_end <= as_of_period and f.status == Status.ok]
     ref = (_quarters(facts, metric) or facts)[0]
     name = f"{metric}_ttm"
@@ -96,6 +98,8 @@ def ttm(facts: list[Fact], metric: str, as_of_period: date) -> Fact:
 
 
 def growth_yoy(facts: list[Fact], metric: str, period_end: date) -> Fact:
+    if not facts:
+        raise ValueError("growth_yoy needs at least one fact")
     qs = {f.period_end: f for f in _quarters(facts, metric)}
     prior_end = date(period_end.year - 1, period_end.month, period_end.day)
     cur, base = qs.get(period_end), qs.get(prior_end)
