@@ -14,7 +14,10 @@ from indiafacts.securitymaster import Resolution, corporate_action_dates, load_c
 from indiafacts.yahoo import fetch_facts
 
 FLOW_METRICS = ("net_income", "ebitda", "interest_expense", "eps_diluted")
-DEFAULT_SYMBOL_CHANGES = Path.home() / ".indiafacts" / "symbolchange.csv"
+
+
+def default_symbol_changes() -> Path:
+    return Path.home() / ".indiafacts" / "symbolchange.csv"
 
 
 class AmbiguousSymbol(ValueError):
@@ -91,7 +94,8 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
 
 
 def _resolve_identity(ticker: str, symbol_changes: Path | None, notices: list[str]) -> tuple[str, bool]:
-    path = symbol_changes or (DEFAULT_SYMBOL_CHANGES if DEFAULT_SYMBOL_CHANGES.exists() else None)
+    default = default_symbol_changes()
+    path = symbol_changes or (default if default.exists() else None)
     changes = load_symbol_changes(path) if path else None
     res = resolve_symbol(ticker, changes, load_curated())
     if res.kind == "split":

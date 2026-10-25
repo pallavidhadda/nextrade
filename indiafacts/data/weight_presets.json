@@ -1,0 +1,11 @@
+{
+  "note": "Factor weights by holding horizon. PROPOSALS set by the project author, not evidence-based; to be tuned and backtested. Each preset must sum to 1.0.",
+  "reviewed_on": "2026-10-26",
+  "review_by": "2027-04-26",
+  "presets": {
+    "<1y":  {"momentum": 0.35, "risk": 0.25, "value": 0.15, "quality": 0.15, "growth": 0.10},
+    "1-3y": {"quality": 0.25, "value": 0.20, "growth": 0.20, "momentum": 0.20, "risk": 0.15},
+    "3-5y": {"quality": 0.30, "value": 0.25, "growth": 0.25, "momentum": 0.10, "risk": 0.10},
+    "5y+":  {"quality": 0.35, "value": 0.25, "growth": 0.25, "risk": 0.10, "momentum": 0.05}
+  }
+}

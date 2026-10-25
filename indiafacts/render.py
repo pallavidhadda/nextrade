@@ -88,7 +88,27 @@ def render_table(facts: Sequence[Fact], refs: _Refs | None = None) -> str:
     return out + "\n\n" + refs.index() if own and refs.index() else out
 
 
-def render(factset: FactSet, as_of: date | None = None) -> str:
+PRO_ONLY = {"change_in_inventories", "net_income_nci", "net_income_total", "other_income", "total_income",
+            "total_expenses", "total_tax", "depreciation", "eps_basic", "profit_before_tax"}
+
+
+def _profile_block(profile, is_default: bool, view: str) -> list[str]:
+    from indiafacts.profile import weights_for
+
+    w = ", ".join(f"{k} {v:.0%}" for k, v in weights_for(profile).items())
+    lines = ["", "PROFILE",
+             f"horizon {profile.horizon} | goal {profile.goal} | tolerance {profile.risk_tolerance}, capacity "
+             f"{profile.risk_capacity} -> effective risk {profile.effective_risk} | max single stock "
+             f"{profile.max_single_stock_pct:g}% | view {view} | profile {profile.profile_hash}"]
+    if is_default:
+        lines.append("default profile (not set by you); set your own with --horizon / --risk-tolerance / --save-profile")
+    lines += [f"scoring weights for this horizon (preset proposal, not evidence-based): {w}",
+              "profile fit: not scored yet (scoring layer not built). Research only, not a recommendation."]
+    return lines
+
+
+def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is_default: bool = False,
+           view: str = "pro") -> str:
     e = factset.entity
     when = as_of or factset.retrieved_at.date()
     head = f"{e.ticker}  |  as of {when}  |  amounts in INR (₹ crore = 10^7)"
@@ -103,9 +123,10 @@ def render(factset: FactSet, as_of: date | None = None) -> str:
 
     bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified)]
     refs = _Refs()
-    parts = [head, *notes, "", f"DATA QUALITY: {len(bad)} item(s) need attention (gaps, unavailable, conflicts, unverified)"]
+    parts = [head, *notes, *(_profile_block(profile, profile_is_default, view) if profile else []),
+             "", f"DATA QUALITY: {len(bad)} item(s) need attention (gaps, unavailable, conflicts, unverified)"]
 
-    parts += ["", "QUARTERLY (Yahoo; availability dates are deadline estimates)", render_table(facts, refs)]
+    parts += ["", "QUARTERLY (Yahoo; availability dates are deadline estimates)", render_table([f for f in facts if view == "pro" or not (f.metric in PRO_ONLY or f.metric.startswith("segment_"))], refs)]
 
     overview = [f for f in facts if f.period_type == PeriodType.point and f.status == Status.ok
                 and f.source != "computed"]

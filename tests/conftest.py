@@ -15,3 +15,9 @@ def _offline_prices(monkeypatch, request):
     import indiafacts.pipeline as pipeline
 
     monkeypatch.setattr(pipeline, "YfinancePriceClient", _NoNetworkPrices)
+
+
+@pytest.fixture(autouse=True)
+def _isolated_home(monkeypatch, tmp_path):
+    """Never read or write the real ~/.indiafacts during tests."""
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
