@@ -101,3 +101,8 @@ Report is text/tables only. Add charts (price vs Nifty 50 line, drawdown, quarte
 Tier 1 free primary: NSE/BSE announcements, results, shareholding, corporate actions (already our direction); RBI DBIE (banking/credit/macro: candidate replacement for FRED/World Bank for India macro); NPCI UPI stats; data.gov.in.
 Tier 2 free structured APIs: TigZig (claims unauthenticated, CC0), TejHQ, Stoxim. Not found by web search; verify coverage, limits, licence.
 Tier 3 digital-demand signals (Google Trends, Play Store, careers pages): own time series from repeated observations; no reliable historical DAU/MAU; low priority; check scraping/ToS.
+
+## Visual HTML report (promoted to roadmap item 5b, 2026-10-26)
+Single self-contained HTML (no server): price vs Nifty 50 line with drawdown shading; quarterly profit/revenue bars with missing quarters shown as gaps; factor score bars with coverage; checklist strip; segment revenue/result bars; peer dot plot. Light/dark safe colours (dataviz skill). Every plotted number is an existing Fact; data-age banner; disclaimer. Terminal: text sparklines. After peers (5).
+## Peer group needs a bigger pool
+A 30-name pool gives few true peers (Reliance sits in Energy with ONGC and Coal India only). Ask user to download an NSE index constituents CSV (e.g. Nifty 500; columns believed: Company Name, Industry, Symbol, Series, ISIN Code; unverified) and add a reader. Conglomerates (Reliance): single-industry peers are approximate; sum-of-the-parts from filing segments is a later item.
