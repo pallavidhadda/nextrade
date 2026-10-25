@@ -152,3 +152,9 @@ def test_pe16_rates_are_compared_by_difference_not_ratio_of_percentages(params):
     assert cmp["pe_ttm"].premium == pytest.approx(0.25) and cmp["pe_ttm"].diff is None
     assert cmp["roe"].premium is None and cmp["roe"].diff == pytest.approx(0.05)
     assert cmp["net_income_yoy"].premium is None and cmp["net_income_yoy"].diff == pytest.approx(-0.224 - 0.00615, abs=1e-4)
+
+
+def test_pe17_same_industry_label_but_different_sector_is_not_a_peer(params):
+    t = TARGET()                                                   # Energy / Refining
+    g = select_peers(t, pool_of(co("X.NS", "Autos", "Refining", 1e13), co("Y.NS", "Energy", "Refining", 1e13)), params=params)
+    assert [p.ticker for p in g.picks] == ["Y.NS"]

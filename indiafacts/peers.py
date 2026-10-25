@@ -95,7 +95,7 @@ def select_peers(target: FactSet, pool: dict[str, FactSet], k: int | None = None
         cap, cap_id = _val(fs, "market_cap")
         pe, pe_id = _val(fs, "pe_ttm")
         ind, sec = fs.entity.industry, fs.entity.sector
-        if t_ind and ind and ind == t_ind:
+        if t_ind and ind and ind == t_ind and (not t_sec or not sec or sec == t_sec):
             tier = 1
         elif t_sec and sec and sec == t_sec:
             tier = 2

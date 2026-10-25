@@ -13,7 +13,7 @@ from indiafacts.profile import InvestorProfile, ProfileError, default_path, defa
 from indiafacts.prices import YfinancePriceClient
 from indiafacts.render import render
 from indiafacts.scoring import load_score_config, score_universe
-from indiafacts.universe import DEFAULT_POOL, build_universe, read_tickers
+from indiafacts.universe import DEFAULT_POOL, build_universe, read_pool
 
 
 def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_client=None, tej_store=None) -> int:
@@ -35,6 +35,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--view", choices=["simple", "pro"], help="override the view chosen by experience")
     p.add_argument("--score", action="store_true", help="rank against a comparison pool (default: built-in pool of 30)")
     p.add_argument("--universe", default=None, help="file with one ticker per line, or tej / tej:N for the top-N liquid names; implies --score")
+    p.add_argument("--labels", type=Path, default=None, help="NSE index CSV used only for industry labels and ISINs")
     p.add_argument("--no-tej", action="store_true", help="do not use TejHQ open data (identity, corporate actions, universe)")
     args = p.parse_args(argv)
     try:
@@ -57,6 +58,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     if args.score or args.universe:
         try:
             scorecard = _scorecard(args, fs, profile, client, sleep, price_client, tej_store)
+            fs = scorecard.pop("target_fs", fs)          # the same facts, now carrying NSE labels and ISIN
         except ValueError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 2
@@ -108,10 +110,14 @@ def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -
         except TejUnavailable as exc:
             raise ValueError(f"TejHQ universe unavailable: {exc}") from exc
         tickers = [m.symbol + ".NS" for m in members]
+        labels = read_pool(args.labels).labels if args.labels else {}
         label = f"TejHQ top-{n} by liquidity (point-in-time)"
     else:
         path = Path(uni) if uni else DEFAULT_POOL
-        tickers = read_tickers(path)
+        pool = read_pool(path)
+        tickers, labels = pool.tickers, pool.labels
+        if args.labels:
+            labels = {**read_pool(args.labels).labels, **labels}
         label = path.name
     target = fs.entity.ticker
     if target not in tickers:
@@ -128,12 +134,13 @@ def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -
         return build_factset(t, as_of=args.as_of, client=client, sleep=sleep, symbol_changes=args.symbol_changes,
                              prices=prices, price_client=memo, tej=not args.no_tej, tej_store=tej_store)
 
-    universe, failed = build_universe(tickers, builder)
+    universe, failed = build_universe(tickers, builder, labels=labels)
     cfg = load_score_config(strict=False)
     results = score_universe(universe, weights_for(profile), cfg, args.as_of or date.today(), datetime.now(timezone.utc))
-    group = select_peers(fs, universe)
-    comparisons = compare_peers(fs, group, universe) if group.picks else []
+    tgt = universe.get(target, fs)
+    group = select_peers(tgt, universe)
+    comparisons = compare_peers(tgt, group, universe) if group.picks else []
     return {"peers": group, "peer_comparisons": comparisons,
             "result": results.get(target), "n": len(universe), "failed": failed, "pool": label,
-            "checklist": checklist(fs), "checklist_summary": summarize(checklist(fs)),
+            "checklist": checklist(fs), "checklist_summary": summarize(checklist(fs)), "target_fs": tgt,
             "config_overdue": cfg.overdue, "default_pool": args.universe is None, "pool_label": label}
