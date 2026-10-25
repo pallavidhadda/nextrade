@@ -36,6 +36,11 @@ A public portfolio project: enter an NSE/BSE ticker, get a profile-aware researc
 - HTML report with charts (price vs Nifty 50, quarterly bars with visible gaps, score bars, checklist strip, segment bars); terminal sparklines. Use the dataviz skill.
 - Security-master equity list (ISIN master) importer; sector field exists on Entity; sector-relative scoring groups.
 
+## Provider-driven additions 2026-10-26
+- 5c: TejHQ adapter (ISIN symbol history, ex-dates, top-500 universe) to replace hand-curated identity data and the 30-name pool.
+- 5d: Stoxim trial for fundamentals/ratios/shareholding (needs user's free key).
+- 5e: TigZig RBI macro and red flags (later).
+
 ## Cut line for a first public demo (v0.1)
 Items 1-7 and 9, in the terminal and as a Claude plugin. Backtest (8) and web UI (12) come after; the demo will state plainly that no performance claim is made.
 

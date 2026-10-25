@@ -35,6 +35,7 @@ class CuratedChange:
     reviewed_on: date
     review_by: date
     notes: str = ""
+    ex_date: str | None = None          # price-affecting date; falls back to effective_date
 
 
 @dataclass
@@ -117,7 +118,8 @@ def load_curated(path: Path | None = None, today: date | None = None, strict: bo
         out.append(CuratedChange(
             old_symbol=e["old_symbol"].upper(), successors=[s.upper() for s in e["successors"]],
             change_type=e["change_type"], effective_date=e["effective_date"], source_urls=e["source_urls"],
-            reviewed_on=date.fromisoformat(e["reviewed_on"]), review_by=review_by, notes=e.get("notes", "")))
+            reviewed_on=date.fromisoformat(e["reviewed_on"]), review_by=review_by, notes=e.get("notes", ""),
+            ex_date=e.get("ex_date")))
     return out
 
 
@@ -159,7 +161,7 @@ def resolve_symbol(raw: str, changes: list[SymbolChange] | None, curated: list[C
 
 
 def corporate_action_dates(symbol: str, curated: list[CuratedChange]) -> list[date]:
-    """Effective dates of curated corporate actions that involve this symbol (old symbol or a successor)."""
+    """Price-affecting dates (ex-date, else effective date) of curated actions involving this symbol."""
     sym = normalize_symbol(symbol)
-    return sorted(date.fromisoformat(c.effective_date) for c in curated
+    return sorted(date.fromisoformat(c.ex_date or c.effective_date) for c in curated
                   if sym == c.old_symbol or sym in c.successors)

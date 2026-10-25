@@ -3,17 +3,22 @@
   "entries": [
     {
       "old_symbol": "TATAMOTORS",
-      "successors": ["TMPV", "TMCV"],
+      "successors": [
+        "TMPV",
+        "TMCV"
+      ],
       "change_type": "demerger",
       "effective_date": "2025-10-01",
       "source_urls": [
         "https://www.samco.in/knowledge-center/articles/tata-motors-sets-october-14-record-date-for-demerged-cv-business-shares/",
         "https://www.business-standard.com/amp/markets/news/tata-motors-cv-shares-to-list-on-november-12-after-demerger-check-likely-listing-price-details-125111100118_1.html",
-        "NSE symbol-change list: TATAMOTORS -> TMPV effective 24-OCT-2025 (user-downloaded symbolchange.csv)"
+        "NSE symbol-change list: TATAMOTORS -> TMPV effective 24-OCT-2025 (user-downloaded symbolchange.csv)",
+        "https://huggingface.co/datasets/tejhq/indian-markets (actions/nse_2025.parquet: TMPV demerger ex_date 2025-10-14; symbol_history: TMPV keeps ISIN INE155A01022 from 2025-10-24, TMCV new ISIN INE1TAE01010 from 2025-11-12)"
       ],
       "reviewed_on": "2026-10-26",
       "review_by": "2027-04-26",
-      "notes": "Secondary sources, not NSE circulars. TMPV (Tata Motors Passenger Vehicles Ltd) carries the legacy price history; TMCV (commercial vehicles) listed 2025-11-12. Record date 2025-10-14, 1:1. Sources disagree on the CV ticker (TMCVL vs TMCV); Yahoo uses TMCV.NS. A price adjustment of about 40% around the record date was reported, so returns spanning it are unreliable."
+      "notes": "Secondary sources, not NSE circulars. TMPV (Tata Motors Passenger Vehicles Ltd) carries the legacy price history; TMCV (commercial vehicles) listed 2025-11-12. Record date 2025-10-14, 1:1. Sources disagree on the CV ticker (TMCVL vs TMCV); Yahoo uses TMCV.NS. A price adjustment of about 40% around the record date was reported, so returns spanning it are unreliable. Price-affecting date is the ex-date 2025-10-14 (TejHQ actions table); the legal effective date 2025-10-01 does not move prices.",
+      "ex_date": "2025-10-14"
     }
   ]
 }

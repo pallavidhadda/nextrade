@@ -74,13 +74,14 @@ def test_cli_prices_on_by_default_with_injected_client(capsys):
 
 
 def test_demerger_date_flags_windows_unverified():
-    assert date(2025, 10, 1) in corporate_action_dates("TMPV.NS", load_curated())
-    assert date(2025, 10, 1) in corporate_action_dates("tmcv", load_curated())
+    assert date(2025, 10, 14) in corporate_action_dates("TMPV.NS", load_curated())      # ex-date, not the 2025-10-01 legal date
+    assert date(2025, 10, 1) not in corporate_action_dates("tmcv", load_curated())
+    assert date(2025, 10, 14) in corporate_action_dates("tmcv", load_curated())
     assert corporate_action_dates("RELIANCE.NS", load_curated()) == []
     fs = build_factset("TMPV.NS", as_of=END, client=FakeClient(), prices=True,
                        price_client=long_pair("TMPV.NS", n=1000), **NS)
     r3 = facts_of(fs, "return_3y")[0]
-    assert r3.status == "unverified" and "2025-10-01" in r3.reason       # 3y window spans the demerger
+    assert r3.status == "unverified" and "2025-10-14" in r3.reason       # 3y window spans the demerger ex-date
     assert facts_of(fs, "return_1y")[0].status == "ok"                    # 1y window starts after it
 
 

@@ -106,3 +106,8 @@ Tier 3 digital-demand signals (Google Trends, Play Store, careers pages): own ti
 Single self-contained HTML (no server): price vs Nifty 50 line with drawdown shading; quarterly profit/revenue bars with missing quarters shown as gaps; factor score bars with coverage; checklist strip; segment revenue/result bars; peer dot plot. Light/dark safe colours (dataviz skill). Every plotted number is an existing Fact; data-age banner; disclaimer. Terminal: text sparklines. After peers (5).
 ## Peer group needs a bigger pool
 A 30-name pool gives few true peers (Reliance sits in Energy with ONGC and Coal India only). Ask user to download an NSE index constituents CSV (e.g. Nifty 500; columns believed: Company Name, Industry, Symbol, Series, ISIN Code; unverified) and add a reader. Conglomerates (Reliance): single-industry peers are approximate; sum-of-the-parts from filing segments is a later item.
+
+## Providers evaluated 2026-10-26 (see docs/2026-10-26-data-providers.md)
+- Adopt TejHQ HF parquet: ISIN symbol history, corporate-action ex-dates, top-500 point-in-time universe (also unlocks a survivorship-bias-free backtest universe). Needs pyarrow dependency.
+- Test Stoxim free key (user signs up): coverage vs claims, ratios incl. EV/EBITDA, shareholding, announcements, filing dates.
+- TigZig for RBI macro and BRSR red flags later; licence per API unread; CC0 claim not found.
