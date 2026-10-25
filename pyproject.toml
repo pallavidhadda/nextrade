@@ -3,7 +3,7 @@ name = "indiafacts"
 version = "0.1.0"
 description = "Typed, source-linked facts for Indian equities. Research/education only; not financial advice."
 requires-python = ">=3.12"
-dependencies = ["pydantic>=2.7", "pandas>=2.2", "yfinance>=0.2.40"]
+dependencies = ["pydantic>=2.7", "pandas>=2.2", "yfinance>=0.2.40", "pyarrow>=15"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
