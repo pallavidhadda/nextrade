@@ -87,3 +87,6 @@ Proposed token budgets (to validate against our measured 39k-token / 13-call bas
 
 ## Staleness controls (2026-10-26)
 Data-age banner on every report; review_by dates on all assumptions (test fails when overdue); canary fixtures per source; scheduled live checks; scorecard watches for fading accuracy; cache AI text by input hash; record upstream versions and licences studied.
+
+## Security master (2026-10-26)
+Needed: deterministic symbol/rename/demerger knowledge (ZOMATO->ETERNAL rename; TATAMOTORS -> TMPV + TMCV demerger). See docs/2026-10-25-price-history-and-profile-spec.md section A0. Ask user for the list of changes they know; verify dates/ISINs against NSE/BSE circulars.
