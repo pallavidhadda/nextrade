@@ -49,6 +49,9 @@ Claude Code plugin; --sector-pool; --digest and --changes-only.
 S1 snapshot store and what-changed (sqlite); comparability gate; multi-filing merge with restatement notes; filing metadata records; --filings-dir.
 Next for official data: annual pages (all columns, balance sheet, cash flow) and raw XBRL instance parser, both waiting on user-saved files.
 
+## Status snapshot 2026-10-26 (end of day)
+Done: items 1-7, 9, 5b, 5c, sector pool, second-brain S1, comparability gate, filing versions. Remaining: official annual pages and raw XBRL (needs user files or browser connection); backtest (8); second brain S2-S6; web front end (12); licence, CI, independent review, public repo (11); live tests of the Anthropic and OpenAI-compatible adapters.
+
 ## Cut line for a first public demo (v0.1)
 Items 1-7 and 9, in the terminal and as a Claude plugin. Backtest (8) and web UI (12) come after; the demo will state plainly that no performance claim is made.
 
