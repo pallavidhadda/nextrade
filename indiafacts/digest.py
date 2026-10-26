@@ -124,10 +124,16 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
         f = _latest(facts, m, quarterly=True)
         if f is not None:
             G("facts", f"fact:{m}", f.fact_id, f"FACT {m} {f.fiscal_label} {_val(f)} [{f.source}]")
+    by_id = {f.fact_id: f for f in facts}
     for m in KEY_POINT:
         f = _latest(facts, m)
         if f is not None:
-            G("facts", f"fact:{m}", f.fact_id, f"FACT {m} {_val(f)} [{f.source}]" + (" unverified" if f.status == Status.unverified else ""))
+            mix = ""
+            if m.endswith("_yoy") and len(f.related_fact_ids) == 2 and all(i in by_id for i in f.related_fact_ids):
+                cur, base = (by_id[i] for i in f.related_fact_ids)
+                if cur.source != base.source:
+                    mix = f" (mixed sources: current {cur.source}, prior year {base.source})"
+            G("facts", f"fact:{m}", f.fact_id, f"FACT {m} {_val(f)} [{f.source}]{mix}" + (" unverified" if f.status == Status.unverified else ""))
     for m in PRICE_KEYS:
         f = _latest([x for x in facts if (x.source_field or "").startswith("series:")], m)
         if f is not None:

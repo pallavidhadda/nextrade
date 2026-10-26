@@ -106,3 +106,12 @@ def test_template_sentences_read_cleanly_with_numbers_and_no_source_tags(inputs)
     assert "-22.4%" in texts and "₹20,946 cr" in texts
     assert re.search(r"\d of \d+ checklist tests", texts)
     assert "Q2 FY26" in ex.uncertainty
+
+
+def test_year_on_year_figures_that_mix_sources_are_flagged_in_digest_and_template(inputs):
+    fs, sc, prof = inputs
+    d = build_digest(fs, sc, prof)
+    line = d.items[d.by_key["fact:revenue_yoy"]].text
+    assert "mixed sources" in line and "nse_filing" in line and "yahoo" in line
+    ex = template_explanation(d, sc, fs)
+    assert any("mixes" in c.text or "mixed" in c.text for c in ex.claims if "profit" in c.text.lower())

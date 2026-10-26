@@ -46,7 +46,7 @@ def _value(d: Digest, key: str) -> str:
     if not sid:
         return ""
     body = d.items[sid].text.split(" ", 2)[-1]                  # drops "FACT <metric>" -> "<value...> [src]"
-    return re.sub(r"\s*\[[^\]]*\](\s+unverified)?$", "", body).strip()
+    return re.sub(r"\s*\[.*$", "", body).strip()           # cut the [source] tag and anything after it
 
 
 def _example(d: Digest) -> str:
@@ -100,7 +100,8 @@ def template_explanation(d: Digest, sc: dict | None, fs=None) -> Explanation:
         m = re.match(r"^(Q\d FY\d+) (.*)$", _value(d, "fact:net_income"))
         yoy = _value(d, "fact:net_income_yoy")
         claims.append(Claim(type="fact", text=(f"Profit for {m.group(1)} was {m.group(2)}" if m else "Latest quarter profit: " + _value(d, "fact:net_income"))
-                            + (f", a change of {yoy} on a year earlier." if yoy else "."),
+                            + (f", a change of {yoy} on a year earlier" + (" (this mixes the official filing with Yahoo's prior-year figure)"
+                                                                        if "mixed sources" in d.items[d.by_key["fact:net_income_yoy"]].text else "") + "." if yoy else "."),
                             ids=_ids(d, "fact:net_income", "fact:net_income_yoy")))
     if "fact:return_1y" in d.by_key:
         rel = _value(d, "fact:relative_return_1y")

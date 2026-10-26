@@ -84,7 +84,8 @@ def test_vr14_cli_writes_file_and_creates_parent_dir(tmp_path, capsys):
 
 
 def test_vr3_self_contained_no_network_references(report):
-    assert "http" not in report and "<script src" not in report and "@import" not in report and "<link" not in report
+    assert "http" not in report and "<script src" not in report and "@import" not in report
+    assert all('href="data:' in t for t in re.findall(r"<link[^>]*>", report))      # only the inline favicon, no network link
 
 
 def test_vr4_disclaimer_data_age_and_no_advice_words(report):
