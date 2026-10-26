@@ -26,6 +26,7 @@ class Explanation(BaseModel):
     uncertainty: str = ""
     removed: int = 0
     notes: list[str] = []
+    usage: dict = {}              # {'in','out','cached','estimated'} when an LLM was involved
 
 
 def _ids(d: Digest, *keys: str) -> list[str]:

@@ -16,7 +16,8 @@ from indiafacts.scoring import load_score_config, score_universe
 from indiafacts.universe import DEFAULT_POOL, build_universe, read_pool
 
 
-def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_client=None, tej_store=None) -> int:
+def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_client=None, tej_store=None,
+         llm_client=None) -> int:
     p = argparse.ArgumentParser(prog="indiafacts", description="Source-linked facts for an NSE/BSE ticker.")
     p.add_argument("ticker", help="e.g. RELIANCE.NS")
     p.add_argument("--as-of", type=date.fromisoformat, default=None, help="YYYY-MM-DD")
@@ -36,11 +37,18 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--score", action="store_true", help="rank against a comparison pool (default: built-in pool of 30)")
     p.add_argument("--universe", default=None, help="file with one ticker per line, or tej / tej:N for the top-N liquid names; implies --score")
     p.add_argument("--labels", type=Path, default=None, help="NSE index CSV used only for industry labels and ISINs")
+    p.add_argument("--explain", action="store_true", help="add an evidence-linked plain-English explanation (deterministic template by default)")
+    p.add_argument("--llm", choices=["gemini", "openai", "anthropic"], default=None, help="let an LLM narrate the digest (needs a key in the environment); implies --explain")
+    p.add_argument("--llm-model", default=None)
     p.add_argument("--html", type=Path, default=None, help="also write a self-contained HTML report with charts")
     p.add_argument("--no-tej", action="store_true", help="do not use TejHQ open data (identity, corporate actions, universe)")
     args = p.parse_args(argv)
     try:
         profile, is_default = _profile(args)
+        if args.llm and llm_client is None:
+            from indiafacts.llm import make_client
+
+            llm_client = make_client(args.llm, args.llm_model)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -63,12 +71,19 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         except ValueError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 2
+    explanation = digest = None
+    if args.explain or args.llm or llm_client is not None:
+        from indiafacts.digest import build_digest
+        from indiafacts.llm import explain as explain_report
+
+        digest = build_digest(fs, scorecard, profile)
+        explanation = explain_report(digest, scorecard, fs, client=llm_client if (args.llm or llm_client) else None)
     print(render(fs, as_of=args.as_of, profile=profile, profile_is_default=is_default,
-                 view=args.view or profile.view, scorecard=scorecard))
+                 view=args.view or profile.view, scorecard=scorecard, explanation=explanation, digest=digest))
     if args.html:
         from indiafacts.htmlreport import build_html
 
-        page = build_html(fs, profile, is_default, args.view or profile.view, scorecard, args.as_of)
+        page = build_html(fs, profile, is_default, args.view or profile.view, scorecard, args.as_of, explanation=explanation, digest=digest)
         args.html.parent.mkdir(parents=True, exist_ok=True)
         tmp = args.html.with_suffix(args.html.suffix + ".tmp")
         tmp.write_text(page, encoding="utf-8")

@@ -228,6 +228,7 @@ def explain(d: Digest, sc: dict | None, fs=None, client=None, cache: LLMCache | 
     hit = cache.get(key)
     if hit and "text" in hit:
         raw, cached = hit["text"], True
+        tin, tout, estimated = hit.get("in", 0), hit.get("out", 0), bool(hit.get("estimated"))
         log.record(client.provider, client.model, hit.get("in", 0), hit.get("out", 0), True, bool(hit.get("estimated")))
     else:
         try:
@@ -246,4 +247,5 @@ def explain(d: Digest, sc: dict | None, fs=None, client=None, cache: LLMCache | 
         cache.put(key, {"text": raw, "in": tin, "out": tout, "estimated": estimated})
     notes = [f"{out.removed} claim(s) removed: " + "; ".join(reasons[:3])] if out.removed else []
     return out.model_copy(update={"source": name, "triggers": base.triggers, "notes": notes,
-                                  "uncertainty": out.uncertainty or base.uncertainty})
+                                  "uncertainty": out.uncertainty or base.uncertainty,
+                                  "usage": {"in": tin, "out": tout, "cached": cached, "estimated": estimated}})
