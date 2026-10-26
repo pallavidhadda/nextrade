@@ -17,7 +17,7 @@ from indiafacts.universe import DEFAULT_POOL, build_universe, read_pool
 
 
 def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_client=None, tej_store=None,
-         llm_client=None) -> int:
+         llm_client=None, brain=None) -> int:
     p = argparse.ArgumentParser(prog="indiafacts", description="Source-linked facts for an NSE/BSE ticker.")
     p.add_argument("ticker", help="e.g. RELIANCE.NS")
     p.add_argument("--as-of", type=date.fromisoformat, default=None, help="YYYY-MM-DD")
@@ -40,6 +40,8 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--explain", action="store_true", help="add an evidence-linked plain-English explanation (deterministic template by default)")
     p.add_argument("--llm", choices=["gemini", "openai", "anthropic"], default=None, help="let an LLM narrate the digest (needs a key in the environment); implies --explain")
     p.add_argument("--llm-model", default=None)
+    p.add_argument("--no-remember", action="store_true", help="do not save this run to the local snapshot store (~/.indiafacts/brain.db)")
+    p.add_argument("--changes", action="store_true", help="always show the what-changed block, even on a first run")
     p.add_argument("--html", type=Path, default=None, help="also write a self-contained HTML report with charts")
     p.add_argument("--no-tej", action="store_true", help="do not use TejHQ open data (identity, corporate actions, universe)")
     args = p.parse_args(argv)
@@ -71,6 +73,26 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         except ValueError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 2
+    changes = changes_note = None
+    if not args.no_remember:
+        from datetime import datetime as _dt, timezone as _tz
+
+        from indiafacts.brain import Brain
+
+        b = brain or Brain()
+        run_id = b.safe_record_run(fs, scorecard, profile, _dt.now(_tz.utc))
+        if run_id is None:
+            fs = fs.model_copy(update={"notices": fs.notices + [f"could not save the snapshot ({b.last_error}); the report is unaffected"]})
+        else:
+            try:
+                changes = b.changes(fs.entity.ticker)
+                changes_note = None if changes else "no changes since the previous run" if b.stats()["runs"] > 1 else "first run: nothing to compare yet"
+            except Exception as exc:
+                fs = fs.model_copy(update={"notices": fs.notices + [f"could not read earlier snapshots ({type(exc).__name__})"]})
+    elif args.changes:
+        changes_note = "snapshot store is off (--no-remember): nothing to compare"
+    if changes_note is None and args.changes and not changes:
+        changes_note = "first run: nothing to compare yet"
     explanation = digest = None
     if args.explain or args.llm or llm_client is not None:
         from indiafacts.digest import build_digest
@@ -79,11 +101,12 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         digest = build_digest(fs, scorecard, profile)
         explanation = explain_report(digest, scorecard, fs, client=llm_client if (args.llm or llm_client) else None)
     print(render(fs, as_of=args.as_of, profile=profile, profile_is_default=is_default,
-                 view=args.view or profile.view, scorecard=scorecard, explanation=explanation, digest=digest))
+                 view=args.view or profile.view, scorecard=scorecard, explanation=explanation, digest=digest,
+                 changes=changes, changes_note=changes_note if (args.changes or not changes) else None))
     if args.html:
         from indiafacts.htmlreport import build_html
 
-        page = build_html(fs, profile, is_default, args.view or profile.view, scorecard, args.as_of, explanation=explanation, digest=digest)
+        page = build_html(fs, profile, is_default, args.view or profile.view, scorecard, args.as_of, explanation=explanation, digest=digest, changes=changes)
         args.html.parent.mkdir(parents=True, exist_ok=True)
         tmp = args.html.with_suffix(args.html.suffix + ".tmp")
         tmp.write_text(page, encoding="utf-8")

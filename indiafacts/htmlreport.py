@@ -438,6 +438,14 @@ def _tile(label: str, value: str, note: str) -> str:
     return f'<div class="tile"><div class="label">{esc(label)}</div><div class="value">{esc(value)}</div><div class="note">{esc(note)}</div></div>'
 
 
+def _changes_card(changes) -> str:
+    if not changes:
+        return ""
+    items = "".join(f'<li><span class="badge">{esc(c.kind.replace("_", " "))}</span>{esc(c.text)}</li>' for c in changes)
+    return _card("changes", "What changed since the last run", "The app keeps every version of every figure with its filing date, so "
+                 "restated numbers show both versions.", f'<ul class="claims">{items}</ul>')
+
+
 def _token_text(digest, usage) -> str:
     if not usage:
         return f"Digest about {digest.est_tokens} estimated tokens"
@@ -469,7 +477,7 @@ def _explanation_card(ex, digest) -> str:
 
 
 def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view: str = "pro", scorecard: dict | None = None,
-               as_of: date | None = None, now: datetime | None = None, explanation=None, digest=None) -> str:
+               as_of: date | None = None, now: datetime | None = None, explanation=None, digest=None, changes=None) -> str:
     e = fs.entity
     now = now or datetime.now()
     ctx = _Ctx()
@@ -538,6 +546,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
 <div class="banner"><b>{esc(DISCLAIMER)}</b></div>
 {prof}{notices}
 <div class="tiles">{tiles}</div>
+{_changes_card(changes)}
 {_explanation_card(explanation, digest)}
 <div class="grid">{charts}</div>
 <div class="grid two">{q}</div>

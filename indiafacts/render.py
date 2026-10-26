@@ -204,8 +204,18 @@ def _explanation_block(ex, digest) -> list[str]:
     return lines
 
 
+def _changes_block(changes, note) -> list[str]:
+    if not changes and not note:
+        return []
+    lines = ["", "WHAT CHANGED SINCE THE LAST RUN (the app keeps every version of every figure)"]
+    if not changes:
+        return lines + [note]
+    lines += [f"- [{c.severity}] {c.kind}: {c.text}" for c in changes]
+    return lines
+
+
 def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is_default: bool = False,
-           view: str = "pro", scorecard: dict | None = None, explanation=None, digest=None) -> str:
+           view: str = "pro", scorecard: dict | None = None, explanation=None, digest=None, changes=None, changes_note=None) -> str:
     e = factset.entity
     when = as_of or factset.retrieved_at.date()
     head = f"{e.ticker}  |  as of {when}  |  amounts in INR (₹ crore = 10^7)"
@@ -221,6 +231,7 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
     bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified)]
     refs = _Refs()
     parts = [head, *notes, *(_profile_block(profile, profile_is_default, view) if profile else []),
+             *_changes_block(changes, changes_note),
              *(_explanation_block(explanation, digest) if explanation is not None else []),
              *(_scorecard_block(scorecard) if scorecard else []),
              *(_peers_block(scorecard, e.ticker) if scorecard else []),
