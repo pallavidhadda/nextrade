@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: indiafacts
+Version: 0.1.0
+Summary: Typed, source-linked facts for Indian equities. Research/education only; not financial advice.
+Requires-Python: >=3.12
+Requires-Dist: pydantic>=2.7
+Requires-Dist: pandas>=2.2
+Requires-Dist: yfinance>=0.2.40
+Requires-Dist: pyarrow>=15
+Provides-Extra: dev
+Requires-Dist: pytest>=8; extra == "dev"

@@ -25,5 +25,13 @@ pytest -m live    # hits the network
 
 Design and spec: `docs/`. Status: v0.6. Yahoo adapter, NSE results-page import, security master (symbol renames, curated demergers), price-history metrics vs Nifty 50, local investor profile. Percentile scoring inside a pool and a 9-point checklist (project-defined). No backtest yet: no claim that any output predicts returns.
 
+## Use it inside Claude Code (plugin)
+```
+claude --plugin-dir /path/to/this/repo          # or add this repo as a marketplace once it is public
+/indiafacts:analyze RELIANCE.NS --filing "samples/IndAS Details.html" --labels samples/ind_nifty500list.csv
+/indiafacts:changes RELIANCE.NS
+```
+The command runs the deterministic tool (needs `uv`), and Claude explains the compact digest in your session, so no separate LLM key is needed. It still uses your session's tokens: in a test the digest added about 1.2k input tokens and the explanation about 1.7k output tokens on top of Claude Code's own context.
+
 ## Data credits
 Price, symbol-history, corporate-action and universe data from the TejHQ open dataset (huggingface.co/datasets/tejhq/indian-markets, MIT tag; built from NSE/BSE public bhavcopy; verify exchange terms before any commercial use). Fundamentals and prices from Yahoo Finance via yfinance (unofficial). Educational project; not financial advice.

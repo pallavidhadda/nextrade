@@ -27,7 +27,7 @@ A public portfolio project: enter an NSE/BSE ticker, get a profile-aware researc
 | 6 | DONE 2026-10-26 (v1): evidence-linked claims typed fact/inference/hypothesis, deterministic triggers, code-side validation | M | 4 |
 | 7 | DONE 2026-10-26: one cached LLM call (Gemini live-tested; OpenAI-compatible and Anthropic adapters tested with fake HTTP); measured 1,174 in + 435 out tokens for a full Reliance report | S | 6 |
 | 8 | Backtest and scorecard (out of sample, costs, benchmark) | L | 2; fundamentals history is thin (about 5 quarters), so first version is price-based only |
-| 9 | Claude Code plugin (`/analyze`) | S | 4-7 |
+| 9 | DONE 2026-10-26: Claude Code plugin (/indiafacts:analyze, /indiafacts:changes), tested end to end | S | 4-7 |
 | 10 | Staleness controls (review_by dates, canary tests, data-age banner) | S | runs through all |
 | 11 | Independent code review, CI, README/licence/disclaimer, push to public repo | S | licence choice |
 | 12 | Web front end (Next.js + thin API), simple and pro views | M | 4-7 |
@@ -45,6 +45,7 @@ A public portfolio project: enter an NSE/BSE ticker, get a profile-aware researc
 S1 snapshot store and what-changed; S2 thesis notes with kill criteria; S3 decision journal and outcome review; S4 portfolio import and risk view; S5 watch digest; S6 markdown vault export. Also: two-filing growth verification.
 
 ## Done 2026-10-26 (later)
+Claude Code plugin; --sector-pool; --digest and --changes-only.
 S1 snapshot store and what-changed (sqlite); comparability gate; multi-filing merge with restatement notes; filing metadata records; --filings-dir.
 Next for official data: annual pages (all columns, balance sheet, cash flow) and raw XBRL instance parser, both waiting on user-saved files.
 
