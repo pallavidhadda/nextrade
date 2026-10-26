@@ -135,3 +135,18 @@ def test_b12_no_secret_material(monkeypatch):
     monkeypatch.setenv("GOOGLE_API_KEY", "SECRET123")
     text = render_backtest(run_backtest(FakeSource(_predictive_panel()), BacktestConfig()))
     assert "SECRET123" not in text
+
+
+def test_b14_out_of_sample_split_by_date():
+    px = _predictive_panel()
+    split = px.index[500].date()
+    r = run_backtest(FakeSource(px), BacktestConfig(cost_bps=0, oos_start=split)).signals["mom_12_1"]
+    assert r.in_sample.periods + r.out_of_sample.periods == r.periods
+    assert r.in_sample.periods > 0 and r.out_of_sample.periods > 0
+    assert r.out_of_sample.first_date >= split > r.in_sample.last_date
+
+
+def test_b15_render_labels_out_of_sample():
+    px = _predictive_panel()
+    text = render_backtest(run_backtest(FakeSource(px), BacktestConfig(oos_start=px.index[500].date())))
+    assert "out-of-sample" in text.lower() and "not untouched" in text.lower()

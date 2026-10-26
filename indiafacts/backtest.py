@@ -38,6 +38,7 @@ class BacktestConfig:
     cost_bps: float = 30.0
     start: date | None = None
     end: date | None = None
+    oos_start: date | None = None
 
 
 @dataclass
@@ -45,6 +46,8 @@ class Half:
     periods: int
     ic_mean: float
     net_excess_mean: float
+    first_date: date | None = None
+    last_date: date | None = None
 
 
 @dataclass
@@ -60,6 +63,8 @@ class SignalResult:
     net_excess_mean: float = float("nan")
     turnover_mean: float = float("nan")
     halves: list[Half] = field(default_factory=list)
+    in_sample: Half | None = None
+    out_of_sample: Half | None = None
 
 
 @dataclass
@@ -106,7 +111,8 @@ def _buckets(sig: pd.Series, q: int) -> pd.Series:
 def _half(rows: list[dict]) -> Half:
     if not rows:
         return Half(0, float("nan"), float("nan"))
-    return Half(len(rows), float(np.nanmean([r["ic"] for r in rows])), float(np.mean([r["net"] for r in rows])))
+    return Half(len(rows), float(np.nanmean([r["ic"] for r in rows])), float(np.mean([r["net"] for r in rows])),
+                rows[0].get("date"), rows[-1].get("date"))
 
 
 def run_backtest(source: PanelSource, cfg: BacktestConfig) -> BacktestResult:
@@ -145,7 +151,7 @@ def run_backtest(source: PanelSource, cfg: BacktestConfig) -> BacktestResult:
             cost = 2 * replaced * cfg.cost_bps / 1e4
             gross = means[-1] - float(f.mean())
             ic = float(s.rank().corr(f.rank()))
-            rows[name].append({"ic": ic, "means": means, "gross": gross, "net": gross - cost, "turn": replaced})
+            rows[name].append({"date": d, "ic": ic, "means": means, "gross": gross, "net": gross - cost, "turn": replaced})
     out: dict[str, SignalResult] = {}
     for name, rs in rows.items():
         r = SignalResult(name, periods=len(rs))
@@ -162,6 +168,9 @@ def run_backtest(source: PanelSource, cfg: BacktestConfig) -> BacktestResult:
             r.turnover_mean = float(np.mean([x["turn"] for x in rs]))
             h = len(rs) // 2
             r.halves = [_half(rs[:h]), _half(rs[h:])]
+            if cfg.oos_start:
+                r.in_sample = _half([x for x in rs if x["date"] < cfg.oos_start])
+                r.out_of_sample = _half([x for x in rs if x["date"] >= cfg.oos_start])
         out[name] = r
     return BacktestResult(cfg, first, last, used, skipped, carried_total, sizes, out)
 
@@ -186,6 +195,14 @@ def render_backtest(res: BacktestResult) -> str:
         halves = " / ".join(_pct(h.net_excess_mean) for h in r.halves) or "n/a"
         lines.append(f"{n:<10} {r.ic_mean:>7.3f} {r.ic_t:>6.1f} {_pct(r.spread):>8} {r.hit_rate * 100 if r.hit_rate == r.hit_rate else float('nan'):>4.0f}% "
                      f"{_pct(r.gross_excess_mean):>8} {_pct(r.net_excess_mean):>8} {r.turnover_mean:>5.2f}  {halves}")
+    if c.oos_start:
+        lines += ["", f"Split at {c.oos_start} (chosen before this run): in-sample before, out-of-sample from that date. "
+                  "The signals were first seen on the full history, so this split is not untouched evidence.",
+                  f"{'signal':<10} {'in-sample IC':>12} {'net':>8} {'n':>4}   {'out-of-sample IC':>16} {'net':>8} {'n':>4}"]
+        for n in SIGNALS:
+            a, b = res.signals[n].in_sample, res.signals[n].out_of_sample
+            if a and b:
+                lines.append(f"{n:<10} {a.ic_mean:>12.3f} {_pct(a.net_excess_mean):>8} {a.periods:>4}   {b.ic_mean:>16.3f} {_pct(b.net_excess_mean):>8} {b.periods:>4}")
     lines += ["", "Caveats:"] + [f"- {x}" for x in CAVEATS] + ["", DISCLAIMER]
     return "\n".join(lines)
 
@@ -226,13 +243,14 @@ def main(argv: list[str] | None = None, store=None) -> int:
     p.add_argument("--horizon-days", type=int, default=21)
     p.add_argument("--cost-bps", type=float, default=30.0)
     p.add_argument("--top-n", type=int, default=500)
+    p.add_argument("--oos-start", type=date.fromisoformat, default=None, help="YYYY-MM-DD: report in-sample and out-of-sample separately")
     a = p.parse_args(argv)
     if store is None:
         from indiafacts.tej import TejStore
 
         store = TejStore()
     src = TejPanelSource(store, range(a.from_year - 1, a.to_year + 1), a.top_n)
-    res = run_backtest(src, BacktestConfig(horizon_days=a.horizon_days, cost_bps=a.cost_bps))
+    res = run_backtest(src, BacktestConfig(horizon_days=a.horizon_days, cost_bps=a.cost_bps, oos_start=a.oos_start))
     print(render_backtest(res))
     return 0
 

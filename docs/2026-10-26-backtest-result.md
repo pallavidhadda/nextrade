@@ -28,3 +28,13 @@ Not financial, investment or trading advice. A historical test of simple price s
 - `mom_12_1` was positive in both halves after the assumed cost (+0.53% / +0.68% per month versus the equal-weight universe). `low_vol` was not (negative second half, hit rate 44%). `composite` faded in the second half (+0.49% / +0.07%).
 - The costs are an assumption and ignore tax, impact and liquidity limits; carried returns (284 name-periods) and unscaled demergers remain open issues.
 - Nothing here has been tested out of sample, and nothing here supports a claim that the project's scores predict returns. The pool score itself (which also uses fundamentals) is NOT what was tested.
+
+## Out-of-sample split (split date 2023-01-01, fixed before this run; not untouched, signals were first seen on the full history)
+| Signal | In-sample IC | net/month | n | Out-of-sample IC | net/month | n |
+|---|---|---|---|---|---|---|
+| mom_12_1 | 0.049 | +0.45% | 82 | 0.045 | +0.88% | 44 |
+| low_vol | 0.072 | -0.04% | 82 | 0.023 | -0.59% | 44 |
+| near_high | 0.048 | +0.16% | 82 | 0.047 | +0.22% | 44 |
+| composite | 0.077 | +0.45% | 82 | 0.057 | -0.04% | 44 |
+
+Momentum kept its sign and size after 2023; low volatility and the composite faded. Still a hint, not evidence.
