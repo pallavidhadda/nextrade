@@ -4,6 +4,12 @@
 
 The Python package and Claude Code plugin are named `indiafacts`.
 
+Install as a Claude Code plugin (private repo for now, so you need access):
+
+```
+/plugin install indiafacts --marketplace pallavidhadda/nextrade
+```
+
 Typed, source-linked facts for Indian equities (NSE/BSE). Every number carries its period, unit, source and an availability date, or is marked unavailable with a reason. No LLM calls.
 
 **Research and education only. Not financial, investment or trading advice.** Data comes from Yahoo Finance (unofficial, can be late, incomplete or wrong). Availability dates are SEBI-deadline estimates, not filing dates.

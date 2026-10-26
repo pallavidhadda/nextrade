@@ -1,0 +1,11 @@
+{
+  "name": "nextrade",
+  "owner": {"name": "Pallavi Dhadda"},
+  "plugins": [
+    {
+      "name": "indiafacts",
+      "source": "./",
+      "description": "Source-linked research facts for NSE/BSE companies: provenance, gaps, pool score, checklist and what-changed. Education only; not financial advice."
+    }
+  ]
+}
