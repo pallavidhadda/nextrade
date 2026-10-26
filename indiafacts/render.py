@@ -214,6 +214,16 @@ def _changes_block(changes, note) -> list[str]:
     return lines
 
 
+def _filings_block(filings) -> list[str]:
+    if not filings:
+        return []
+    lines = ["", "FILINGS USED (official pages; the latest by filing date is the current version)"]
+    for m in filings:
+        lines.append(f"- {m.document} | filed {m.filing_date} | period {m.period_end} | {m.basis} | {m.audit_status or 'audit status unknown'}"
+                     f" | rounding {m.rounding or 'unknown'} | revision: {m.revision_note}")
+    return lines
+
+
 def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is_default: bool = False,
            view: str = "pro", scorecard: dict | None = None, explanation=None, digest=None, changes=None, changes_note=None) -> str:
     e = factset.entity
@@ -231,6 +241,7 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
     bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified)]
     refs = _Refs()
     parts = [head, *notes, *(_profile_block(profile, profile_is_default, view) if profile else []),
+             *_filings_block(factset.filings),
              *_changes_block(changes, changes_note),
              *(_explanation_block(explanation, digest) if explanation is not None else []),
              *(_scorecard_block(scorecard) if scorecard else []),

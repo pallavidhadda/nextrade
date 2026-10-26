@@ -5,6 +5,7 @@ tables; the saved page had no ix: tags. Treat the file as data. Only the first (
 """
 from __future__ import annotations
 
+import hashlib
 import html as htmllib
 import re
 from datetime import date, datetime, timezone
@@ -13,7 +14,7 @@ from email import message_from_bytes, policy
 from pathlib import Path
 
 from indiafacts.calendar import fiscal_label
-from indiafacts.models import AvailabilityKind, Basis, Entity, Fact, FactSet, Identifier, PeriodType, Status
+from indiafacts.models import AvailabilityKind, Basis, Entity, Fact, FactSet, FilingMeta, Identifier, PeriodType, Status
 
 SOURCE = "nse_filing"
 _SCALE = {"lakhs": Decimal(10) ** 5, "lakh": Decimal(10) ** 5, "crores": Decimal(10) ** 7,
@@ -141,6 +142,20 @@ def facts_from_nse_filing(path: Path, retrieved_at: datetime | None = None) -> F
     else:
         avail = None
 
+    document = location or Path(path).name
+    audit_status = "unaudited" if "unaudited" in audit else "audited" if "audited" in audit else ""
+    note = "not stated on the page"
+    for cells in rows:
+        low = cells[0].lower()
+        if any(k in low for k in ("revis", "resubmi", "correction", "restat")) and "unmodified" not in low and len(cells) > 1 and cells[1].strip():
+            note = f"{cells[0]}: {cells[1]}"
+            break
+    board = _dmy(info["date of board meeting when results were approved"]) if "date of board meeting when results were approved" in info else None
+    filing_id = hashlib.sha256(f"{symbol}|{document}|{end}|{avail}".encode()).hexdigest()[:16]
+    meta = FilingMeta(filing_id=filing_id, document=document, source_type="nse_rendered_page", entity_symbol=symbol,
+                      filing_date=avail, board_meeting_date=board, period_start=start, period_end=end, period_type=ptype.value,
+                      basis=basis.value, audit_status=audit_status, rounding=info.get("level of rounding used in financial results", ""),
+                      currency=currency, revision_note=note)
     ticker = f"{symbol}.NS"
     entity = Entity(
         ticker_input=Path(path).name, ticker=ticker,
@@ -151,21 +166,26 @@ def facts_from_nse_filing(path: Path, retrieved_at: datetime | None = None) -> F
 
     facts: list[Fact] = []
     seen: set[str] = set()
+    dim: dict[str, str] = {}
 
     def add(metric: str, kind: str, label: str, cell: str) -> None:
         value = _num(cell)
         if value is None or metric in seen:
             return
         seen.add(metric)
+        reported = value
         if kind == "money":
-            value, unit = value * scale, "INR"
+            value, unit, runit = value * scale, "INR", f"INR {info.get('level of rounding used in financial results', '')}".strip()
         else:
             unit = "INR_per_share" if kind == "per_share" else "ratio"
+            runit = "INR per share" if kind == "per_share" else "ratio"
         facts.append(Fact.make(
             entity_key=ticker, metric=metric, value=value, unit=unit, period_start=start, period_end=end,
             period_type=ptype, fiscal_label=fiscal_label(end, ptype.value), basis=basis, source=SOURCE,
             source_field=f"{label} [{audit}]", retrieved_at=now, available_from=avail,
-            evidence=f"{location or Path(path).name} | row '{label}'",
+            evidence=f"{document} | row '{label}'", reported_value=reported, reported_unit=runit,
+            audit_status=audit_status, filing_id=filing_id,
+            dimension=dim.get(metric, ""),
             availability_kind=AvailabilityKind.filed if avail else AvailabilityKind.unknown,
         ))
 
@@ -192,11 +212,12 @@ def facts_from_nse_filing(path: Path, retrieved_at: datetime | None = None) -> F
             metric, kind = _PL[low]
             add(metric, kind, label, c[1])
         elif section in ("segment_revenue", "segment_result") and not low.startswith(_NOT_SEGMENT):
+            dim[f"{section}_{_slug(label)}"] = re.sub(r"\s*\[.*$", "", label)
             add(f"{section}_{_slug(label)}", "money", label, c[1])
 
     if not facts:
         raise ValueError("not an NSE results page: no financial rows recognised")
-    return FactSet(entity=entity, facts=facts, retrieved_at=now)
+    return FactSet(entity=entity, facts=facts, retrieved_at=now, filings=[meta])
 
 
 def merge_filings(filings: list[FactSet]) -> tuple[FactSet, list[str]]:
@@ -233,4 +254,5 @@ def merge_filings(filings: list[FactSet]) -> tuple[FactSet, list[str]]:
                              f"{new.value} (filing dated {new.available_from or 'unknown date'}); both versions are kept")
         for m, f in current.items():
             facts.append(f.model_copy(update={"restated": "yes"}) if m in changed else f)
-    return filings[-1].model_copy(update={"facts": facts}), notes
+    metas = sorted((m for fs in filings for m in fs.filings), key=lambda m: (m.filing_date or date.min))
+    return filings[-1].model_copy(update={"facts": facts, "filings": metas}), notes

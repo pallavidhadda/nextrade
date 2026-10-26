@@ -44,6 +44,10 @@ A public portfolio project: enter an NSE/BSE ticker, get a profile-aware researc
 ## Second brain (docs/SECOND_BRAIN.md), added 2026-10-26
 S1 snapshot store and what-changed; S2 thesis notes with kill criteria; S3 decision journal and outcome review; S4 portfolio import and risk view; S5 watch digest; S6 markdown vault export. Also: two-filing growth verification.
 
+## Done 2026-10-26 (later)
+S1 snapshot store and what-changed (sqlite); comparability gate; multi-filing merge with restatement notes; filing metadata records; --filings-dir.
+Next for official data: annual pages (all columns, balance sheet, cash flow) and raw XBRL instance parser, both waiting on user-saved files.
+
 ## Cut line for a first public demo (v0.1)
 Items 1-7 and 9, in the terminal and as a Claude plugin. Backtest (8) and web UI (12) come after; the demo will state plainly that no performance claim is made.
 

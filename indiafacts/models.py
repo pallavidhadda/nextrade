@@ -64,6 +64,12 @@ class Fact(BaseModel):
     related_fact_ids: list[str] = Field(default_factory=list)
     restated: str = "unknown"            # yes | no | unknown (no free source states it today)
     evidence: str = ""                   # where the figure came from: file or URL plus the row, so it can be re-checked
+    reported_value: Decimal | None = None   # the number as printed in the source, before any unit conversion
+    reported_unit: str = ""                 # e.g. "INR Lakhs", "INR per share"
+    concept: str = ""                       # original XBRL concept/tag; empty when the source (a rendered page) carries none
+    dimension: str = ""                     # segment or other dimension member, if any
+    audit_status: str = ""                  # audited | unaudited | "" (unknown)
+    filing_id: str = ""                     # links to FilingMeta.filing_id
 
     @model_validator(mode="after")
     def _check(self) -> Fact:
@@ -137,6 +143,25 @@ class Entity(BaseModel):
         return self.model_copy(update={"resolution": "unresolved", "resolution_reason": reason})
 
 
+class FilingMeta(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    filing_id: str
+    document: str                        # URL when known (saved .mhtml), else the file name
+    source_type: str                     # nse_rendered_page | nse_xbrl_instance
+    entity_symbol: str
+    filing_date: date | None = None      # submission date from the URL timestamp, else the board-meeting date
+    board_meeting_date: date | None = None
+    period_start: date | None = None
+    period_end: date | None = None
+    period_type: str = ""
+    basis: str = "unknown"
+    audit_status: str = ""
+    rounding: str = ""
+    currency: str = ""
+    revision_note: str = "not stated on the page"
+
+
 class FactSet(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -146,6 +171,7 @@ class FactSet(BaseModel):
     not_yet_public: list[Fact] = Field(default_factory=list)
     notices: list[str] = Field(default_factory=list)
     price_notes: list[str] = Field(default_factory=list)
+    filings: list[FilingMeta] = Field(default_factory=list)
     charts: dict = Field(default_factory=dict)           # plotting series for the HTML report (not Facts)
 
     def by_metric(self, name: str) -> list[Fact]:

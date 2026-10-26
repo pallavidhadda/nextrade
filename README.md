@@ -12,6 +12,8 @@ python -m indiafacts RELIANCE.NS --filing "samples/IndAS Details.html"     # off
 python -m indiafacts ZOMATO.NS --symbol-changes samples/symbolchange.csv    # follows renames; demergers ask you to choose
 python -m indiafacts RELIANCE.NS --horizon 5y+ --experience beginner --save-profile   # profile in ~/.indiafacts/
 python -m indiafacts RELIANCE.NS --no-prices --view pro
+python -m indiafacts RELIANCE.NS --filings-dir samples/filings          # every saved NSE results page for the company; revised filings are compared and restatements noted
+python -m indiafacts RELIANCE.NS --changes                                # what changed since the last run (snapshots kept in ~/.indiafacts/brain.db; --no-remember to skip)
 python -m indiafacts RELIANCE.NS --score --explain                  # deterministic explanation, no LLM, zero tokens
 GOOGLE_API_KEY=... python -m indiafacts RELIANCE.NS --score --explain --llm gemini --html reports/r.html   # one validated, cached LLM call
 python -m indiafacts RELIANCE.NS --score --html reports/reliance.html    # self-contained HTML report with charts (open in a browser)
@@ -21,7 +23,7 @@ pytest            # offline tests
 pytest -m live    # hits the network
 ```
 
-Design and spec: `docs/`. Status: v0.5. Yahoo adapter, NSE results-page import, security master (symbol renames, curated demergers), price-history metrics vs Nifty 50, local investor profile. Percentile scoring inside a pool and a 9-point checklist (project-defined). No backtest yet: no claim that any output predicts returns.
+Design and spec: `docs/`. Status: v0.6. Yahoo adapter, NSE results-page import, security master (symbol renames, curated demergers), price-history metrics vs Nifty 50, local investor profile. Percentile scoring inside a pool and a 9-point checklist (project-defined). No backtest yet: no claim that any output predicts returns.
 
 ## Data credits
 Price, symbol-history, corporate-action and universe data from the TejHQ open dataset (huggingface.co/datasets/tejhq/indian-markets, MIT tag; built from NSE/BSE public bhavcopy; verify exchange terms before any commercial use). Fundamentals and prices from Yahoo Finance via yfinance (unofficial). Educational project; not financial advice.

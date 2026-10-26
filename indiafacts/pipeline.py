@@ -81,7 +81,7 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
         public, later = (filter_as_of(filing.facts, as_of) if as_of else (filing.facts, []))
         facts += public
         pending += later
-        fs = fs.model_copy(update={"entity": _merge_entity(fs.entity, filing.entity)})
+        fs = fs.model_copy(update={"entity": _merge_entity(fs.entity, filing.entity), "filings": filing.filings})
     if tej_hist is not None and fs.entity.resolution == "resolved" and fs.entity.isin.value is None:
         isin = isin_for(tej_hist, normalize_symbol(fs.entity.ticker), as_of)
         if isin:

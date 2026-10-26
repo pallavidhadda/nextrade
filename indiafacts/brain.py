@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS observations(obs_id TEXT PRIMARY KEY, fact_id TEXT, t
 CREATE INDEX IF NOT EXISTS obs_fact ON observations(fact_id);
 CREATE TABLE IF NOT EXISTS run_obs(run_id INTEGER, obs_id TEXT, PRIMARY KEY(run_id, obs_id));
 CREATE TABLE IF NOT EXISTS scores(run_id INTEGER PRIMARY KEY, overall REAL, rank INTEGER, n INTEGER, config_hash TEXT);
+CREATE TABLE IF NOT EXISTS filings(filing_id TEXT PRIMARY KEY, ticker TEXT, document TEXT, filing_date TEXT, period_end TEXT, basis TEXT,
+  audit_status TEXT, rounding TEXT, currency TEXT, revision_note TEXT, first_seen TEXT);
 CREATE TABLE IF NOT EXISTS checks(run_id INTEGER, check_id TEXT, result TEXT, PRIMARY KEY(run_id, check_id));
 """
 MARKET_METRICS = {"price", "pe_ttm", "pb", "eps_ttm", "market_cap", "roe", "debt_to_equity", "revenue_ttm_vendor",
@@ -82,6 +84,11 @@ class Brain:
                                f.status.value, f.reason, f.available_from.isoformat() if f.available_from else None,
                                f.evidence, now.isoformat()))
                     c.execute("INSERT OR IGNORE INTO run_obs VALUES (?,?)", (run_id, oid))
+                for m in fs.filings:
+                    c.execute("INSERT OR IGNORE INTO filings VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                              (m.filing_id, fs.entity.ticker, m.document, m.filing_date.isoformat() if m.filing_date else None,
+                               m.period_end.isoformat() if m.period_end else None, m.basis, m.audit_status, m.rounding, m.currency,
+                               m.revision_note, now.isoformat()))
                 r = (sc or {}).get("result")
                 if r is not None and r.status == "ok":
                     c.execute("INSERT INTO scores VALUES (?,?,?,?,?)", (run_id, r.overall, r.rank, sc["n"], r.config_hash))
@@ -105,6 +112,13 @@ class Brain:
         try:
             return {"runs": c.execute("SELECT COUNT(*) FROM runs").fetchone()[0],
                     "observations": c.execute("SELECT COUNT(*) FROM observations").fetchone()[0]}
+        finally:
+            c.close()
+
+    def filings(self, ticker: str) -> list[dict]:
+        c = self._conn()
+        try:
+            return [dict(r) for r in c.execute("SELECT * FROM filings WHERE ticker=? ORDER BY filing_date, filing_id", (ticker,))]
         finally:
             c.close()
 
