@@ -45,6 +45,8 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--llm-model", default=None)
     p.add_argument("--no-remember", action="store_true", help="do not save this run to the local snapshot store (~/.indiafacts/brain.db)")
     p.add_argument("--changes", action="store_true", help="always show the what-changed block, even on a first run")
+    p.add_argument("--digest", action="store_true", help="print only the compact evidence digest and narration rules (for Claude Code or any LLM; zero API tokens here)")
+    p.add_argument("--changes-only", action="store_true", help="print only the what-changed block")
     p.add_argument("--html", type=Path, default=None, help="also write a self-contained HTML report with charts")
     p.add_argument("--no-tej", action="store_true", help="do not use TejHQ open data (identity, corporate actions, universe)")
     args = p.parse_args(argv)
@@ -103,7 +105,18 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
 
         digest = build_digest(fs, scorecard, profile)
         explanation = explain_report(digest, scorecard, fs, client=llm_client if (args.llm or llm_client) else None)
-    print(render(fs, as_of=args.as_of, profile=profile, profile_is_default=is_default,
+    if args.changes_only:
+        from indiafacts.render import _changes_block
+
+        print("\n".join(_changes_block(changes, changes_note or "first run: nothing to compare yet")).strip() or "no changes since the previous run")
+    elif args.digest:
+        from indiafacts.digest import build_digest as _bd
+        from indiafacts.llm import NARRATION_RULES
+
+        dg = digest or _bd(fs, scorecard, profile)
+        print(f"DIGEST for {fs.entity.ticker} (about {dg.est_tokens} estimated tokens; cite the ids F1, F2...)\n{dg.text}\n\n{NARRATION_RULES}")
+    else:
+        print(render(fs, as_of=args.as_of, profile=profile, profile_is_default=is_default,
                  view=args.view or profile.view, scorecard=scorecard, explanation=explanation, digest=digest,
                  changes=changes, changes_note=changes_note if (args.changes or not changes) else None))
     if args.html:
