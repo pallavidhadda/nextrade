@@ -155,3 +155,6 @@ Open: `claude plugin validate` says the directory requires a LICENSE file (or `l
 
 ## Sector pool measured on real data (2026-10-26)
 `--sector-pool --universe samples/ind_nifty500list.csv` for RELIANCE.NS: NSE group "Oil Gas & Consumable Fuels" = 19 companies, 16 fetched, 48.8 s total (acceptance was under ~60 s, under 100 Yahoo calls: met for this group). Real peers appeared (IOC, BPCL, HINDPETRO, AEGISLOG, PETRONET): P/E 21.6 vs peer median 10.3 (+110.9%), P/B 1.79 vs 1.37, net margin 6.7% vs 2.7%; sector-relative score 42.5/100, rank 13 of 19; growth unscored (unverified mixed-source). Larger groups (Financial Services 98, Capital Goods 70) will be slower: measure and consider capping to the N closest by size.
+
+## Backtest v1 (done 2026-10-26)
+`indiafacts/backtest.py`, spec `docs/2026-10-26-backtest-spec.md`, result `docs/2026-10-26-backtest-result.md`. Open: out-of-sample split fixed in advance, delisting returns from actions data, benchmark vs Nifty 50 TRI, symbol-chain stitching by ISIN, test the actual pool score (needs fundamentals history), plugin command, volatility-matched comparison.
