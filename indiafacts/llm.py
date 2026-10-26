@@ -252,6 +252,11 @@ def explain(d: Digest, sc: dict | None, fs=None, client=None, cache: LLMCache | 
         return base.model_copy(update={"notes": ["LLM output rejected (" + "; ".join(reasons[:3]) + "); showing the template explanation"]})
     if not cached:
         cache.put(key, {"text": raw, "in": tin, "out": tout, "estimated": estimated})
+    caveat = " (this compares the official filing with Yahoo's prior-year figure)"
+    claims = [c.model_copy(update={"text": c.text.rstrip(".") + caveat + "."})
+              if any("mixed sources" in d.items[i].text for i in c.ids if i in d.items) and "compares the official filing" not in c.text
+              else c for c in out.claims]
+    out = out.model_copy(update={"claims": claims})
     notes = [f"{out.removed} claim(s) removed: " + "; ".join(reasons[:3])] if out.removed else []
     return out.model_copy(update={"source": name, "triggers": base.triggers, "notes": notes,
                                   "uncertainty": out.uncertainty or base.uncertainty,

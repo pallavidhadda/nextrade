@@ -1,4 +1,5 @@
 import json
+import re
 import os
 
 import pytest
@@ -191,3 +192,15 @@ def test_adapters_report_finish_reasons_and_prompt_asks_for_short_output():
 
     assert "at most 5 claims" in SYSTEM_PROMPT.lower() and "under 30 words" in SYSTEM_PROMPT
     assert inspect.signature(explain).parameters["max_tokens"].default >= 700
+
+
+def test_claims_citing_a_mixed_source_figure_get_the_caveat_added_by_code(digest, tmp_path):
+    d, sc, fs = digest
+    sid = d.by_key["fact:revenue_yoy"]
+    pct = re.search(r"\+?\d+\.\d%", d.items[sid].text).group(0).lstrip("+")
+    raw = json.dumps({"summary": "A summary.", "uncertainty": "Gaps exist.",
+                      "claims": [{"type": "fact", "text": f"Revenue grew {pct} on a year earlier.", "ids": [sid]},
+                                 {"type": "inference", "text": "Several checks did not pass.", "ids": list(d.ids)[1:3]}]})
+    out = explain(d, sc, fs, client=FakeLLM(raw), cache=LLMCache(tmp_path / "c"), log=TokenLog(tmp_path / "l.jsonl"))
+    first = out.claims[0].text
+    assert "compares the official filing with Yahoo" in first and out.claims[1].text == "Several checks did not pass."

@@ -121,3 +121,9 @@ Ideas to evaluate, cheapest first:
 4. Parallel fetch with a small thread pool and polite backoff; measure Yahoo throttling first.
 5. Bulk fundamentals source: none verified yet (Stoxim signup failed; TejHQ fundamentals planned; NSE XBRL manual). Re-check TejHQ for fundamentals, BharatStock free tier (25 requests/day, 1-year history), other providers; also ask whether a shared snapshot file of the pool's facts could be generated nightly and published with the repo (check data licences first).
 Acceptance: peers/score for a target in under about 60 seconds on a cold cache, and fewer than 100 Yahoo calls.
+
+## Explanation layer: measured and open items (2026-10-26)
+- Live Gemini (gemini-3.1-flash-lite) on the real Reliance report: digest ~583-610 estimated tokens; real call 1,144-1,174 in (system prompt + digest) and 412-435 out, about 1.6k tokens total; all claims passed validation (numbers copied exactly). TradingAgents baseline was ~39k tokens for a 2-analyst run (different product, not like-for-like).
+- Fixed from the live run: cache-vs-fresh mismatch (target now always uses the just-fetched facts), output truncation handling (cap 700, <=5 claims), template wording, mixed-source YoY caveat added by code.
+- Open: the validator cannot catch loose language ("strong revenue growth"); consider banning intensity adjectives or requiring numbers in inference claims; Anthropic/OpenAI-compatible adapters untested live; token estimate undercounts (system prompt ~500 tokens not in the digest estimate); digest budget not yet tuned; no evaluation of explanation quality beyond validation rules.
+- Browser verification done in Brave's Chromium engine via the browser-scenario tool (Claude in Chrome tools were not available in this session): crosshair, bar and chip tooltips, theme toggle (auto/light/dark) work; no JS errors. Not tested: real touch devices, Safari/Firefox, print.

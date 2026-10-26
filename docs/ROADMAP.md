@@ -24,8 +24,8 @@ A public portfolio project: enter an NSE/BSE ticker, get a profile-aware researc
 | 4 | DONE 2026-10-26: Factor scoring + 9-point checklist + bad-data tests (sector-relative groups and bank metric set partly deferred) | M | 2, 3 |
 | 5 | IN PROGRESS: Peer groups (deterministic tiers: industry then sector, size band, positive P/E gate, median with not-meaningful cap) and relative valuation table | M | 1 (done) |
 | 5b | DONE 2026-10-26 (v1): Visual HTML report: price vs Nifty 50, drawdown, quarterly bars with visible gaps, score and checklist strips, segment bars, peer dot plot; terminal sparklines. Use the dataviz skill; only computed numbers | M | 4, 5 |
-| 6 | Thesis/evidence layer (claims typed fact/inference/hypothesis, invalidation triggers) | M | 4 |
-| 7 | One cached LLM call that explains the numbers (token budget enforced) | S | 6 |
+| 6 | DONE 2026-10-26 (v1): evidence-linked claims typed fact/inference/hypothesis, deterministic triggers, code-side validation | M | 4 |
+| 7 | DONE 2026-10-26: one cached LLM call (Gemini live-tested; OpenAI-compatible and Anthropic adapters tested with fake HTTP); measured 1,174 in + 435 out tokens for a full Reliance report | S | 6 |
 | 8 | Backtest and scorecard (out of sample, costs, benchmark) | L | 2; fundamentals history is thin (about 5 quarters), so first version is price-based only |
 | 9 | Claude Code plugin (`/analyze`) | S | 4-7 |
 | 10 | Staleness controls (review_by dates, canary tests, data-age banner) | S | runs through all |
