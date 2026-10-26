@@ -111,3 +111,13 @@ A 30-name pool gives few true peers (Reliance sits in Energy with ONGC and Coal 
 - Adopt TejHQ HF parquet: ISIN symbol history, corporate-action ex-dates, top-500 point-in-time universe (also unlocks a survivorship-bias-free backtest universe). Needs pyarrow dependency.
 - Test Stoxim free key (user signs up): coverage vs claims, ratios incl. EV/EBITDA, shareholding, announcements, filing dates.
 - TigZig for RBI macro and BRSR red flags later; licence per API unread; CC0 claim not found.
+
+## TO FIND: faster bulk source OR smaller sector-targeted pool (added 2026-10-26)
+Problem: scoring/peers need many companies' facts; Yahoo is per-ticker and slow (500 names stalled at ~80 in 40+ min; 30 names 1.5-5 min).
+Ideas to evaluate, cheapest first:
+1. Smaller sector-targeted pool: for a target, load only its NSE industry group from the index CSV (a few dozen names) plus nearest by size. Also enables sector-relative scoring (deferred S13). Needs a test that scores stay meaningful with small groups.
+2. Take prices off Yahoo entirely: TejHQ parquet (prices_adjusted, metrics tree with returns and 52-week high/low) is a bulk file download, so returns/drawdown/volatility for all 500 need zero per-ticker calls. Halves the Yahoo calls.
+3. Longer cache lifetimes by data type: fundamentals/statements 7 days (quarterly data), prices 1 day; incremental refresh; a pre-built cache for the default pool.
+4. Parallel fetch with a small thread pool and polite backoff; measure Yahoo throttling first.
+5. Bulk fundamentals source: none verified yet (Stoxim signup failed; TejHQ fundamentals planned; NSE XBRL manual). Re-check TejHQ for fundamentals, BharatStock free tier (25 requests/day, 1-year history), other providers; also ask whether a shared snapshot file of the pool's facts could be generated nightly and published with the repo (check data licences first).
+Acceptance: peers/score for a target in under about 60 seconds on a cold cache, and fewer than 100 Yahoo calls.
