@@ -189,3 +189,8 @@ def test_every_table_is_in_a_horizontal_scroll_wrapper_and_peer_notes_are_separa
     assert report.count("<table") == report.count('<div class="tablewrap"><table')
     assert "overflow-x:auto" in report
     assert "; sector-level peers" in report or "coarse comparison" not in report
+
+
+def test_sources_table_and_terminal_index_show_the_evidence_for_each_figure(report):
+    src = section(report, "sources")
+    assert "Evidence" in src and ("yfinance Ticker.quarterly_income_stmt row" in src or "f.html | row" in src)

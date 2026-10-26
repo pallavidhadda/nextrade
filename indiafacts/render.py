@@ -35,7 +35,7 @@ class _Refs:
             where = f"{f.source}:{f.source_field}" if f.source_field else f.source
             self._rows.append(
                 f"{name} = {f.fact_id} | {f.metric} | {f.fiscal_label or f.period_end} | {where} | "
-                f"retrieved {f.retrieved_at.date()}"
+                f"retrieved {f.retrieved_at.date()}" + (f" | evidence: {f.evidence}" if f.evidence else "")
             )
         return self._by_id[f.fact_id]
 

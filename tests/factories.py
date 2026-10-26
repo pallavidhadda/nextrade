@@ -10,7 +10,7 @@ def fact(period_end=date(2026, 6, 30), metric="net_income", value="1", period_ty
          source="yahoo", status="ok", reason="", **over):
     v = None if value is None else Decimal(value)
     return Fact.make(
-        entity_key="RELIANCE", metric=metric, value=v, unit="INR", period_end=period_end,
+        entity_key="RELIANCE", metric=metric, value=v, unit=over.pop("unit", "INR"), period_end=period_end,
         period_type=period_type, source=source, retrieved_at=NOW, status=status,
         reason=reason, **over,
     )

@@ -511,10 +511,10 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
                "Gaps, unavailable values, conflicts and unverified figures are listed instead of hidden.",
                _table(["Metric", "Period", "Status", "Reason"], dq_rows) if dq_rows else '<p class="empty">None.</p>')
     src_rows = [[fid, f.metric, f.fiscal_label or f.period_end.isoformat(), format_inr(f.value) if f.unit == "INR" else str(f.value),
-                 f"{f.source}:{f.source_field or ''}", str(f.retrieved_at.date())] for fid, f in ctx.used.items()]
+                 f"{f.source}:{f.source_field or ''}", f.evidence or "", str(f.retrieved_at.date())] for fid, f in ctx.used.items()]
     sources = (f'<section class="card" id="sources"><h2>Sources for plotted figures</h2>'
                f'<p class="sub">Every bar carries a fact id (data-fact). This table maps each id to its source.</p>'
-               f'{_table(["Fact id", "Metric", "Period", "Value", "Source", "Retrieved"], src_rows, num=(3,))}</section>')
+               f'{_table(["Fact id", "Metric", "Period", "Value", "Source", "Evidence", "Retrieved"], src_rows, num=(3,))}</section>')
 
     prof = ""
     if profile is not None:

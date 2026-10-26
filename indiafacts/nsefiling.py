@@ -165,6 +165,7 @@ def facts_from_nse_filing(path: Path, retrieved_at: datetime | None = None) -> F
             entity_key=ticker, metric=metric, value=value, unit=unit, period_start=start, period_end=end,
             period_type=ptype, fiscal_label=fiscal_label(end, ptype.value), basis=basis, source=SOURCE,
             source_field=f"{label} [{audit}]", retrieved_at=now, available_from=avail,
+            evidence=f"{location or Path(path).name} | row '{label}'",
             availability_kind=AvailabilityKind.filed if avail else AvailabilityKind.unknown,
         ))
 

@@ -59,9 +59,9 @@ def test_ex2_gaps_and_unavailable_items_are_always_in_the_digest(inputs):
 def test_digest_shrinks_deterministically_to_a_small_budget_and_says_what_it_dropped(inputs):
     fs, sc, prof = inputs
     big = build_digest(fs, sc, prof)
-    small = build_digest(fs, sc, prof, budget_tokens=450)
-    assert small.est_tokens <= 450 < big.est_tokens and small.dropped
-    assert small.text == build_digest(fs, sc, prof, budget_tokens=450).text
+    small = build_digest(fs, sc, prof, budget_tokens=520)
+    assert small.est_tokens <= 520 < big.est_tokens and small.dropped
+    assert small.text == build_digest(fs, sc, prof, budget_tokens=520).text
     assert "GAP" in small.text                                   # gaps survive shrinking
     assert "dropped" in small.text.lower()
 

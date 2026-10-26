@@ -97,6 +97,33 @@ def ttm(facts: list[Fact], metric: str, as_of_period: date) -> Fact:
     )
 
 
+def comparability_check(cur: Fact, base: Fact) -> tuple[list[str], list[str]]:
+    """Is cur / base a fair growth comparison? Returns (issues that block verification, notes that only caveat it)."""
+    issues: list[str] = []
+    notes: list[str] = []
+    if cur.metric != base.metric:
+        issues.append(f"different metrics ({cur.metric} vs {base.metric})")
+    gap = (cur.period_end - base.period_end).days
+    if cur.period_type != base.period_type or abs(gap - 365) > 7:
+        issues.append(f"periods not comparable ({base.fiscal_label or base.period_end} {base.period_type.value} to "
+                      f"{cur.fiscal_label or cur.period_end} {cur.period_type.value}, {gap} days apart)")
+    if cur.unit != base.unit:
+        issues.append(f"units differ ({cur.unit} vs {base.unit})")
+    if cur.source != base.source:
+        issues.append(f"sources differ ({cur.source} vs {base.source}); definitions may differ")
+    if cur.basis != base.basis:
+        issues.append(f"basis differs ({cur.basis.value} vs {base.basis.value})")
+    elif cur.basis.value == "unknown":
+        notes.append("basis not stated by the source (same source and series)")
+    if cur.restated == "yes" or base.restated == "yes":
+        issues.append("a figure was restated")
+    elif cur.restated == "unknown" or base.restated == "unknown":
+        notes.append("restatement status unknown")
+    if not cur.evidence or not base.evidence:
+        issues.append("evidence not traceable for one of the figures")
+    return issues, notes
+
+
 def growth_yoy(facts: list[Fact], metric: str, period_end: date) -> Fact:
     if not facts:
         raise ValueError("growth_yoy needs at least one fact")
@@ -111,10 +138,12 @@ def growth_yoy(facts: list[Fact], metric: str, period_end: date) -> Fact:
     if base.value <= 0:
         return _unavailable(ref, name, period_end, PeriodType.Q, "ratio", "base not positive",
                             [cur.fact_id, base.fact_id])
+    issues, notes = comparability_check(cur, base)
     return Fact.make(
         entity_key=ref.entity_key, metric=name, value=cur.value / base.value - 1, unit="ratio",
         period_end=period_end, period_type=PeriodType.Q, source=COMPUTED, retrieved_at=ref.retrieved_at,
-        status=Status.ok, related_fact_ids=[cur.fact_id, base.fact_id],
+        status=Status.unverified if issues else Status.ok, reason="; ".join(issues + notes),
+        related_fact_ids=[cur.fact_id, base.fact_id],
     )
 
 

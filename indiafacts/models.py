@@ -62,6 +62,8 @@ class Fact(BaseModel):
     status: Status = Status.ok
     reason: str = ""
     related_fact_ids: list[str] = Field(default_factory=list)
+    restated: str = "unknown"            # yes | no | unknown (no free source states it today)
+    evidence: str = ""                   # where the figure came from: file or URL plus the row, so it can be re-checked
 
     @model_validator(mode="after")
     def _check(self) -> Fact:

@@ -89,3 +89,9 @@ def test_computed_check_not_duplicated_in_overview():
     out = render(build_factset("RELIANCE.NS", client=FakeClient(), sleep=lambda s: None))
     overview = out.split("OVERVIEW")[1].split("COMPUTED CHECKS")[0]
     assert "price_pe_eps_check" not in overview
+
+
+def test_terminal_source_index_shows_evidence():
+    out = render(reliance())
+    idx = out.split("SOURCES")[1]
+    assert "evidence: yfinance Ticker.quarterly_income_stmt row 'Net Income Common Stockholders'" in idx

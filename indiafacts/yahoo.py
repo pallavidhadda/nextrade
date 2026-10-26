@@ -116,6 +116,7 @@ def fetch_facts(
                     entity_key=key, metric=metric, unit=unit, period_end=period_end,
                     period_type=PeriodType.Q, fiscal_label=fiscal_label(period_end, "Q"),
                     source=SOURCE, source_field=row, retrieved_at=now,
+                    evidence=f"yfinance Ticker.quarterly_income_stmt row '{row}'",
                 )
                 if _is_nan(raw):
                     facts.append(Fact.make(value=None, status=Status.unavailable,
@@ -135,6 +136,7 @@ def fetch_facts(
         common = dict(
             entity_key=key, metric=metric, unit=unit, period_end=today, period_type=ptype,
             source=SOURCE, source_field=yf_key, retrieved_at=now, available_from=today,
+            evidence=f"yfinance Ticker.info['{yf_key}']",
         )
         if _is_nan(raw):
             facts.append(Fact.make(value=None, status=Status.unavailable,
