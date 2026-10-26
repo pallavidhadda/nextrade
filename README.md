@@ -35,3 +35,7 @@ The command runs the deterministic tool (needs `uv`), and Claude explains the co
 
 ## Data credits
 Price, symbol-history, corporate-action and universe data from the TejHQ open dataset (huggingface.co/datasets/tejhq/indian-markets, MIT tag; built from NSE/BSE public bhavcopy; verify exchange terms before any commercial use). Fundamentals and prices from Yahoo Finance via yfinance (unofficial). Educational project; not financial advice.
+
+## Licence
+
+Apache-2.0 (see `LICENSE`, `NOTICE`). Educational use only; not financial, investment or trading advice. Real NSE/BSE files and third-party datasets are not included and keep their own terms.
