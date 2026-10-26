@@ -1,4 +1,8 @@
-# indiafacts
+# NexTrade
+
+**An AI-powered research assistant for Indian stocks (NSE/BSE).** It gathers source-linked facts, flags what is missing, compares a company with its peers and explains the numbers in plain English. It never says buy or sell.
+
+The Python package and Claude Code plugin are named `indiafacts`.
 
 Typed, source-linked facts for Indian equities (NSE/BSE). Every number carries its period, unit, source and an availability date, or is marked unavailable with a reason. No LLM calls.
 

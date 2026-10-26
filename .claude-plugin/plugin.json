@@ -1,7 +1,7 @@
 {
   "name": "indiafacts",
   "version": "0.6.0",
-  "author": {"name": "Sarah Dhadda"},
+  "author": {"name": "Pallavi Dhadda"},
   "license": "Apache-2.0",
   "description": "Source-linked research facts for NSE/BSE companies: provenance, gaps, pool score, checklist and what-changed. Education only; not financial advice."
 }
