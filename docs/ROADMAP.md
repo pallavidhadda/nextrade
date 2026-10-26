@@ -41,6 +41,9 @@ A public portfolio project: enter an NSE/BSE ticker, get a profile-aware researc
 - 5d: Stoxim PARKED (signup not working). Dated fundamentals stay: Yahoo + saved NSE results pages.
 - 5e: TigZig RBI macro and red flags (later).
 
+## Second brain (docs/SECOND_BRAIN.md), added 2026-10-26
+S1 snapshot store and what-changed; S2 thesis notes with kill criteria; S3 decision journal and outcome review; S4 portfolio import and risk view; S5 watch digest; S6 markdown vault export. Also: two-filing growth verification.
+
 ## Cut line for a first public demo (v0.1)
 Items 1-7 and 9, in the terminal and as a Claude plugin. Backtest (8) and web UI (12) come after; the demo will state plainly that no performance claim is made.
 
