@@ -48,6 +48,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--digest", action="store_true", help="print only the compact evidence digest and narration rules (for Claude Code or any LLM; zero API tokens here)")
     p.add_argument("--changes-only", action="store_true", help="print only the what-changed block")
     p.add_argument("--sector-pool", action="store_true", help="with an NSE index CSV: compare only against the target's NSE industry group (faster, sector-relative scores)")
+    p.add_argument("--json", type=Path, default=None, help="also write a compact JSON summary (used by the web app)")
     p.add_argument("--html", type=Path, default=None, help="also write a self-contained HTML report with charts")
     p.add_argument("--no-tej", action="store_true", help="do not use TejHQ open data (identity, corporate actions, universe)")
     args = p.parse_args(argv)
@@ -120,6 +121,13 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         print(render(fs, as_of=args.as_of, profile=profile, profile_is_default=is_default,
                  view=args.view or profile.view, scorecard=scorecard, explanation=explanation, digest=digest,
                  changes=changes, changes_note=changes_note if (args.changes or not changes) else None))
+    if args.json:
+        import json as _json
+
+        from indiafacts.summary import summarize_run
+
+        args.json.parent.mkdir(parents=True, exist_ok=True)
+        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes), default=str), encoding="utf-8")
     if args.html:
         from indiafacts.htmlreport import build_html
 
