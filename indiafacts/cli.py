@@ -47,6 +47,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--changes", action="store_true", help="always show the what-changed block, even on a first run")
     p.add_argument("--digest", action="store_true", help="print only the compact evidence digest and narration rules (for Claude Code or any LLM; zero API tokens here)")
     p.add_argument("--changes-only", action="store_true", help="print only the what-changed block")
+    p.add_argument("--sector-pool", action="store_true", help="with an NSE index CSV: compare only against the target's NSE industry group (faster, sector-relative scores)")
     p.add_argument("--html", type=Path, default=None, help="also write a self-contained HTML report with charts")
     p.add_argument("--no-tej", action="store_true", help="do not use TejHQ open data (identity, corporate actions, universe)")
     args = p.parse_args(argv)
@@ -164,6 +165,7 @@ def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -
     from indiafacts.profile import weights_for
 
     uni = args.universe
+    target = fs.entity.ticker
     if uni and str(uni).startswith("tej"):
         from indiafacts.tej import TejStore, TejUnavailable, universe_members
 
@@ -183,7 +185,14 @@ def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -
         if args.labels:
             labels = {**read_pool(args.labels).labels, **labels}
         label = path.name
-    target = fs.entity.ticker
+        if getattr(args, "sector_pool", False):
+            if pool.kind != "nse_index_csv" and not args.labels:
+                raise ValueError("--sector-pool needs an NSE index CSV (give it with --universe FILE or --labels FILE)")
+            group = labels.get(target, {}).get("industry")
+            if not group:
+                raise ValueError(f"{target} is not in the index file, so its industry group is unknown")
+            tickers = [t for t in tickers if labels.get(t, {}).get("industry") == group]
+            label = f"NSE industry group '{group}' (from {(args.labels or path).name})"
     if target not in tickers:
         tickers.append(target)
     prices = not args.no_prices
