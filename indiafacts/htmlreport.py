@@ -18,7 +18,8 @@ from indiafacts.models import Fact, FactSet, PeriodType, Status
 from indiafacts.render import DISCLAIMER
 from indiafacts.units import format_inr
 
-W = 760          # chart viewBox width
+W = 760          # full-width chart viewBox width
+HALF = 520       # half-width cards use a narrower canvas so text is not scaled down
 
 
 def esc(x) -> str:
@@ -90,6 +91,7 @@ ul.checks{list-style:none;margin:6px 0 0;padding:0}
 .check .state{font-size:12px;color:var(--muted);margin-left:6px}
 details{margin-top:8px}summary{cursor:pointer;color:var(--ink2);font-size:13px}
 table{border-collapse:collapse;width:100%;font-size:13px;margin-top:6px}
+.tablewrap{overflow-x:auto;max-width:100%}.grid>*{min-width:0}.banner,.sub,.tile{overflow-wrap:anywhere}
 th,td{text-align:left;padding:4px 8px;border-top:1px solid var(--grid);vertical-align:top}th{color:var(--ink2);font-weight:600}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 #tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12px;padding:6px 8px;border-radius:6px;
@@ -140,12 +142,12 @@ class _Ctx:
         return f.fact_id
 
 
-def _table(headers: list[str], rows: list[list[str]], caption: str = "") -> str:
-    h = "".join(f'<th class="{"num" if i else ""}">{esc(x)}</th>' for i, x in enumerate(headers))
-    body = "".join("<tr>" + "".join(f'<td class="{"num" if i else ""}">{esc(c)}</td>' for i, c in enumerate(r)) + "</tr>"
+def _table(headers: list[str], rows: list[list[str]], caption: str = "", num: tuple[int, ...] = ()) -> str:
+    h = "".join(f'<th class="{"num" if i in num else ""}">{esc(x)}</th>' for i, x in enumerate(headers))
+    body = "".join("<tr>" + "".join(f'<td class="{"num" if i in num else ""}">{esc(c)}</td>' for i, c in enumerate(r)) + "</tr>"
                    for r in rows)
     cap = f"<caption class=\"muted\">{esc(caption)}</caption>" if caption else ""
-    return f"<table>{cap}<thead><tr>{h}</tr></thead><tbody>{body}</tbody></table>"
+    return f'<div class="tablewrap"><table>{cap}<thead><tr>{h}</tr></thead><tbody>{body}</tbody></table></div>'
 
 
 def _card(ident: str, title: str, sub: str, inner: str, twin: str = "", cls: str = "") -> str:
@@ -212,7 +214,7 @@ def _price_card(charts: dict, facts: list[Fact], name: str) -> str:
             cells.append(_fmt_pct(float(f.value)) if f is not None and f.value is not None else "unavailable")
         rows.append([f"{n} year", *cells])
     twin = _table(["Window", name, "Nifty 50", "Relative", "Worst fall"], rows,
-                  f"Price returns (dividends excluded); series {c['series_id']}, basis {c['basis']}")
+                  f"Price returns (dividends excluded); series {c['series_id']}, basis {c['basis']}", num=(1, 2, 3, 4))
     return _card("chart-price", "Price against the Nifty 50",
                  f"Both rebased to 100 at {c['start']}. Price returns only: dividends are excluded and past prices are "
                  "split-adjusted to today's share count.", legend + svg, twin)
@@ -261,6 +263,7 @@ def _round_top_path(x: float, y0: float, y1: float, w: float, r: float = 4) -> s
 
 
 def _quarter_card(ident: str, title: str, metric: str, facts: list[Fact], ctx: _Ctx) -> str:
+    W = HALF
     qs = prefer_sources([f for f in facts if f.metric == metric and f.period_type == PeriodType.Q
                          and f.source != "computed"])
     if not qs:
@@ -299,13 +302,14 @@ def _quarter_card(ident: str, title: str, metric: str, facts: list[Fact], ctx: _
     base = f'<line class="axisline" x1="{L}" x2="{W - R}" y1="{Y(0):.1f}" y2="{Y(0):.1f}"/>'
     svg = (f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="Bar chart: {esc(title)} by quarter, '
            f'{sum(1 for f in qs if f.value is not None)} of {len(qs)} quarters have data">{g}{base}{marks}</svg>')
-    twin = _table(["Quarter", "Value", "Source"], rows, f"{title} (INR)")
+    twin = _table(["Quarter", "Value", "Source"], rows, f"{title} (INR)", num=(1,))
     return _card(ident, title, "Quarterly, in rupees. A gap means the source returned no figure for that quarter.", svg, twin)
 
 
 def _hbars(rows: list[tuple[str, float | None, str, str, str | None]], lo: float, hi: float, fmt, zero_line: float | None = None) -> str:
     """rows: (label, value|None, tip, note_if_none, fact_id). Horizontal bars, <= 24px thick."""
-    L, R, rowh = 130, 90, 34
+    W = HALF
+    L, R, rowh = 112, 84, 34
     H = rowh * len(rows) + 8
     X = lambda v: L + (v - lo) / (hi - lo) * (W - L - R)
     out = ""
@@ -348,7 +352,7 @@ def _score_card(sc: dict | None) -> str:
         rows.append(("overall", None, "", f"abstain: {r.reason}", None))
     inner = _hbars(rows, 0, 100, lambda v: f"{v:.0f}", zero_line=50)
     tr = [[a, "n/a" if v is None else f"{v:.1f}", (n if v is None else "")] for a, v, _, n, _ in rows]
-    twin = _table(["Factor", "Score", "Note"], tr, f"config {r.config_hash}; {sc['n']} companies in the pool")
+    twin = _table(["Factor", "Score", "Note"], tr, f"config {r.config_hash}; {sc['n']} companies in the pool", num=(1,))
     sub = (f"Percentile rank among {sc['n']} companies in the pool ({sc.get('pool_label') or sc.get('pool')}). "
            "It orders companies inside this pool; it is not absolute quality.")
     return _card("chart-scores", "Score inside the comparison pool", sub, inner, twin)
@@ -377,6 +381,7 @@ def _peer_card(sc: dict | None, metric: str, target: str) -> str:
     if cmp_ is None or cmp_.status != "ok":
         why = (cmp_.reason if cmp_ else ((sc or {}).get("peers").unavailable_reason if (sc or {}).get("peers") else "no peer comparison"))
         return _card(ident, title, "Peers are chosen by rule from the pool.", f'<p class="empty">Unavailable: {esc(why)}</p>')
+    W = HALF
     L, R, H = 30, 30, 120
     vals = [v for _, v in cmp_.peer_values] + [cmp_.peer_median] + ([cmp_.target_value] if cmp_.target_value is not None else [])
     lo, hi = min(vals), max(vals)
@@ -403,7 +408,7 @@ def _peer_card(sc: dict | None, metric: str, target: str) -> str:
     rows = [[tk, f"{v:.3g}"] for tk, v in cmp_.peer_values] + [[f"median ({cmp_.n} peers)", f"{cmp_.peer_median:.3g}"],
                                                                 [target, f"{cmp_.target_value:.3g}" if cmp_.target_value is not None else "n/a"]]
     return _card(ident, title, f"Grey dots are peers; the blue dot is {target}. {prem} Peers with a P/E above 75 are left out of the median.",
-                 svg, _table(["Company", "Value"], rows))
+                 svg, _table(["Company", "Value"], rows, num=(1,)))
 
 
 def _segment_cards(facts: list[Fact], ctx: _Ctx) -> str:
@@ -419,7 +424,7 @@ def _segment_cards(facts: list[Fact], ctx: _Ctx) -> str:
         lo = min(0.0, min(v for _, v, *_ in rows))
         hi = max(v for _, v, *_ in rows)
         svg = _hbars(rows, lo, hi * 1.05, lambda v: f"₹{v:,.0f} cr", zero_line=0 if lo < 0 else None)
-        twin = _table(["Segment", "₹ crore"], [[r[0], f"{r[1]:,.0f}"] for r in rows])
+        twin = _table(["Segment", "₹ crore"], [[r[0], f"{r[1]:,.0f}"] for r in rows], num=(1,))
         out += _card(f"chart-seg-{'revenue' if kind.endswith('revenue') else 'result'}", title,
                      f"{fs_[0].fiscal_label}, {fs_[0].basis.value}; from the official filing.", svg, twin)
     return out
@@ -464,7 +469,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
         g = scorecard["peers"]
         peer_note = ('<p class="sub">Peers picked by rule: ' + esc("; ".join(
             f"{p.ticker} ({'same industry' if p.tier == 1 else 'same sector'}, {p.size_ratio:.2f}x size)" for p in g.picks))
-            + (" " + esc(" ".join(g.notes)) if g.notes else "") + "</p>")
+            + (". " + esc("; ".join(g.notes)) if g.notes else "") + "</p>")
     seg = _segment_cards(facts, ctx)
 
     bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified)]
@@ -476,7 +481,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
                  f"{f.source}:{f.source_field or ''}", str(f.retrieved_at.date())] for fid, f in ctx.used.items()]
     sources = (f'<section class="card" id="sources"><h2>Sources for plotted figures</h2>'
                f'<p class="sub">Every bar carries a fact id (data-fact). This table maps each id to its source.</p>'
-               f'{_table(["Fact id", "Metric", "Period", "Value", "Source", "Retrieved"], src_rows)}</section>')
+               f'{_table(["Fact id", "Metric", "Period", "Value", "Source", "Retrieved"], src_rows, num=(3,))}</section>')
 
     prof = ""
     if profile is not None:

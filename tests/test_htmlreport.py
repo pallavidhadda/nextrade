@@ -168,3 +168,23 @@ def test_segment_charts_only_with_a_filing(report, tmp_path):
 
 def test_page_has_title_viewport_and_stat_tiles(report):
     assert "<title>" in report and 'name="viewport"' in report and 'class="tile"' in report
+
+
+def test_half_width_cards_use_a_narrower_canvas_so_text_stays_readable(report):
+    for ident in ("chart-q-net_income", "chart-scores", "chart-seg-revenue"):
+        assert 'viewBox="0 0 520 ' in section(report, ident), ident
+    assert 'viewBox="0 0 760 ' in section(report, "chart-price")
+
+
+def test_text_columns_are_left_aligned_and_numbers_right_aligned(report):
+    dq = section(report, "data-quality")
+    assert '<td class="">ebitda</td>' in dq or "<td>ebitda</td>" in dq
+    assert not re.search(r'<td class="num">appears to be EBIT', dq)          # reason text is not right-aligned
+    q = section(report, "chart-q-net_income")
+    assert re.search(r'<td class="num">₹20,946 cr</td>', q)
+
+
+def test_every_table_is_in_a_horizontal_scroll_wrapper_and_peer_notes_are_separated(report):
+    assert report.count("<table") == report.count('<div class="tablewrap"><table')
+    assert "overflow-x:auto" in report
+    assert "; sector-level peers" in report or "coarse comparison" not in report

@@ -23,7 +23,7 @@ A public portfolio project: enter an NSE/BSE ticker, get a profile-aware researc
 | 3 | DONE 2026-10-26: Investor profile (user sets horizon; presets drive weights; simple/pro view) | S | none |
 | 4 | DONE 2026-10-26: Factor scoring + 9-point checklist + bad-data tests (sector-relative groups and bank metric set partly deferred) | M | 2, 3 |
 | 5 | IN PROGRESS: Peer groups (deterministic tiers: industry then sector, size band, positive P/E gate, median with not-meaningful cap) and relative valuation table | M | 1 (done) |
-| 5b | Visual HTML report: price vs Nifty 50, drawdown, quarterly bars with visible gaps, score and checklist strips, segment bars, peer dot plot; terminal sparklines. Use the dataviz skill; only computed numbers | M | 4, 5 |
+| 5b | DONE 2026-10-26 (v1): Visual HTML report: price vs Nifty 50, drawdown, quarterly bars with visible gaps, score and checklist strips, segment bars, peer dot plot; terminal sparklines. Use the dataviz skill; only computed numbers | M | 4, 5 |
 | 6 | Thesis/evidence layer (claims typed fact/inference/hypothesis, invalidation triggers) | M | 4 |
 | 7 | One cached LLM call that explains the numbers (token budget enforced) | S | 6 |
 | 8 | Backtest and scorecard (out of sample, costs, benchmark) | L | 2; fundamentals history is thin (about 5 quarters), so first version is price-based only |
