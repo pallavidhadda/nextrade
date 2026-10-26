@@ -197,3 +197,40 @@ def facts_from_nse_filing(path: Path, retrieved_at: datetime | None = None) -> F
     if not facts:
         raise ValueError("not an NSE results page: no financial rows recognised")
     return FactSet(entity=entity, facts=facts, retrieved_at=now)
+
+
+def merge_filings(filings: list[FactSet]) -> tuple[FactSet, list[str]]:
+    """Combine several parsed results pages. For one company and period, the latest filing (by its filing date, then input
+    order) is the current version. If a figure differs from an earlier version, the current figure is marked restated, the
+    earlier one is kept as a superseded 'stale' fact, and a note cites both filing dates. Identical figures are not flagged."""
+    if not filings:
+        raise ValueError("no filings given")
+    syms = {f.entity.nse_symbol.value for f in filings}
+    if len(syms) > 1:
+        raise ValueError(f"filings are for different companies: {', '.join(sorted(syms))}")
+    groups: dict[tuple, list[tuple[int, FactSet]]] = {}
+    for i, fs in enumerate(filings):
+        if not fs.facts:
+            continue
+        key = (fs.facts[0].period_end, fs.facts[0].period_type, fs.facts[0].basis)
+        groups.setdefault(key, []).append((i, fs))
+    facts: list[Fact] = []
+    notes: list[str] = []
+    for key, versions in groups.items():
+        versions.sort(key=lambda v: (v[1].facts[0].available_from or date.min, v[0]))
+        current = {f.metric: f for f in versions[-1][1].facts}
+        changed: dict[str, Fact] = {}
+        for _, old_fs in versions[:-1]:
+            for old in old_fs.facts:
+                new = current.get(old.metric)
+                if new is None or old.value == new.value:
+                    continue
+                changed[old.metric] = new
+                facts.append(old.model_copy(update={"source": SOURCE + "_superseded", "status": Status.stale,
+                    "reason": f"superseded by the filing dated {new.available_from}",
+                    "fact_id": Fact.compute_id(old.entity_key, old.metric, old.period_end, str(old.period_type.value), SOURCE + "_superseded")}))
+                notes.append(f"restatement: {old.metric} {old.fiscal_label}: {old.value} (filing dated {old.available_from or 'unknown date'}) -> "
+                             f"{new.value} (filing dated {new.available_from or 'unknown date'}); both versions are kept")
+        for m, f in current.items():
+            facts.append(f.model_copy(update={"restated": "yes"}) if m in changed else f)
+    return filings[-1].model_copy(update={"facts": facts}), notes

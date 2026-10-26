@@ -21,7 +21,8 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p = argparse.ArgumentParser(prog="indiafacts", description="Source-linked facts for an NSE/BSE ticker.")
     p.add_argument("ticker", help="e.g. RELIANCE.NS")
     p.add_argument("--as-of", type=date.fromisoformat, default=None, help="YYYY-MM-DD")
-    p.add_argument("--filing", type=Path, default=None, help="saved NSE results page (.html/.mhtml) for official figures")
+    p.add_argument("--filing", type=Path, action="append", default=None,
+                   help="saved NSE results page (.html/.mhtml); repeat it for other quarters or a revised filing")
     p.add_argument("--symbol-changes", type=Path, default=None, help="NSE symbolchange.csv (default ~/.indiafacts/symbolchange.csv)")
     p.add_argument("--no-prices", action="store_true", help="skip price-history metrics")
     p.add_argument("--profile", type=Path, default=None, help="profile JSON (default ~/.indiafacts/profile.json)")

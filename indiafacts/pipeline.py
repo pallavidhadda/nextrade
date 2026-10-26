@@ -7,7 +7,7 @@ from pathlib import Path
 from indiafacts.analysis import add_gaps, check_ebitda, cross_check, growth_yoy, margin_latest, prefer_sources, reconcile_price, ttm
 from indiafacts.availability import filter_as_of
 from indiafacts.models import AvailabilityKind, Entity, Fact, FactSet, Identifier, PeriodType, Status
-from indiafacts.nsefiling import facts_from_nse_filing
+from indiafacts.nsefiling import facts_from_nse_filing, merge_filings
 from indiafacts.pricemetrics import price_metrics
 from indiafacts.prices import YfinancePriceClient, chart_data, load_series
 from indiafacts.tej import TejStore, TejUnavailable, isin_for, price_affecting_dates, symbol_changes_from_history
@@ -37,19 +37,25 @@ def _merge_entity(entity: Entity, filing: Entity) -> Entity:
 
 
 def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=time.sleep,
-                  filing_path: Path | None = None, symbol_changes: Path | None = None,
+                  filing_path: Path | list[Path] | None = None, symbol_changes: Path | None = None,
                   prices: bool = False, price_client=None, benchmark: str = "^NSEI",
                   tej: bool = False, tej_store: TejStore | None = None) -> FactSet:
     """Resolve identity, fetch, flag gaps, optionally merge an official NSE filing, then append computed facts."""
     notices: list[str] = []
     store = (tej_store or TejStore()) if tej else None
     ticker, loaded, tej_hist = _resolve_identity(ticker, symbol_changes, notices, store)
-    filing = facts_from_nse_filing(filing_path) if filing_path else None
+    paths = [] if not filing_path else (list(filing_path) if isinstance(filing_path, (list, tuple)) else [filing_path])
+    parsed = [facts_from_nse_filing(p) for p in paths]
     entity = Entity.from_ticker(ticker)
-    if filing and entity.ticker.split(".")[0] != filing.entity.nse_symbol.value:
-        raise ValueError(f"filing is for {filing.entity.nse_symbol.value}, not {entity.ticker}")
+    for pf in parsed:
+        if entity.ticker.split(".")[0] != pf.entity.nse_symbol.value:
+            raise ValueError(f"filing is for {pf.entity.nse_symbol.value}, not {entity.ticker}")
+    filing = None
+    if parsed:
+        filing, merge_notes = merge_filings(parsed)
+        notices.extend(merge_notes)
     filing_dates = {f.period_end: f.available_from for f in filing.facts
-                    if f.availability_kind == AvailabilityKind.filed and f.available_from} if filing else None
+                    if f.source == "nse_filing" and f.availability_kind == AvailabilityKind.filed and f.available_from} if filing else None
 
     fs = add_gaps(fetch_facts(ticker, as_of=as_of, client=client, sleep=sleep, filing_dates=filing_dates))
     if fs.entity.resolution != "resolved":

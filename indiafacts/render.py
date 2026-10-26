@@ -75,7 +75,7 @@ def render_table(facts: Sequence[Fact], refs: _Refs | None = None) -> str:
             raise TypeError(f"render_table accepts only Fact objects, got {type(f).__name__}")
     own = refs is None
     refs = refs or _Refs()
-    qs = prefer_sources([f for f in facts if f.period_type == PeriodType.Q and f.source != "computed"])
+    qs = prefer_sources([f for f in facts if f.period_type == PeriodType.Q and f.source != "computed" and f.status != Status.stale])
     ends = sorted({f.period_end for f in qs}, reverse=True)
     labels = {f.period_end: f.fiscal_label or fiscal_label(f.period_end, "Q") for f in qs}
     metrics = sorted({f.metric for f in qs})
