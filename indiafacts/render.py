@@ -193,7 +193,14 @@ def _explanation_block(ex, digest) -> list[str]:
         use = f"cached response: 0 new tokens (saved in {u['in']}, out {u['out']})"
     else:
         use = f"LLM call: in {u['in']}, out {u['out']}" + (" (estimated)" if u.get("estimated") else "")
-    lines.append(f"tokens: digest ~{digest.est_tokens} estimated tokens; {use}")
+    if u:
+        from indiafacts.digest import est_tokens
+        from indiafacts.llm import SYSTEM_PROMPT
+
+        ins = est_tokens(SYSTEM_PROMPT)
+        lines.append(f"tokens: prompt ~{ins + digest.est_tokens} estimated tokens (instructions ~{ins} + digest ~{digest.est_tokens}); {use}")
+    else:
+        lines.append(f"tokens: digest ~{digest.est_tokens} estimated tokens; {use}")
     return lines
 
 

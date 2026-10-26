@@ -88,3 +88,12 @@ def test_explanation_text_is_html_escaped(tmp_path, capsys):
                 client=FakeClient(stmt=QUARTERLY, info=INFO2), sleep=lambda s: None, price_client=prices_for(SYMS))
     page = out_file.read_text(encoding="utf-8")
     assert code == 0 and "<script>alert(1)</script>" not in page
+
+
+def test_token_line_counts_the_instructions_as_well_as_the_digest(tmp_path, capsys):
+    code, out, err = run(tmp_path, capsys, "--explain", "--llm", "gemini", llm=AdaptiveLLM())
+    line = next(l for l in out.splitlines() if l.startswith("tokens:"))
+    m = re.search(r"prompt ~(\d+) estimated tokens \(instructions ~(\d+) \+ digest ~(\d+)\)", line)
+    assert code == 0 and m and int(m.group(1)) == int(m.group(2)) + int(m.group(3)) and int(m.group(2)) > 150
+    code, out2, _ = run(tmp_path, capsys, "--explain")                     # template: no prompt is sent at all
+    assert "no LLM call" in out2 and "prompt ~" not in out2

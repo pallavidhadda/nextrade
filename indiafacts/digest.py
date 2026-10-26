@@ -1,5 +1,5 @@
 """Compact, deterministic digest of a report for narration. Every line has a short id (F1..) that maps to a fact id
-or a score/check/peer label. Gaps and unavailable items are always included. Token counts are estimates (chars / 4)."""
+or a score/check/peer label. Gaps and unavailable items are always included. Token counts are estimates (chars / 2.8, calibrated on live calls)."""
 from __future__ import annotations
 
 import hashlib
@@ -19,7 +19,9 @@ _CTRL = re.compile(r"[\x00-\x1f\x7f]+")
 
 
 def est_tokens(text: str) -> int:
-    return math.ceil(len(text) / 4)
+    """Estimate, not a tokenizer. chars/4 undercounted this digit- and symbol-heavy text by about 30%: two live Gemini calls
+    (2026-10-26) took 1,144 and 1,174 prompt tokens for about 3.2k characters, i.e. about 2.8 characters per token."""
+    return math.ceil(len(text) / 2.8)
 
 
 def clean(s, n: int = 60) -> str:
