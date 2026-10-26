@@ -39,17 +39,28 @@ def _merge_entity(entity: Entity, filing: Entity) -> Entity:
 def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=time.sleep,
                   filing_path: Path | list[Path] | None = None, symbol_changes: Path | None = None,
                   prices: bool = False, price_client=None, benchmark: str = "^NSEI",
-                  tej: bool = False, tej_store: TejStore | None = None) -> FactSet:
+                  tej: bool = False, tej_store: TejStore | None = None, skip_other_filings: bool = False) -> FactSet:
     """Resolve identity, fetch, flag gaps, optionally merge an official NSE filing, then append computed facts."""
     notices: list[str] = []
     store = (tej_store or TejStore()) if tej else None
     ticker, loaded, tej_hist = _resolve_identity(ticker, symbol_changes, notices, store)
     paths = [] if not filing_path else (list(filing_path) if isinstance(filing_path, (list, tuple)) else [filing_path])
-    parsed = [facts_from_nse_filing(p) for p in paths]
     entity = Entity.from_ticker(ticker)
-    for pf in parsed:
+    parsed = []
+    for p in paths:
+        try:
+            pf = facts_from_nse_filing(p)
+        except ValueError as exc:
+            if not skip_other_filings:
+                raise
+            notices.append(f"skipped filing {Path(p).name}: {exc}")
+            continue
         if entity.ticker.split(".")[0] != pf.entity.nse_symbol.value:
+            if skip_other_filings:
+                notices.append(f"skipped filing {Path(p).name}: it is for {pf.entity.nse_symbol.value}, not {entity.ticker}")
+                continue
             raise ValueError(f"filing is for {pf.entity.nse_symbol.value}, not {entity.ticker}")
+        parsed.append(pf)
     filing = None
     if parsed:
         filing, merge_notes = merge_filings(parsed)

@@ -37,6 +37,8 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--view", choices=["simple", "pro"], help="override the view chosen by experience")
     p.add_argument("--score", action="store_true", help="rank against a comparison pool (default: built-in pool of 30)")
     p.add_argument("--universe", default=None, help="file with one ticker per line, or tej / tej:N for the top-N liquid names; implies --score")
+    p.add_argument("--filings-dir", type=Path, default=None,
+                   help="folder of saved NSE results pages; every page for this company is used (others are skipped with a notice)")
     p.add_argument("--labels", type=Path, default=None, help="NSE index CSV used only for industry labels and ISINs")
     p.add_argument("--explain", action="store_true", help="add an evidence-linked plain-English explanation (deterministic template by default)")
     p.add_argument("--llm", choices=["gemini", "openai", "anthropic"], default=None, help="let an LLM narrate the digest (needs a key in the environment); implies --explain")
@@ -57,7 +59,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         return 2
     try:
         fs = build_factset(args.ticker, as_of=args.as_of, client=client, sleep=sleep,
-                           filing_path=args.filing, symbol_changes=args.symbol_changes,
+                           filing_path=_filing_paths(args), skip_other_filings=bool(args.filings_dir), symbol_changes=args.symbol_changes,
                            prices=not args.no_prices, price_client=price_client,
                            tej=not args.no_tej, tej_store=tej_store)
     except AmbiguousSymbol as exc:
@@ -193,3 +195,12 @@ def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -
             "result": results.get(target), "n": len(universe), "failed": failed, "pool": label,
             "checklist": checklist(fs), "checklist_summary": summarize(checklist(fs)), "target_fs": tgt,
             "config_overdue": cfg.overdue, "default_pool": args.universe is None, "pool_label": label}
+
+
+def _filing_paths(args) -> list[Path] | None:
+    paths = list(args.filing or [])
+    if args.filings_dir:
+        if not args.filings_dir.is_dir():
+            raise ValueError(f"filings folder not found: {args.filings_dir}")
+        paths += sorted(p for p in args.filings_dir.iterdir() if p.suffix.lower() in (".html", ".htm", ".mhtml", ".mht"))
+    return paths or None

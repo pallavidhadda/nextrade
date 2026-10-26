@@ -81,3 +81,25 @@ def test_rs6_cli_accepts_filing_twice_and_prints_the_restatement(files, capsys):
                 client=FakeClient(stmt=QUARTERLY, info=INFO), sleep=lambda s: None)
     out = capsys.readouterr().out
     assert code == 0 and "restatement: net_income" in out and "190000000000" in out
+
+
+def test_rs7_filings_dir_loads_every_saved_page_for_the_company_and_skips_the_rest(files, tmp_path, capsys):
+    d = tmp_path / "filings"
+    d.mkdir()
+    for k in ("orig", "rev", "prior"):
+        (d / f"{k}.html").write_text(files[k].read_text(encoding="utf-8"), encoding="utf-8")
+    (d / "tcs.html").write_text(HTML.replace("RELIANCE", "TCS"), encoding="utf-8")
+    (d / "notes.html").write_text("<html><body>not a results page</body></html>", encoding="utf-8")
+    (d / "readme.txt").write_text("ignored")
+    code = main(["RELIANCE.NS", "--no-prices", "--no-tej", "--no-remember", "--filings-dir", str(d)],
+                client=FakeClient(stmt=QUARTERLY, info=INFO), sleep=lambda s: None)
+    out = capsys.readouterr().out
+    assert code == 0 and "restatement: net_income" in out
+    assert "skipped filing tcs.html" in out and "skipped filing notes.html" in out and "readme.txt" not in out
+    assert "net_income_yoy" in out
+
+
+def test_rs8_empty_or_missing_filings_dir_is_a_clear_message(tmp_path, capsys):
+    code = main(["RELIANCE.NS", "--no-prices", "--no-tej", "--no-remember", "--filings-dir", str(tmp_path / "nope")],
+                client=FakeClient(stmt=QUARTERLY, info=INFO), sleep=lambda s: None)
+    assert code == 2 and "filings folder not found" in capsys.readouterr().err
