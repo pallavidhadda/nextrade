@@ -16,7 +16,7 @@ from typing import Callable, Literal
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from indiafacts.render import DISCLAIMER
 
@@ -41,6 +41,12 @@ class AnalyzeRequest(BaseModel):
         if not TICKER.match(v) or v.startswith("-"):
             raise ValueError("ticker must look like RELIANCE or RELIANCE.NS")
         return v
+
+
+class ValidateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    raw: str = Field(max_length=20000)
+    model: str | None = Field(default=None, max_length=80)
 
 
 def subprocess_runner(opts: dict, progress: Callable[[str], None]) -> dict:
@@ -128,6 +134,24 @@ def create_app(runner: Runner = subprocess_runner, max_running: int = 2) -> Fast
         if not j:
             raise HTTPException(404, "unknown job")
         return {k: j[k] for k in ("status", "progress", "summary", "error") if k in j}
+
+    @app.post("/api/jobs/{job_id}/validate")
+    def validate(job_id: str, req: ValidateRequest):
+        """Check a model's answer against the stored digest. The caller's own model produced it; no key ever reaches us."""
+        from indiafacts.digest import Digest
+        from indiafacts.llm import validate_llm_output
+
+        j = jobs.get(job_id)
+        llm = (j or {}).get("summary", {}).get("llm") if j and j["status"] == "done" else None
+        if not llm:
+            raise HTTPException(404, "no digest for this job")
+        d = Digest(text=llm["digest"], ids={i: "" for i in llm["ids"]}, items={}, by_key={}, est_tokens=0)
+        ex, reasons = validate_llm_output(req.raw, d)
+        if ex is None:
+            return {"explanation": None, "reasons": reasons}
+        body = ex.model_dump()
+        body["source"] = "your model"
+        return {"explanation": body, "reasons": reasons}
 
     @app.get("/api/jobs/{job_id}/report", response_class=HTMLResponse)
     def report(job_id: str):

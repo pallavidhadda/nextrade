@@ -124,10 +124,11 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     if args.json:
         import json as _json
 
+        from indiafacts.digest import build_digest as _build_digest
         from indiafacts.summary import summarize_run
 
         args.json.parent.mkdir(parents=True, exist_ok=True)
-        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes), default=str), encoding="utf-8")
+        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes, digest or _build_digest(fs, scorecard, profile)), default=str), encoding="utf-8")
     if args.html:
         from indiafacts.htmlreport import build_html
 

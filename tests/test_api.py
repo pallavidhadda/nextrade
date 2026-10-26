@@ -73,3 +73,48 @@ def test_health_and_disclaimer_header():
     c = TestClient(create_app(fake_runner))
     r = c.get("/api/health")
     assert r.json()["ok"] is True and "Not financial" in r.json()["disclaimer"]
+
+
+def _runner_with_digest(opts, progress):
+    text = "F1 net profit 100 crore\nF2 pe ratio 20.5"
+    return {"summary": {"ticker": opts["ticker"], "llm": {"system": "s", "user": "DIGEST:\n" + text, "max_tokens": 700, "ids": ["F1", "F2"], "digest": text}},
+            "html": "<html></html>"}
+
+
+def _job(c):
+    job = c.post("/api/analyze", json={"ticker": "TCS.NS"}).json()["job_id"]
+    wait(c, job)
+    return job
+
+
+GOOD = '{"summary":"Profit is 100 crore and P/E 20.5.","uncertainty":"Some data is missing.","claims":[{"type":"fact","text":"Net profit is 100 crore.","ids":["F1"]},{"type":"fact","text":"The P/E is 20.5.","ids":["F2"]}]}'
+
+
+def test_validate_accepts_good_output_without_any_key():
+    c = TestClient(create_app(_runner_with_digest))
+    job = _job(c)
+    r = c.post(f"/api/jobs/{job}/validate", json={"raw": GOOD, "model": "my-model"})
+    assert r.status_code == 200 and len(r.json()["explanation"]["claims"]) == 2
+    assert r.json()["explanation"]["source"] == "your model"
+
+
+def test_validate_rejects_unknown_ids_and_advice():
+    c = TestClient(create_app(_runner_with_digest))
+    job = _job(c)
+    bad = GOOD.replace('"ids":["F1"]', '"ids":["F99"]').replace("The P/E is 20.5.", "You should buy at 20.5.")
+    r = c.post(f"/api/jobs/{job}/validate", json={"raw": bad})
+    assert r.json()["explanation"] is None and r.json()["reasons"]
+
+
+def test_validate_limits_size_and_unknown_job():
+    c = TestClient(create_app(_runner_with_digest))
+    job = _job(c)
+    assert c.post(f"/api/jobs/{job}/validate", json={"raw": "x" * 30000}).status_code == 422
+    assert c.post("/api/jobs/nope/validate", json={"raw": GOOD}).status_code == 404
+
+
+def test_server_never_logs_or_returns_request_secrets(caplog):
+    c = TestClient(create_app(_runner_with_digest))
+    job = _job(c)
+    r = c.post(f"/api/jobs/{job}/validate", json={"raw": GOOD}, headers={"x-api-key": "SECRET123", "authorization": "Bearer SECRET123"})
+    assert "SECRET123" not in r.text and "SECRET123" not in caplog.text

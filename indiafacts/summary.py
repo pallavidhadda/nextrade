@@ -11,7 +11,18 @@ def _val(f):
     return None if f.value is None else float(f.value)
 
 
-def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, changes=None) -> dict:
+def _pool_name(sc: dict) -> str | None:
+    label = sc.get("pool_label") or sc.get("pool")
+    if not label:
+        return None
+    if sc.get("default_pool"):
+        return f"the built-in pool of {sc.get('n')} large companies"
+    if str(label).lower().endswith((".txt", ".csv")):
+        return f"your list of {sc.get('n')} companies"
+    return str(label)
+
+
+def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, changes=None, digest=None) -> dict:
     e = fs.entity
     gaps = [{"metric": f.metric, "period": str(f.period_end), "status": f.status.value, "reason": f.reason}
             for f in fs.facts if f.status in (Status.gap, Status.unavailable)]
@@ -20,7 +31,7 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
     if scorecard and scorecard.get("result") is not None:
         r = scorecard["result"]
         score = {"status": r.status, "overall": r.overall, "rank": r.rank, "n": scorecard.get("n"),
-                 "reason": r.reason, "pool": scorecard.get("pool_label"), "flags": list(r.flags),
+                 "reason": r.reason, "pool": _pool_name(scorecard), "flags": list(r.flags),
                  "factors": {k: {"score": v.score, "coverage": v.coverage, "reason": v.reason} for k, v in r.factors.items()}}
         checklist = [{"label": c.label, "result": c.result, "display": c.display, "threshold": c.threshold, "reason": c.reason}
                      for c in scorecard["checklist"]]
@@ -36,9 +47,15 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
         ex = {"source": explanation.source, "summary": explanation.summary, "uncertainty": explanation.uncertainty,
               "claims": [{"type": c.type, "text": c.text, "ids": c.ids} for c in explanation.claims],
               "triggers": [{"text": t.text, "ids": t.ids} for t in explanation.triggers], "usage": explanation.usage}
+    llm = None
+    if digest is not None:
+        from indiafacts.llm import build_prompt
+
+        system, user = build_prompt(digest)
+        llm = {"system": system, "user": user, "max_tokens": 700, "ids": sorted(digest.ids, key=lambda i: int(i[1:])), "digest": digest.text}
     return {"ticker": e.ticker, "name": e.name, "sector": e.sector, "industry": e.industry,
             "isin": e.isin.value, "retrieved_at": fs.retrieved_at.isoformat(),
             "profile": {"horizon": profile.horizon, "risk": profile.effective_risk, "experience": profile.experience},
             "key_facts": key, "score": score, "checklist": checklist, "gaps": gaps,
             "notices": list(fs.notices), "changes": [str(c) for c in (changes or [])][:20],
-            "explanation": ex, "disclaimer": DISCLAIMER}
+            "explanation": ex, "llm": llm, "disclaimer": DISCLAIMER}
