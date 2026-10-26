@@ -2,6 +2,8 @@
 it, but only numbers and ids that exist in the digest survive validation."""
 from __future__ import annotations
 
+import re
+
 from pydantic import BaseModel
 
 from indiafacts.digest import Digest
@@ -38,6 +40,25 @@ def _text(d: Digest, key: str) -> str:
     return d.items[sid].text.split(" ", 2)[-1] if sid else ""
 
 
+def _value(d: Digest, key: str) -> str:
+    """The value part of a FACT/PRICE line: drops the metric name, the [source] tag and the 'unverified' suffix."""
+    sid = d.by_key.get(key)
+    if not sid:
+        return ""
+    body = d.items[sid].text.split(" ", 2)[-1]                  # drops "FACT <metric>" -> "<value...> [src]"
+    return re.sub(r"\s*\[[^\]]*\](\s+unverified)?$", "", body).strip()
+
+
+def _example(d: Digest) -> str:
+    for sid, it in d.items.items():
+        if it.group != "gaps":
+            continue
+        kind, _, rest = it.key.partition(":")
+        return {"gap": f"the {rest} gap", "unavailable": f"{rest} is unavailable", "unverified": f"{rest} is unverified",
+                "conflict": f"a conflict on {rest}"}.get(kind, it.text)
+    return ""
+
+
 def triggers(sc: dict | None, d: Digest) -> list[Trigger]:
     out: list[Trigger] = []
     for c in (sc or {}).get("checklist", []):
@@ -69,25 +90,31 @@ def template_explanation(d: Digest, sc: dict | None, fs=None) -> Explanation:
     if sc and sc.get("checklist"):
         known = [c for c in sc["checklist"] if c.result != "unavailable"]
         failed = [c for c in known if c.result == "fail"]
-        claims.append(Claim(type="fact", text=f"{sc['checklist_summary']} of the nine checklist tests"
+        passed = sum(1 for c in known if c.result == "pass")
+        na = len(sc["checklist"]) - len(known)
+        claims.append(Claim(type="fact", text=f"{passed} of {len(known)} checklist tests with data passed"
+                            + (f" ({na} unavailable)" if na else "")
                             + (f"; those it did not pass: {'; '.join(c.label.lower() for c in failed[:3])}." if failed else "."),
                             ids=_ids(d, *[f"check:{c.id}" for c in (failed[:3] or known[:1])])))
     if "fact:net_income" in d.by_key:
-        yoy = _text(d, "fact:net_income_yoy")
-        claims.append(Claim(type="fact", text="Latest quarter profit: " + _text(d, "fact:net_income")
-                            + (f"; change on a year earlier {yoy.split(' ')[-1].split('[')[0]}." if yoy else "."),
+        m = re.match(r"^(Q\d FY\d+) (.*)$", _value(d, "fact:net_income"))
+        yoy = _value(d, "fact:net_income_yoy")
+        claims.append(Claim(type="fact", text=(f"Profit for {m.group(1)} was {m.group(2)}" if m else "Latest quarter profit: " + _value(d, "fact:net_income"))
+                            + (f", a change of {yoy} on a year earlier." if yoy else "."),
                             ids=_ids(d, "fact:net_income", "fact:net_income_yoy")))
     if "fact:return_1y" in d.by_key:
-        rel = _text(d, "fact:relative_return_1y")
-        claims.append(Claim(type="fact", text="Price over the last year: " + _text(d, "fact:return_1y").replace("return_1y ", "")
-                            + (f", {rel.replace('relative_return_1y ', '')} against the Nifty 50." if rel else "."),
+        rel = _value(d, "fact:relative_return_1y")
+        claims.append(Claim(type="fact", text=f"Over the last year the price changed {_value(d, 'fact:return_1y')}"
+                            + (f", {rel} against the Nifty 50 price index." if rel else "."),
                             ids=_ids(d, "fact:return_1y", "fact:relative_return_1y")))
     if "peer:pe_ttm" in d.by_key:
-        claims.append(Claim(type="fact", text="Valuation against peers: " + _text(d, "peer:pe_ttm").replace("peer ", "") + ".",
+        pm = re.match(r"^PEER pe_ttm ([\d.]+) vs median ([\d.]+) \(([^,]+), n=(\d+)\)", d.items[d.by_key["peer:pe_ttm"]].text)
+        claims.append(Claim(type="fact", text=(f"Its P/E is {pm.group(1)} against a peer median of {pm.group(2)} "
+                                               f"({pm.group(3)}, {pm.group(4)} peers).") if pm else "Valuation against peers is available.",
                             ids=_ids(d, "peer:pe_ttm")))
     gaps = [i for i in d.items.values() if i.group == "gaps"]
     unc = (f"Data gaps: {len(gaps)} item(s) are missing, unavailable, unverified or in conflict"
-           + (f" (for example {gaps[0].text.split(':')[0].lower()})" if gaps else "")
+           + (f" (for example {_example(d)})" if gaps else "")
            + ". Scores are relative to the pool and are not forecasts; they say nothing about future returns.")
     claims = [c for c in claims if c.ids]
     return Explanation(source="template", summary=claims[0].text if claims else "No explanation could be built from the available data.",

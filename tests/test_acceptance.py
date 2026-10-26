@@ -118,3 +118,16 @@ def test_cli_peers_unavailable_reason_when_target_has_no_industry(capsys, tmp_pa
                 client=FakeClient(), sleep=lambda s: None)
     out = capsys.readouterr().out
     assert code == 0 and "no peer comparison" in out and "industry or sector unknown" in out
+
+
+def test_score_run_uses_the_just_fetched_target_not_a_cached_older_copy(capsys, tmp_path):
+    from tests.fixtures.reliance_quarterly import INFO, QUARTERLY
+
+    pool = _pool_file(tmp_path, 6)
+    for pe in (21.55, 30.0):
+        info = {**INFO, "sector": "Energy", "industry": "Refining", "trailingPE": pe}
+        main(["T0.NS", "--score", "--universe", str(pool), "--no-prices", "--no-tej"],
+             client=FakeClient(stmt=QUARTERLY, info=info), sleep=lambda s: None)
+        out = capsys.readouterr().out
+    peers = out.split("PEERS")[1].split("DATA QUALITY")[0]
+    assert "| pe_ttm | 30 |" in peers                                  # second run shows the fresh P/E, not the cached 21.55

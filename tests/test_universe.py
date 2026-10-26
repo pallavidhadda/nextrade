@@ -86,3 +86,15 @@ def test_cache_written_by_an_older_schema_is_rebuilt(tmp_path):
     calls.clear()
     build_universe(["A.NS"], b, tmp_path, now=NOW + timedelta(hours=1))
     assert calls == ["A.NS"]
+
+
+def test_fresh_target_overrides_a_cached_copy_and_refreshes_the_cache(tmp_path):
+    calls = []
+    old = mkfs("A.NS", {"pe_ttm": 10.0})
+    build_universe(["A.NS", "B.NS"], lambda t: (calls.append(t), old if t == "A.NS" else mkfs(t, {"pe_ttm": 11.0}))[1], tmp_path, now=NOW)
+    new = mkfs("A.NS", {"pe_ttm": 99.0})
+    calls.clear()
+    fs, failed = build_universe(["A.NS", "B.NS"], builder_factory(calls), tmp_path, now=NOW + timedelta(hours=1), fresh={"A.NS": new})
+    assert calls == [] and float(fs["A.NS"].facts[0].value) == 99.0          # A from fresh, B from cache, no builder call
+    again, _ = build_universe(["A.NS"], builder_factory(calls), tmp_path, now=NOW + timedelta(hours=2))
+    assert float(again["A.NS"].facts[0].value) == 99.0                       # cache now holds the fresh copy

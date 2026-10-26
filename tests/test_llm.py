@@ -159,3 +159,35 @@ def test_ex13_adapters_build_correct_requests_and_parse_responses(monkeypatch):
     assert seen["url"].endswith("/v1/messages") and seen["headers"]["x-api-key"] == "KEY3" and seen["body"]["system"] == "SYS"
     assert (r.text, r.input_tokens, r.output_tokens) == ("{}", 12, 7)
     assert OpenAICompatClient("m", None, "http://x/v1", post=post).headers().get("Authorization") is None   # local servers need no key
+
+
+def test_truncated_output_is_reported_as_cut_off_not_as_bad_json(digest, tmp_path):
+    d, sc, fs = digest
+
+    class Cut(FakeLLM):
+        def complete(self, system, user, max_tokens):
+            self.calls += 1
+            return LLMResult('{"summary": "x", "claims": [{"type": "fact", "te', 900, 700, finish="length")
+
+    out = explain(d, sc, fs, client=Cut(""), cache=LLMCache(tmp_path / "c"), log=TokenLog(tmp_path / "l.jsonl"))
+    assert out.source == "template" and any("cut off at the token limit" in n for n in out.notes)
+
+
+def test_adapters_report_finish_reasons_and_prompt_asks_for_short_output():
+    def post(url, headers, body, timeout=60):
+        return R[seen[0]]
+
+    seen = ["g"]
+    R = {"g": {"candidates": [{"finishReason": "MAX_TOKENS", "content": {"parts": [{"text": "{"}]}}], "usageMetadata": {}},
+         "o": {"choices": [{"finish_reason": "length", "message": {"content": "{"}}], "usage": {}},
+         "a": {"content": [{"type": "text", "text": "{"}], "stop_reason": "max_tokens", "usage": {}}}
+    assert GeminiClient("m", "k", post=post).complete("s", "u", 10).finish == "length"
+    seen[0] = "o"
+    assert OpenAICompatClient("m", None, "http://x/v1", post=post).complete("s", "u", 10).finish == "length"
+    seen[0] = "a"
+    assert AnthropicClient("m", "k", post=post).complete("s", "u", 10).finish == "length"
+    from indiafacts.llm import SYSTEM_PROMPT
+    import inspect
+
+    assert "at most 5 claims" in SYSTEM_PROMPT.lower() and "under 30 words" in SYSTEM_PROMPT
+    assert inspect.signature(explain).parameters["max_tokens"].default >= 700

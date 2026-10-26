@@ -80,7 +80,8 @@ def _safe(ticker: str) -> str:
 
 
 def build_universe(tickers: list[str], builder: Callable[[str], FactSet], cache_dir: Path | None = None,
-                   now: datetime | None = None, labels: dict | None = None) -> tuple[dict[str, FactSet], dict[str, str]]:
+                   now: datetime | None = None, labels: dict | None = None,
+                   fresh: dict[str, FactSet] | None = None) -> tuple[dict[str, FactSet], dict[str, str]]:
     """Returns (factsets, failures). A failing or unresolved ticker is reported, never fatal."""
     cache_dir = Path(cache_dir or default_cache_dir())
     now = now or datetime.now(timezone.utc)
@@ -89,8 +90,9 @@ def build_universe(tickers: list[str], builder: Callable[[str], FactSet], cache_
     failed: dict[str, str] = {}
     for t in tickers:
         path = cache_dir / f"{_safe(t)}.json"
-        fs = None
-        if path.exists():
+        fs = (fresh or {}).get(t)          # a just-fetched copy always beats the cache, and refreshes it
+        wrote = fs is not None
+        if fs is None and path.exists():
             try:
                 blob = json.loads(path.read_text(encoding="utf-8"))
                 if blob.get("schema") == CACHE_SCHEMA and now - datetime.fromisoformat(blob["fetched_at"]) < CACHE_MAX_AGE:
@@ -103,6 +105,8 @@ def build_universe(tickers: list[str], builder: Callable[[str], FactSet], cache_
             except Exception as exc:
                 failed[t] = f"{type(exc).__name__}: {exc}"
                 continue
+            wrote = True
+        if wrote:
             path.write_text(json.dumps({"schema": CACHE_SCHEMA, "fetched_at": now.isoformat(), "factset": json.loads(fs.model_dump_json())}),
                             encoding="utf-8")
         if fs.entity.resolution != "resolved":

@@ -95,3 +95,14 @@ def test_ex10_triggers_are_deterministic_with_thresholds_and_ids(inputs):
     assert len([t for t in t1 if "now" in t.text]) >= len(failed)
     assert all(t.ids and set(t.ids) <= set(d.ids) for t in t1)
     assert any("needs" in t.text.lower() or "at" in t.text for t in t1)
+
+
+def test_template_sentences_read_cleanly_with_numbers_and_no_source_tags(inputs):
+    fs, sc, prof = inputs
+    d = build_digest(fs, sc, prof)
+    ex = template_explanation(d, sc, fs)
+    texts = " ".join(c.text for c in ex.claims)
+    assert "[" not in texts and " ." not in texts and "()" not in texts
+    assert "-22.4%" in texts and "₹20,946 cr" in texts
+    assert re.search(r"\d of \d+ checklist tests", texts)
+    assert "Q2 FY26" in ex.uncertainty

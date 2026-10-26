@@ -159,7 +159,7 @@ def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -
         return build_factset(t, as_of=args.as_of, client=client, sleep=sleep, symbol_changes=args.symbol_changes,
                              prices=prices, price_client=memo, tej=not args.no_tej, tej_store=tej_store)
 
-    universe, failed = build_universe(tickers, builder, labels=labels)
+    universe, failed = build_universe(tickers, builder, labels=labels, fresh={target: fs})
     cfg = load_score_config(strict=False)
     results = score_universe(universe, weights_for(profile), cfg, args.as_of or date.today(), datetime.now(timezone.utc))
     tgt = universe.get(target, fs)
