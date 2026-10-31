@@ -7,5 +7,5 @@ COPY indiafacts ./indiafacts
 RUN uv sync --frozen --no-dev --extra api
 USER app
 ENV INDIAFACTS_TRUST_PROXY=1 HOME=/home/app
-EXPOSE 8000
-CMD ["/srv/.venv/bin/uvicorn", "indiafacts.api:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 10000
+CMD ["sh", "-c", "exec /srv/.venv/bin/uvicorn indiafacts.api:app --host 0.0.0.0 --port ${PORT:-10000}"]

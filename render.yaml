@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: nextrade-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: INDIAFACTS_TRUST_PROXY
+        value: "1"
+      - key: INDIAFACTS_POOL_SIZE
+        value: "12"
+      - key: INDIAFACTS_MAX_RUNNING
+        value: "1"
+      - key: INDIAFACTS_CORS
+        sync: false          # set to your Vercel web URL when you have one
+      - key: INDIAFACTS_MCP_HOSTS
+        sync: false          # set to the service host name (without https://) after the first deploy

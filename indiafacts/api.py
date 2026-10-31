@@ -89,7 +89,9 @@ def subprocess_runner(opts: dict, progress: Callable[[str], None]) -> dict:
         return {"summary": json.loads(out_json.read_text(encoding="utf-8")), "html": out_html.read_text(encoding="utf-8")}
 
 
-def create_app(runner: Runner = subprocess_runner, max_running: int = 2, per_minute: int = 6) -> FastAPI:
+def create_app(runner: Runner = subprocess_runner, max_running: int | None = None, per_minute: int = 6) -> FastAPI:
+    if max_running is None:
+        max_running = int(os.environ.get("INDIAFACTS_MAX_RUNNING", "2"))
     holder: dict = {}
 
     @asynccontextmanager
