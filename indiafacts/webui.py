@@ -1,0 +1,214 @@
+"""Pure helpers for the Streamlit app: validation, number formatting and HTML cards in the Furrow look.
+Every dynamic string is escaped. No keys, no user data kept. Education only; not financial, investment or trading advice."""
+from __future__ import annotations
+
+import html
+import threading
+import time
+
+from indiafacts.runner import TICKER, subprocess_runner
+from indiafacts.render import DISCLAIMER
+
+RUNNER = subprocess_runner                       # tests replace this
+SLOTS = threading.BoundedSemaphore(2)            # at most two analyses at once on a small free host
+CACHE: dict[str, tuple[float, dict]] = {}
+CACHE_SECONDS = 3600
+FACTORS = {"value": "Value", "quality": "Quality", "growth": "Growth", "momentum": "Momentum", "risk": "Risk"}
+LABELS = {"price": "Price", "market_cap": "Market value", "revenue": "Revenue, latest quarter", "net_income": "Net profit, latest quarter",
+          "eps_diluted": "Earnings per share", "pe_ttm": "Price to earnings", "pb": "Price to book", "roe": "Return on equity",
+          "debt_to_equity": "Debt to equity"}
+e = html.escape
+
+
+def valid_ticker(raw: str) -> str | None:
+    t = (raw or "").strip().upper()
+    return t if TICKER.match(t) and not t.startswith("-") else None
+
+
+def format_value(value, unit: str) -> str:
+    if value is None:
+        return "n/a"
+    if unit == "INR":
+        a = abs(value)
+        if a >= 1e12:
+            return f"₹{value / 1e12:.2f} lakh cr"
+        if a >= 1e7:
+            return f"₹{round(value / 1e7):,} cr"
+        return f"₹{value:,.2f}"
+    if unit == "INR_per_share":
+        return f"₹{value:,.2f}"
+    if unit == "percent":
+        return f"{value:.2f}%"
+    return f"{value:.2f}"
+
+
+def metric_label(m: str) -> str:
+    return LABELS.get(m, m.replace("_", " ").capitalize())
+
+
+def _card(title: str, note: str, body: str, notebook: bool = False) -> str:
+    cls = "entry notebook" if notebook else "entry"
+    return (f'<section class="{cls}"><header><h2>{e(title)}</h2><span class="note">{e(note)}</span></header>'
+            f'<div class="body">{body}</div></section>')
+
+
+def score_html(s: dict) -> str:
+    sc = s.get("score")
+    if not sc or sc.get("overall") is None:
+        return _card("Score inside the comparison pool", "0 to 100", f"<p>No score for this run{': ' + e(sc['reason']) if sc and sc.get('reason') else ''}.</p>", True)
+    rows = ""
+    for k, f in sc["factors"].items():
+        name = FACTORS.get(k, k.capitalize())
+        if f["score"] is None:
+            rows += f'<div class="factor"><span>{e(name)}</span><span class="na">Not scored: {e(f.get("reason") or "not enough data")}</span></div>'
+        else:
+            rows += (f'<div class="factor"><span>{e(name)}</span><div class="bar-track" role="img" aria-label="{e(name)} {f["score"]:.0f} of 100">'
+                     f'<div class="bar-fill" style="width:{max(2, f["score"]):.0f}%"></div></div><span class="num">{f["score"]:.0f}</span></div>')
+    body = (f'<p class="reading">{sc["overall"]:.1f}<small>of 100</small></p>'
+            f'<p class="rank">Rank {sc["rank"]} of {sc["n"]} in {e(sc.get("pool") or "the pool")}. It orders companies inside this pool and is not absolute quality.</p>'
+            f'<div class="factors">{rows}</div>')
+    return _card("Score inside the comparison pool", "0 to 100", body, True)
+
+
+def checklist_html(s: dict) -> str:
+    items = s.get("checklist") or []
+    if not items:
+        return _card("Nine-point checklist", "needs a score run", "<p>The checklist runs together with the score.</p>")
+    word = {"pass": "Pass", "fail": "Fail", "unavailable": "Unavailable"}
+    rows = ""
+    for c in items:
+        detail = f"{c['display']}, needs {c['threshold']}" if c.get("display") else c.get("reason", "")
+        rows += (f'<tr><td>{e(c["label"])}<span class="ids">{e(detail)}</span></td>'
+                 f'<td><span class="tag {e(c["result"])}">{word.get(c["result"], "")}</span></td></tr>')
+    passed = sum(1 for c in items if c["result"] == "pass")
+    body = f'<table><thead><tr><th>Test</th><th>Result</th></tr></thead><tbody>{rows}</tbody></table><p class="helper">Project-defined tests. Missing data shows as unavailable, never as a fail.</p>'
+    return _card("Nine-point checklist", f"{passed} passed", body)
+
+
+def facts_html(s: dict) -> str:
+    kf = s.get("key_facts") or []
+    if not kf:
+        return _card("Facts with their period and source", "latest available", "<p>No verified figures came back for this company.</p>")
+    rows = "".join(f'<tr><td>{e(metric_label(f["metric"]))}</td><td class="num">{e(format_value(f["value"], f["unit"]))}</td>'
+                   f'<td>{e(f["period"])}</td><td>{e(f["source"])}, basis {e(f["basis"])}</td></tr>' for f in kf)
+    return _card("Facts with their period and source", "latest available",
+                 f'<table><thead><tr><th>Measure</th><th class="num">Value</th><th>Period</th><th>Source</th></tr></thead><tbody>{rows}</tbody></table>')
+
+
+def explanation_html(s: dict) -> str:
+    ex = s.get("explanation")
+    if not ex:
+        return _card("In plain English", "", "<p>No explanation was produced for this run.</p>")
+    tag = {"fact": "Fact", "inference": "Inference", "hypothesis": "Hypothesis"}
+    claims = "".join(f'<li><span class="tag {e(c["type"])}">{tag.get(c["type"], "")}</span><span>{e(c["text"])}'
+                     f'<span class="ids">{e(", ".join(c["ids"]))}</span></span></li>' for c in ex["claims"])
+    unc = f'<p><strong>What is uncertain.</strong> {e(ex["uncertainty"])}</p>' if ex.get("uncertainty") else ""
+    note = "template, no model used" if ex["source"] == "template" else f"written by {ex['source']}"
+    return _card("In plain English", note, f'<p>{e(ex["summary"])}</p><ul class="claims">{claims}</ul>{unc}')
+
+
+def valuation_html(s: dict) -> str:
+    v = s.get("valuation")
+    if not v:
+        return ""
+    if not v["items"]:
+        return _card("What the price implies", "arithmetic, not a forecast", f'<p>Not available: {e(v.get("unavailable_reason") or "")}.</p>')
+    if v["method"] == "reverse_dcf_earnings":
+        grid: dict[str, dict[str, float | None]] = {}
+        for it in v["items"]:
+            parts = it["metric"].split("_")
+            if it["metric"].startswith("implied_growth") and len(parts) == 4:
+                grid.setdefault(parts[2][1:], {})[parts[3][1:]] = it["value"]
+        years = sorted({y for d in grid.values() for y in d}, key=int)
+        head = "".join(f'<th class="num">{e(y)} years</th>' for y in years)
+        rows = "".join(f'<tr><td>{e(r)}%</td>' + "".join(
+            f'<td class="num">{"n/a" if grid[r].get(y) is None else f"{grid[r][y]:.1f}% a year"}</td>' for y in years) + "</tr>"
+            for r in sorted(grid, key=int))
+        body = ('<p>Yearly earnings growth the current price would need to be explained, if earnings were fully distributable. '
+                'It says what is priced in, not what will happen.</p>'
+                f'<table><thead><tr><th>Discount rate</th>{head}</tr></thead><tbody>{rows}</tbody></table>')
+    else:
+        vals = " to ".join(f"{i['value']:.2f}" for i in v["items"] if i["metric"].startswith("justified_pb"))
+        body = f"<p>Price-to-book that the stated return on equity and assumptions would support: <span class=\"num\">{e(vals)}</span>.</p>"
+    return _card("What the price implies", "arithmetic, not a forecast", body + f'<p class="helper">{e(v["assumptions"])}</p>')
+
+
+def gaps_html(s: dict) -> str:
+    gaps = s.get("gaps") or []
+    if not gaps:
+        body = "<p>No missing periods or unavailable measures were found.</p>"
+    else:
+        rows = "".join(f'<tr><td>{e(metric_label(g["metric"]))}</td><td>{e(g["period"])}</td><td>{e(g["reason"])}</td></tr>' for g in gaps)
+        body = f'<table><thead><tr><th>Measure</th><th>Period</th><th>Why</th></tr></thead><tbody>{rows}</tbody></table>'
+    if s.get("notices"):
+        body += '<ul class="claims">' + "".join(f"<li style='grid-template-columns:1fr'>{e(n)}</li>" for n in s["notices"]) + "</ul>"
+    return _card("What could not be checked", f"{len(gaps)} items", body)
+
+
+def run_analysis(opts: dict, progress) -> dict:
+    """Cached for an hour per option set; at most two run at once."""
+    key = repr(sorted(opts.items()))
+    hit = CACHE.get(key)
+    if hit and time.time() - hit[0] < CACHE_SECONDS:
+        return hit[1]
+    if not SLOTS.acquire(timeout=1):
+        raise RuntimeError("The service is busy with other analyses; try again in a minute.")
+    try:
+        res = RUNNER(opts, progress)
+    finally:
+        SLOTS.release()
+    CACHE[key] = (time.time(), res)
+    return res
+
+
+CSS = """
+@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@600&family=Red+Hat+Text:wght@400;500&family=Red+Hat+Mono:wght@400;500&display=swap');
+:root { --paper: #f6f1e7; --paper2: #fffdf8; --paper3: #ece5d4; --ink: #1b1815; --ink2: #3a342d; --muted: #6b6258; --rule: #e0d8c6;
+  --accent: #f4793c; --accent-soft: #fbd9c4; --green: #2f6b45; --green-soft: #dcebdc; --grid: #e6dfcd; }
+html, body, .stApp, .stApp p, .stApp label, .stApp input, .stApp button, .stApp textarea, .stApp li, .stApp td, .stApp th { font-family: 'Red Hat Text', system-ui, sans-serif; }
+[data-testid="stIconMaterial"], .material-icons, span[class*="material"] { font-family: 'Material Symbols Rounded', 'Material Icons' !important; }
+.stApp { background: var(--paper); color: var(--ink); }
+#MainMenu, footer, header[data-testid="stHeader"] { visibility: hidden; height: 0; }
+.block-container { max-width: 1180px; padding-top: 1rem; }
+.bar { border-bottom: 1px solid var(--ink); padding: .6rem 0; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+.brand { font-family: 'Red Hat Display', sans-serif; font-weight: 600; font-size: 1.44rem; letter-spacing: -0.03em; }
+.bar a { color: var(--ink2); font-size: .875rem; font-weight: 500; }
+h1, .head h1 { font-family: 'Red Hat Display', sans-serif; font-weight: 600; letter-spacing: -0.035em; line-height: 1; }
+.hero h1 { font-size: clamp(2.1rem, 4.5vw, 3.2rem); max-width: 14ch; margin: 0; }
+.hero p.lead { color: var(--muted); max-width: 52ch; margin-top: 1rem; }
+.entry { border-radius: 14px; background: var(--paper2); box-shadow: 0 0 0 1px var(--ink), 0 24px 44px -20px rgba(27,24,21,.35); overflow: hidden; margin-bottom: 1.25rem; }
+.entry > header { background: var(--ink); color: var(--paper2); padding: .5rem 1rem; display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.entry > header h2 { font-family: 'Red Hat Display', sans-serif; font-size: 1rem; font-weight: 600; margin: 0; padding: 0; color: inherit; }
+.entry > header .note { font-size: .875rem; opacity: .78; }
+.entry .body { padding: 1rem; }
+.entry .body p { color: var(--ink); margin: 0 0 .5rem; }
+.notebook { background: linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 8px 8px, linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 8px 8px, var(--paper2); }
+.entry .body p.reading { font-family: 'Red Hat Display', sans-serif; font-weight: 600; font-size: clamp(3.4rem, 8vw, 5.4rem) !important; margin: 0 0 .5rem !important; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.entry .body p.reading small { font-size: 1.2rem; color: var(--muted); letter-spacing: 0; font-weight: 500; margin-left: .25rem; }
+.rank { color: var(--ink2); }
+.factors { border-top: 1px solid var(--ink); margin-top: 1rem; }
+.factor { display: grid; grid-template-columns: 7rem minmax(0,1fr) 3.5rem; gap: .75rem; align-items: center; padding: .5rem 0; border-bottom: 1px solid var(--rule); }
+.bar-track { height: 10px; background: var(--paper3); border-radius: 2px; overflow: hidden; } .bar-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+.num { font-family: 'Red Hat Mono', monospace; font-variant-numeric: tabular-nums; font-size: .875rem; text-align: right; white-space: nowrap; }
+.na { color: var(--muted); font-size: .875rem; grid-column: 2 / 4; }
+.entry table { width: 100%; border-collapse: collapse; border: 0 !important; }
+.entry th, .entry td { border-left: 0 !important; border-right: 0 !important; border-top: 0 !important; background: transparent !important; }
+.entry th { text-align: left; font-weight: 500; font-size: .875rem; color: var(--muted); padding: .5rem .5rem .5rem 0; border-bottom: 1px solid var(--ink); white-space: nowrap; }
+.entry td { padding: .5rem .5rem .5rem 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.entry td.num, .entry th.num { padding-right: 1rem; padding-left: .5rem; }
+.tag { display: inline-block; min-width: 5.5rem; text-align: center; padding: 0 .5rem; border-radius: 4px; border: 1px solid var(--rule); font-size: .875rem; font-weight: 500; }
+.tag.pass, .tag.fact { background: var(--green-soft); color: var(--green); border-color: var(--green); }
+.tag.fail, .tag.inference { background: var(--accent-soft); color: var(--ink); border-color: var(--accent); }
+.tag.unavailable, .tag.hypothesis { color: var(--muted); background: var(--paper3); }
+.claims { list-style: none; margin: .75rem 0 0; padding: 0; border-top: 1px solid var(--ink); }
+.claims li { display: grid; grid-template-columns: 6.5rem minmax(0,1fr); gap: .75rem; padding: .75rem 0; border-bottom: 1px solid var(--rule); align-items: start; }
+.ids { font-family: 'Red Hat Mono', monospace; font-size: .75rem; color: var(--muted); display: block; margin-top: 2px; overflow-wrap: anywhere; }
+.helper { color: var(--muted); font-size: .875rem; }
+.head { border-bottom: 2px solid var(--ink); padding-bottom: 1rem; margin-bottom: 1rem; } .head h1 { font-size: 2.07rem; margin: 0; } .head .sub { color: var(--muted); margin: .25rem 0 0; }
+.foot { border-top: 1px solid var(--ink); margin-top: 2rem; padding-top: 1rem; color: var(--muted); font-size: .875rem; max-width: 70ch; }
+div[data-testid="stButton"] button[kind="primary"], div[data-testid="stFormSubmitButton"] button { background: var(--accent); color: var(--ink); border: 1px solid #c75d25; border-radius: 6px; font-weight: 500; min-height: 48px; box-shadow: inset 0 1px 0 rgba(255,255,255,.3); }
+div[data-testid="stButton"] button { border-radius: 6px; min-height: 44px; font-weight: 500; }
+div[data-testid="stTextInput"] input { font-family: 'Red Hat Mono', monospace; background: var(--paper2); border-radius: 6px; min-height: 52px; }
+button[data-baseweb="tab"] { font-weight: 500; min-height: 44px; }
+@media (max-width: 640px) { .claims li { grid-template-columns: 1fr; } .factor { grid-template-columns: 5.5rem minmax(0,1fr) 3rem; } }
+"""

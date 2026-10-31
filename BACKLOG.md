@@ -164,3 +164,6 @@ Open: `claude plugin validate` says the directory requires a LICENSE file (or `l
 
 ## Valuation depth (started 2026-10-31)
 Done: sector-aware method choice, reverse DCF on trailing earnings (discount x years grid), justified P/B for banks (needs ROE). Next: EV/EBITDA vs peers, own-history percentile bands (needs multi-year filings), ROE from filings, banks' book value quality.
+
+## Raw XBRL samples received 2026-10-31 (samples/, git-ignored)
+`INDAS_104633_...xml` (Reliance standalone) and `INDAS_104634_...xml` (consolidated): filed 2024-04-22, Q4 FY2024 (quarter Jan-Mar 2024) with the full-year FY2023-24 in the same file; old `in-bse-fin` taxonomy (2020-03-31 entry point), contexts OneD (quarter) and FourD (year), ISIN-free but scrip code 500325, rounding Crores. Example values: consolidated FY24 revenue 9,144,720 crore, PBT 1,043,400 crore, profit 790,200 crore, EPS 102.90. Next: instance parser (contexts, dimensions, concept to metric map) and the FY2025-26 / FY2024-25 pages still needed from NSE.

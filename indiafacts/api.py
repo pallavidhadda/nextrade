@@ -20,11 +20,10 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from indiafacts.render import DISCLAIMER
+from indiafacts.runner import TICKER, Runner, subprocess_runner  # noqa: F401  (re-exported)
 
-TICKER = re.compile(r"^[A-Za-z0-9&\-]{1,20}(\.(NS|BO))?$")
 CACHE_SECONDS = 3600
 JOB_KEEP_SECONDS = 6 * 3600
-Runner = Callable[[dict, Callable[[str], None]], dict]
 
 
 class AnalyzeRequest(BaseModel):
@@ -52,41 +51,6 @@ class ValidateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     raw: str = Field(max_length=20000)
     model: str | None = Field(default=None, max_length=80)
-
-
-def subprocess_runner(opts: dict, progress: Callable[[str], None]) -> dict:
-    """Run the CLI in its own process (own stdout, own timeout); read its JSON and HTML outputs."""
-    with tempfile.TemporaryDirectory() as d:
-        out_json, out_html = Path(d) / "s.json", Path(d) / "r.html"
-        argv = [sys.executable, "-m", "indiafacts", opts["ticker"], "--score", "--explain", "--json", str(out_json), "--html", str(out_html)]
-        labels = os.environ.get("INDIAFACTS_LABELS")
-        if labels and Path(labels).exists():
-            argv += ["--universe", labels, "--sector-pool"]
-        if os.environ.get("INDIAFACTS_POOL_SIZE", "").isdigit():
-            argv += ["--pool-size", os.environ["INDIAFACTS_POOL_SIZE"]]                  # smaller pool: faster on a small free host
-        for flag, key in (("--horizon", "horizon"), ("--risk-tolerance", "risk_tolerance"),
-                          ("--risk-capacity", "risk_capacity"), ("--experience", "experience")):
-            if opts.get(key):
-                argv += [flag, opts[key]]
-        env = {k: v for k, v in os.environ.items() if not k.endswith("_API_KEY")}      # the analysis needs no keys
-        proc = subprocess.Popen(argv, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, env=env)
-        tail: list[str] = []
-        deadline = time.time() + 600
-        for line in proc.stderr:                                                       # type: ignore[union-attr]
-            line = line.strip()
-            if re.match(r"^\[\d+/\d+\]", line):
-                progress(line)
-            elif line:
-                tail = (tail + [line])[-3:]
-            if time.time() > deadline:
-                proc.kill()
-                raise TimeoutError("analysis took too long")
-        code = proc.wait()
-        if code != 0 or not out_json.exists():
-            raise ValueError(next((t[7:] for t in reversed(tail) if t.startswith("error: ")), "analysis failed"))
-        import json
-
-        return {"summary": json.loads(out_json.read_text(encoding="utf-8")), "html": out_html.read_text(encoding="utf-8")}
 
 
 def create_app(runner: Runner = subprocess_runner, max_running: int | None = None, per_minute: int = 6) -> FastAPI:
