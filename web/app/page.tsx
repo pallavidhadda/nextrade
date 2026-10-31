@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import ContourMap from "@/components/ContourMap";
 import ProfileChooser from "@/components/Profile";
 import OwnModelPanel from "@/components/OwnModel";
-import { Checklist, Explanation, Gaps, KeyFacts, Score } from "@/components/Result";
+import { Checklist, Explanation, Gaps, KeyFacts, Score, Valuation } from "@/components/Result";
 import { ApiError, poll, reportUrl, submit } from "@/lib/api";
 import type { Job, Profile, Summary } from "@/lib/types";
 
@@ -160,7 +160,7 @@ function ResultView({ s: base, jobId, tab, onTab, onNew }: { s: Summary; jobId: 
         <div style={{ marginTop: "var(--space-lg)", maxWidth: 900 }}><Gaps s={s} /></div>
       ) : (
         <div className="grid">
-          <div className="stack"><Score s={s} /><Checklist s={s} /></div>
+          <div className="stack"><Score s={s} /><Valuation s={s} /><Checklist s={s} /></div>
           <div className="stack"><Explanation s={s} /><OwnModelPanel jobId={jobId} summary={base} onExplanation={setOwn} /><KeyFacts s={s} /></div>
         </div>
       )}

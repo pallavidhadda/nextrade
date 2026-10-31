@@ -224,6 +224,38 @@ def _filings_block(filings) -> list[str]:
     return lines
 
 
+def _valuation_block(facts: Sequence[Fact], refs: _Refs) -> list[str]:
+    v = [f for f in facts if f.source == "computed:valuation"]
+    if not v:
+        return []
+    ok = [f for f in v if f.status == Status.ok]
+    out = ["", "WHAT THE PRICE IMPLIES (arithmetic under stated assumptions; not a forecast, a fair value or a target)"]
+    if not ok:
+        return out + [f"unavailable: {v[0].reason}"]
+    from indiafacts.valuation import load_valuation_params
+
+    p = load_valuation_params(strict=False)
+    if ok[0].metric.startswith("implied_growth"):
+        out.append(f"assumptions: discount rates {', '.join(f'{r:.0%}' for r in p['discount_rates'])}; explicit years {', '.join(map(str, p['horizons']))}; "
+                   f"terminal growth {p['terminal_growth']:.0%}; earnings-based; reviewed {p['reviewed_on']}, review by {p['review_by']}")
+    else:
+        out.append(f"assumptions: {ok[0].source_field}")
+    if ok[0].metric.startswith("implied_growth"):
+        out.append("annual earnings growth the current price would need to be explained, by discount rate and years (earnings treated as distributable):")
+        rows: dict[str, dict[int, Fact]] = {}
+        for f in ok:
+            rows.setdefault(f.metric.split("_")[2], {})[int(f.metric.split("_")[3][1:])] = f
+        years = sorted({y for d in rows.values() for y in d})
+        out += ["| discount rate | " + " | ".join(f"{y} years" for y in years) + " |", "|---|" + "---|" * len(years)]
+        for r in sorted(rows, key=lambda x: int(x[1:])):
+            out.append(f"| {r[1:]}% | " + " | ".join((f"{float(rows[r][y].value):.1f}% a year [{refs.ref(rows[r][y])}]" if y in rows[r] else "n/a") for y in years) + " |")
+    else:
+        lo = next(f for f in ok if f.metric == "justified_pb_low")
+        hi = next(f for f in ok if f.metric == "justified_pb_high")
+        out.append(f"price-to-book that the stated ROE and assumptions would support: {float(lo.value):.2f} to {float(hi.value):.2f} [{refs.ref(lo)}, {refs.ref(hi)}]")
+    return out
+
+
 def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is_default: bool = False,
            view: str = "pro", scorecard: dict | None = None, explanation=None, digest=None, changes=None, changes_note=None) -> str:
     e = factset.entity
@@ -251,7 +283,7 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
     parts += ["", "QUARTERLY (Yahoo; availability dates are deadline estimates)", render_table([f for f in facts if view == "pro" or not (f.metric in PRO_ONLY or f.metric.startswith("segment_"))], refs)]
 
     overview = [f for f in facts if f.period_type == PeriodType.point and f.status == Status.ok
-                and f.source != "computed"]
+                and not f.source.startswith("computed")]
     if overview:
         parts += ["", "OVERVIEW (live snapshot)"]
         parts += [f"{f.metric}: {_fmt(f)} [{refs.ref(f)}]" for f in overview]
@@ -282,9 +314,16 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
                 parts.append(f"{m}: {_cell(pf[m], refs)}")
         parts += [f"note: {pf[m].metric}: {pf[m].reason}" for m in pf if pf[m].status == Status.unverified][:1]
 
+    parts += _valuation_block(facts, refs)
+
     parts += ["", "Could not check"]
-    missing = [f for f in facts if f.status == Status.unavailable and f.period_type != PeriodType.Q]
-    parts += [f"- {f.metric}: {f.reason}" for f in missing] or ["- none"]
+    missing = [f for f in facts if f.status == Status.unavailable and f.period_type != PeriodType.Q and f.source != "computed:valuation"]
+    vmissing = [f for f in facts if f.status == Status.unavailable and f.source == "computed:valuation"]
+    parts += [f"- {f.metric}: {f.reason}" for f in missing]
+    if vmissing:
+        parts.append(f"- price-implied valuation: {vmissing[0].reason}")
+    if not missing and not vmissing:
+        parts.append("- none")
 
     pending = [f for f in factset.not_yet_public if f.period_type == PeriodType.Q]
     if pending:

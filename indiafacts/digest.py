@@ -77,7 +77,7 @@ PRICE_KEYS = ("return_1y", "relative_return_1y", "max_drawdown_3y", "pct_from_52
 def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int = DEFAULT_BUDGET) -> Digest:
     e = fs.entity
     groups: dict[str, list[Item]] = {"header": [], "gaps": [], "scores": [], "checklist": [], "facts": [], "price": [],
-                                     "peers": [], "notices": []}
+                                     "peers": [], "valuation": [], "notices": []}
     G = lambda g, key, ref, text: groups[g].append(Item(key, ref, text, g))
     G("header", "entity", "entity",
       f"ENTITY {clean(e.ticker)} | {clean(e.name)} | ISIN {clean(e.isin.value) or 'unavailable'} | sector {clean(e.sector) or 'unavailable'}")
@@ -94,7 +94,10 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
     for label, fl in sorted(gap_periods.items()):
         G("gaps", f"gap:{label}", fl[0].fact_id, f"GAP {label}: no figure for {', '.join(sorted({x.metric for x in fl})[:6])} "
                                                   f"({clean(fl[0].reason)})")
-    for f in sorted([f for f in facts if f.status == Status.unavailable and f.period_type != PeriodType.Q],
+    vun = [f for f in facts if f.source == "computed:valuation" and f.status == Status.unavailable]
+    if vun:
+        G("gaps", "unavailable:valuation", vun[0].fact_id, f"UNAVAILABLE price-implied valuation: {clean(vun[0].reason, 90)}")
+    for f in sorted([f for f in facts if f.status == Status.unavailable and f.period_type != PeriodType.Q and f.source != "computed:valuation"],
                     key=lambda f: f.metric)[:10]:
         G("gaps", f"unavailable:{f.metric}", f.fact_id, f"UNAVAILABLE {f.metric}: {clean(f.reason, 80)}")
     unver = sorted({(f.metric, f.reason) for f in facts if f.status == Status.unverified and not (f.source_field or "").startswith("series:")})
@@ -146,17 +149,35 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
                 prem = f"{c.premium:+.1%}" if c.premium is not None else "n/a"
                 G("peers", f"peer:{c.metric}", f"peer:{c.metric}",
                   f"PEER {c.metric} {c.target_value:.3g} vs median {c.peer_median:.3g} ({prem}, n={c.n})")
+    vok = [f for f in facts if f.source == "computed:valuation" and f.status == Status.ok]
+    ig = {}
+    for f in vok:
+        if f.metric.startswith("implied_growth"):
+            _, _, r, n = f.metric.split("_")
+            ig.setdefault(int(n[1:]), {})[int(r[1:])] = f
+    for n, d in sorted(ig.items()):
+        rs = sorted(d)
+        mid = d[rs[len(rs) // 2]]
+        vals = "/".join(f"{float(d[r].value):.1f}" for r in rs)
+        G("valuation", f"valuation:n{n}", mid.fact_id,
+          f"VALUATION price implies earnings growth {vals} % a year for {n} years at discount rates {'/'.join(str(r) for r in rs)} % "
+          f"(terminal growth 5 %; arithmetic under assumptions, not a forecast)")
+    lo = next((f for f in vok if f.metric == "justified_pb_low"), None)
+    hi = next((f for f in vok if f.metric == "justified_pb_high"), None)
+    if lo and hi:
+        G("valuation", "valuation:justified_pb", lo.fact_id,
+          f"VALUATION price-to-book supported by ROE and assumptions {float(lo.value):.2f} to {float(hi.value):.2f} (arithmetic, not a fair value)")
     for n in fs.notices[:3]:
         G("notices", f"notice:{len(groups['notices'])}", "notice", f"NOTICE {clean(n, 100)}")
 
     # shrink: drop whole groups from the lowest priority first; gaps and header are never dropped
-    order = ["notices", "peers", "price", "facts", "checklist", "scores"]
+    order = ["notices", "peers", "price", "valuation", "facts", "checklist", "scores"]
     dropped: list[str] = []
 
     def render() -> tuple[str, dict, dict, dict]:
         ids, items, by_key, lines = {}, {}, {}, []
         n = 0
-        for g in ("header", "scores", "checklist", "facts", "price", "peers", "gaps", "notices"):
+        for g in ("header", "scores", "checklist", "facts", "price", "peers", "valuation", "gaps", "notices"):
             for it in groups[g]:
                 if it.ref in ("entity", "profile", "notice"):
                     lines.append(it.text)

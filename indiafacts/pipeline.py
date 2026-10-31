@@ -126,7 +126,11 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
                 extra.append(cross_check(f, y))
     price_facts, price_notes, charts = _price_facts(fs.entity.ticker, as_of, prices, price_client, benchmark, notices,
                                             _tej_action_dates(store, tej_hist, fs.entity.ticker, as_of, prices, notices))
-    return fs.model_copy(update={"facts": facts + extra + price_facts, "not_yet_public": pending,
+    from indiafacts.valuation import valuation_facts
+
+    base_facts = facts + extra + price_facts
+    val_facts = valuation_facts(fs.model_copy(update={"facts": base_facts}), today=as_of or fs.retrieved_at.date(), now=fs.retrieved_at)
+    return fs.model_copy(update={"facts": base_facts + val_facts, "not_yet_public": pending,
                                  "notices": notices, "price_notes": price_notes,
                                  "charts": ({"price": charts} if charts else {})})
 

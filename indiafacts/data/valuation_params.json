@@ -1,0 +1,11 @@
+{
+  "note": "Assumptions for what-the-price-implies arithmetic. PROPOSALS by the project author, not evidence-based. They are shown beside every output. Not a forecast, not a fair value, not a target.",
+  "reviewed_on": "2026-10-31",
+  "review_by": "2027-04-30",
+  "discount_rates": [0.10, 0.12, 0.14],
+  "horizons": [5, 10],
+  "terminal_growth": 0.05,
+  "growth_search_range": [-0.30, 0.60],
+  "justified_pb": {"cost_of_equity": [0.11, 0.13], "growth": [0.04, 0.06]},
+  "financial_industry_words": ["bank", "finance", "insurance", "nbfc", "housing finance", "asset management", "capital markets"]
+}

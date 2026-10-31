@@ -158,3 +158,9 @@ Open: `claude plugin validate` says the directory requires a LICENSE file (or `l
 
 ## Backtest v1 (done 2026-10-26)
 `indiafacts/backtest.py`, spec `docs/2026-10-26-backtest-spec.md`, result `docs/2026-10-26-backtest-result.md`. Open: out-of-sample split fixed in advance, delisting returns from actions data, benchmark vs Nifty 50 TRI, symbol-chain stitching by ISIN, test the actual pool score (needs fundamentals history), plugin command, volatility-matched comparison.
+
+## Deploy to Render (decided 2026-10-31; do later, needs the user's Render login)
+`render.yaml` and `Dockerfile` are ready. Steps are in `docs/DEPLOY.md` and the chat of 2026-10-31: sign up with GitHub, New > Blueprint, pick the repo, apply, check `/api/health`, set `INDIAFACTS_MCP_HOSTS` and `INDIAFACTS_CORS`, put the URL in `.mcp.json` (copy `connector/mcp.json.example`), add the marketplace `pallavidhadda/nextrade` on claude.ai Customize > Plugins. Untested: the Docker build (no Docker on the dev Mac). Then Vercel: set `NEXT_PUBLIC_API_BASE`.
+
+## Valuation depth (started 2026-10-31)
+Done: sector-aware method choice, reverse DCF on trailing earnings (discount x years grid), justified P/B for banks (needs ROE). Next: EV/EBITDA vs peers, own-history percentile bands (needs multi-year filings), ROE from filings, banks' book value quality.

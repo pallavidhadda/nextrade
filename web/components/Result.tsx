@@ -125,3 +125,37 @@ export function Gaps({ s }: { s: Summary }) {
     </section>
   );
 }
+
+export function Valuation({ s }: { s: Summary }) {
+  const v = s.valuation;
+  if (!v) return null;
+  const grid: Record<string, Record<string, number | null>> = {};
+  for (const it of v.items) {
+    const m = it.metric.match(/^implied_growth_r(\d+)_n(\d+)$/);
+    if (m) (grid[m[1]] ??= {})[m[2]] = it.value;
+  }
+  const rates = Object.keys(grid).sort((a, b) => Number(a) - Number(b));
+  const years = Array.from(new Set(rates.flatMap((r) => Object.keys(grid[r])))).sort((a, b) => Number(a) - Number(b));
+  const pb = v.items.filter((i) => i.metric.startsWith("justified_pb"));
+  return (
+    <section className="entry" aria-labelledby="val-h">
+      <header><h2 id="val-h">What the price implies</h2><span className="note">arithmetic, not a forecast</span></header>
+      <div className="body">
+        {v.unavailable_reason && v.items.length === 0 ? <p>Not available: {v.unavailable_reason}.</p> : v.method === "reverse_dcf_earnings" ? (
+          <>
+            <p>Yearly earnings growth the current price would need to be explained, if earnings were fully distributable. It says what is priced in, not what will happen.</p>
+            <table style={{ marginTop: "var(--space-sm)" }}>
+              <thead><tr><th>Discount rate</th>{years.map((y) => <th className="num" key={y}>{y} years</th>)}</tr></thead>
+              <tbody>{rates.map((r) => (
+                <tr key={r}><td>{r}%</td>{years.map((y) => <td className="num" key={y}>{grid[r][y] == null ? "n/a" : `${grid[r][y]!.toFixed(1)}% a year`}</td>)}</tr>
+              ))}</tbody>
+            </table>
+          </>
+        ) : (
+          <p>Price-to-book that the stated return on equity and assumptions would support: <span className="num" style={{ textAlign: "left" }}>{pb.map((i) => i.value?.toFixed(2)).join(" to ")}</span>.</p>
+        )}
+        <p className="helper" style={{ marginTop: "var(--space-sm)" }}>{v.assumptions}</p>
+      </div>
+    </section>
+  );
+}

@@ -43,3 +43,14 @@ Ranks 1, 2, 4, 8, 10, 12 plus an honest "what this is not" page. Ranks 3, 5, 6, 
 
 ## 4. Risks
 Free data (Yahoo) is unofficial; label-based filing parser is fragile; NSE/TejHQ redistribution terms unverified; no independent review; no claim of predictive power is supported.
+
+## 5. Our edge and how to widen it (2026-10-31)
+**Edge today (defensible):** (1) provenance and stated gaps as the product, not a footnote; (2) India identity done properly (renames, demergers, filing-versus-vendor reconciliation, restatement notes); (3) near-zero model cost and private by design: the explanation can run in the user's own Claude, with their own key, or with no model; (4) "what the price implies" arithmetic instead of targets, which is both more educational and lower legal risk; (5) a channel competitors lack: install from the Claude Plugins page and use it inside the chat people already open.
+**Where we lose:** years of fundamentals, screens and alerts, polish, community, official-data depth.
+**Moves that would make us clearly better (ranked):**
+1. **Claim checker.** Paste any AI or social-media claim about an Indian stock ("Reliance EPS was 59.69") and get it verified against filings with sources. Nobody does this for India; it uses our provenance engine and needs official filings (rank 1 in the action list).
+2. **Official filings first.** Annual and quarterly NSE data with restatement tracking turns "free Yahoo with caveats" into the most auditable free source.
+3. **Expectations toolkit.** Reverse DCF (started), EV/EBITDA versus peers, own-history bands; each a grid of stated assumptions.
+4. **Beginner mode.** Plain definitions beside every number, what a gap means, why a score is pool-relative.
+5. **Open verified-facts dataset** (with licence checks) to attract contributors.
+6. **Honesty page** with backtest results, including the null ones.

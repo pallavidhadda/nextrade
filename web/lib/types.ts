@@ -18,6 +18,7 @@ export type Summary = {
     factors: Record<string, { score: number | null; coverage: number; reason: string }>;
   };
   checklist: Check[]; gaps: Gap[]; notices: string[]; changes: string[];
+  valuation: null | { method: "reverse_dcf_earnings" | "justified_pb"; assumptions: string; unavailable_reason: string | null; items: { metric: string; value: number | null; unit: string; fact_id: string }[] };
   explanation: null | { source: string; summary: string; uncertainty: string; claims: Claim[]; triggers: { text: string; ids: string[] }[]; usage: Record<string, number> };
   llm: null | { system: string; user: string; max_tokens: number; ids: string[]; digest: string };
   disclaimer: string;

@@ -42,6 +42,13 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
             f = latest[-1]
             key.append({"metric": m, "value": _val(f), "unit": f.unit, "period": f.fiscal_label or str(f.period_end),
                         "source": f.source, "basis": f.basis.value, "fact_id": f.fact_id})
+    vals = [f for f in fs.facts if f.source == "computed:valuation"]
+    valuation = None
+    if vals:
+        okv = [f for f in vals if f.status == Status.ok]
+        valuation = {"method": "justified_pb" if vals[0].metric.startswith("justified") else "reverse_dcf_earnings",
+                     "assumptions": (okv or vals)[0].source_field, "unavailable_reason": None if okv else vals[0].reason,
+                     "items": [{"metric": f.metric, "value": _val(f), "unit": f.unit, "fact_id": f.fact_id} for f in okv]}
     ex = None
     if explanation is not None:
         ex = {"source": explanation.source, "summary": explanation.summary, "uncertainty": explanation.uncertainty,
@@ -58,4 +65,4 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
             "profile": {"horizon": profile.horizon, "risk": profile.effective_risk, "experience": profile.experience},
             "key_facts": key, "score": score, "checklist": checklist, "gaps": gaps,
             "notices": list(fs.notices), "changes": [str(c) for c in (changes or [])][:20],
-            "explanation": ex, "llm": llm, "disclaimer": DISCLAIMER}
+            "valuation": valuation, "explanation": ex, "llm": llm, "disclaimer": DISCLAIMER}

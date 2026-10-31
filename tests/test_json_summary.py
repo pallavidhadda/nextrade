@@ -45,3 +45,14 @@ def test_pool_size_limits_the_comparison_pool(tmp_path, capsys):
     code, _, _ = run(tmp_path, capsys, "--pool-size", "2", "--json", str(out))
     d = json.loads(out.read_text())
     assert code == 0 and d["score"]["n"] <= 3
+
+
+def test_valuation_block_in_text_digest_and_json(tmp_path, capsys):
+    out = tmp_path / "s.json"
+    code, text, _ = run(tmp_path, capsys, "--explain", "--json", str(out))
+    d = json.loads(out.read_text())
+    assert d["valuation"]["method"] == "reverse_dcf_earnings" and len(d["valuation"]["items"]) == 6
+    assert "WHAT THE PRICE IMPLIES" in text and "not a forecast" in text
+    assert "VALUATION price implies earnings growth" in d["llm"]["digest"]
+    lowered = (text + d["llm"]["digest"]).lower()
+    assert "undervalued" not in lowered and "overvalued" not in lowered and "fair value of" not in lowered
