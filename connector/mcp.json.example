@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "nextrade": { "type": "http", "url": "https://YOUR-API-HOST/mcp" }
+  }
+}

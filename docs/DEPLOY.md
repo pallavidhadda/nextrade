@@ -24,3 +24,14 @@ Add a persistent volume for `/home/app/.indiafacts` (price and TejHQ caches) to 
 **Web (Next.js):** import the `web/` folder in Vercel, set `NEXT_PUBLIC_API_BASE=https://YOUR-API-URL`. Commits are authored with the GitHub noreply address so the Hobby plan accepts them.
 
 **Before going public:** independent review, SEBI/legal wording check, NSE/TejHQ terms, rate limits tuned to the host.
+
+## Claude Plugins page (web, desktop, mobile chat): what it needs
+Official docs (claude.com/docs/plugins/overview, checked 2026-10-31): a plugin can bundle skills and remote connectors, and chat on the web, desktop and mobile loads them; shell commands and hooks do not run in chat, which is why the old slash commands only work in Claude Code. Users add a marketplace from **Customize > Plugins > Add > Add marketplace** with `pallavidhadda/nextrade`; a private GitHub repo works after connecting GitHub and installing the Claude GitHub App on it. Connectors are added from the plugin's Connectors tab. Custom connector limits by plan (for example one on the Free plan) come from third-party pages; verify.
+
+What is built: a remote MCP endpoint at `/mcp` on the same API (tools `start_analysis` and `get_analysis`, stateless, no keys, no user data stored) and the skill `skills/indian-stock-research`. Claude itself narrates the digest in the user's own chat, so we pay no model tokens.
+
+To switch it on after the API has a public HTTPS address:
+1. Set `INDIAFACTS_MCP_HOSTS=your-api-host` on the server (turns on host and origin checks) and optionally `INDIAFACTS_POOL_SIZE=12` for speed.
+2. `cp connector/mcp.json.example .mcp.json`, put the real URL (`https://your-api-host/mcp`) in it, commit, push.
+3. In claude.ai: Customize > Plugins > Add > Add marketplace > `pallavidhadda/nextrade`, install NexTrade, open its Connectors tab, add and connect the connector. Ask: "Analyse TCS.NS".
+Claude connects from Anthropic's cloud, so the API must be publicly reachable over valid HTTPS. That favours Render (HTTPS included) over a bare Oracle VM, which would need a domain and a certificate or a tunnel. A sleeping free host will make the first tool call slow or fail; the skill tells Claude to retry.

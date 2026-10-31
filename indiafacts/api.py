@@ -2,6 +2,7 @@
 Education only; not financial, investment or trading advice. No user-supplied paths ever reach the analysis."""
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 import os
 import re
 import subprocess
@@ -43,6 +44,10 @@ class AnalyzeRequest(BaseModel):
         return v
 
 
+class Busy(Exception):
+    pass
+
+
 class ValidateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     raw: str = Field(max_length=20000)
@@ -57,6 +62,8 @@ def subprocess_runner(opts: dict, progress: Callable[[str], None]) -> dict:
         labels = os.environ.get("INDIAFACTS_LABELS")
         if labels and Path(labels).exists():
             argv += ["--universe", labels, "--sector-pool"]
+        if os.environ.get("INDIAFACTS_POOL_SIZE", "").isdigit():
+            argv += ["--pool-size", os.environ["INDIAFACTS_POOL_SIZE"]]                  # smaller pool: faster on a small free host
         for flag, key in (("--horizon", "horizon"), ("--risk-tolerance", "risk_tolerance"),
                           ("--risk-capacity", "risk_capacity"), ("--experience", "experience")):
             if opts.get(key):
@@ -83,7 +90,18 @@ def subprocess_runner(opts: dict, progress: Callable[[str], None]) -> dict:
 
 
 def create_app(runner: Runner = subprocess_runner, max_running: int = 2, per_minute: int = 6) -> FastAPI:
-    app = FastAPI(title="NexTrade API", docs_url=None, redoc_url=None)
+    holder: dict = {}
+
+    @asynccontextmanager
+    async def lifespan(_app):
+        mcp = holder.get("mcp")
+        if mcp is None:
+            yield
+        else:
+            async with mcp.session_manager.run():
+                yield
+
+    app = FastAPI(title="NexTrade API", docs_url=None, redoc_url=None, lifespan=lifespan)
     origins = [o for o in os.environ.get("INDIAFACTS_CORS", "").split(",") if o]
     if origins:
         app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET", "POST"], allow_headers=["content-type"])
@@ -124,29 +142,37 @@ def create_app(runner: Runner = subprocess_runner, max_running: int = 2, per_min
     def health():
         return {"ok": True, "disclaimer": DISCLAIMER}
 
-    @app.post("/api/analyze", status_code=202)
-    def analyze(req: AnalyzeRequest, request: Request):
-        opts = req.model_dump()
+    def submit(opts: dict, who: str) -> tuple[str, bool]:
         key = repr(sorted(opts.items()))
         with lock:
             now = time.time()
             for k in [k for k, j in jobs.items() if now - j["created"] > JOB_KEEP_SECONDS]:
                 jobs.pop(k, None)
-            who, window = client_key(request), hits.setdefault(client_key(request), [])
+            window = hits.setdefault(who, [])
             window[:] = [t for t in window if now - t < 60]
             if len(window) >= per_minute:
-                raise HTTPException(429, "Too many requests from this connection; wait a minute.")
+                raise Busy("Too many requests from this connection; wait a minute.")
             window.append(now)
             hit = cache.get(key)
             if hit and now - hit[0] < CACHE_SECONDS and hit[1] in jobs and jobs[hit[1]]["status"] == "done":
-                return {"job_id": hit[1], "cached": True}
+                return hit[1], True
             if running() >= max_running:
-                raise HTTPException(429, "The service is busy with other analyses; try again in a minute.")
+                raise Busy("The service is busy with other analyses; try again in a minute.")
             job_id = uuid.uuid4().hex[:16]
             jobs[job_id] = {"status": "queued", "created": now, "progress": ""}
             cache[key] = (now, job_id)
         threading.Thread(target=work, args=(job_id, opts), daemon=True).start()
-        return {"job_id": job_id, "cached": False}
+        return job_id, False
+
+    app.state.submit, app.state.jobs = submit, jobs
+
+    @app.post("/api/analyze", status_code=202)
+    def analyze(req: AnalyzeRequest, request: Request):
+        try:
+            job_id, cached = submit(req.model_dump(), client_key(request))
+        except Busy as exc:
+            raise HTTPException(429, str(exc))
+        return {"job_id": job_id, "cached": cached}
 
     @app.get("/api/jobs/{job_id}")
     def job(job_id: str):
@@ -182,6 +208,12 @@ def create_app(runner: Runner = subprocess_runner, max_running: int = 2, per_min
             "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; font-src data:",
             "x-content-type-options": "nosniff"})
 
+    from indiafacts.mcp_tools import build_mcp
+
+    hosts = [h for h in os.environ.get("INDIAFACTS_MCP_HOSTS", "").split(",") if h]
+    mcp = build_mcp(app, hosts or None)
+    holder["mcp"] = mcp
+    app.mount("/", mcp.streamable_http_app())          # last, so /api routes win; the connector URL is /mcp
     return app
 
 
