@@ -38,3 +38,10 @@ def test_summary_carries_prompt_for_browser_side_llm(tmp_path, capsys):
     assert d["llm"]["user"].startswith("DIGEST:") and "JSON" in d["llm"]["system"]
     assert d["llm"]["max_tokens"] == 700 and d["llm"]["ids"] and d["llm"]["ids"][0].startswith("F")
     assert "KEY" not in json.dumps(d).upper().replace("KEY_FACTS", "")
+
+
+def test_pool_size_limits_the_comparison_pool(tmp_path, capsys):
+    out = tmp_path / "s.json"
+    code, _, _ = run(tmp_path, capsys, "--pool-size", "2", "--json", str(out))
+    d = json.loads(out.read_text())
+    assert code == 0 and d["score"]["n"] <= 3

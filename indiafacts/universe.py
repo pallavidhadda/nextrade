@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import csv
 import json
+import os
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -79,36 +81,59 @@ def _safe(ticker: str) -> str:
     return ticker.replace("&", "_AND_")
 
 
+DEFAULT_WORKERS = int(os.environ.get("INDIAFACTS_WORKERS", "4"))
+
+
 def build_universe(tickers: list[str], builder: Callable[[str], FactSet], cache_dir: Path | None = None,
                    now: datetime | None = None, labels: dict | None = None,
-                   fresh: dict[str, FactSet] | None = None) -> tuple[dict[str, FactSet], dict[str, str]]:
+                   fresh: dict[str, FactSet] | None = None, workers: int = DEFAULT_WORKERS) -> tuple[dict[str, FactSet], dict[str, str]]:
     """Returns (factsets, failures). A failing or unresolved ticker is reported, never fatal."""
     cache_dir = Path(cache_dir or default_cache_dir())
     now = now or datetime.now(timezone.utc)
     cache_dir.mkdir(parents=True, exist_ok=True)
     out: dict[str, FactSet] = {}
     failed: dict[str, str] = {}
+    have: dict[str, FactSet] = {}
+    wrote: set[str] = set()
+    todo: list[str] = []
     for t in tickers:
         path = cache_dir / f"{_safe(t)}.json"
         fs = (fresh or {}).get(t)          # a just-fetched copy always beats the cache, and refreshes it
-        wrote = fs is not None
-        if fs is None and path.exists():
+        if fs is not None:
+            wrote.add(t)
+        elif path.exists():
             try:
                 blob = json.loads(path.read_text(encoding="utf-8"))
                 if blob.get("schema") == CACHE_SCHEMA and now - datetime.fromisoformat(blob["fetched_at"]) < CACHE_MAX_AGE:
                     fs = FactSet.model_validate(blob["factset"])
             except (ValueError, KeyError, TypeError):
                 fs = None                                  # corrupt cache entry: rebuild
+        if fs is not None:
+            have[t] = fs
+        else:
+            todo.append(t)
+
+    def build(t: str):
+        try:
+            return t, builder(t), None
+        except Exception as exc:
+            return t, None, f"{type(exc).__name__}: {exc}"
+
+    if todo:
+        with ThreadPoolExecutor(max_workers=max(1, min(workers, len(todo)))) as pool:
+            for t, fs, err in pool.map(build, todo):           # results arrive in ticker order
+                if err:
+                    failed[t] = err
+                else:
+                    have[t] = fs
+                    wrote.add(t)
+    for t in tickers:
+        fs = have.get(t)
         if fs is None:
-            try:
-                fs = builder(t)
-            except Exception as exc:
-                failed[t] = f"{type(exc).__name__}: {exc}"
-                continue
-            wrote = True
-        if wrote:
-            path.write_text(json.dumps({"schema": CACHE_SCHEMA, "fetched_at": now.isoformat(), "factset": json.loads(fs.model_dump_json())}),
-                            encoding="utf-8")
+            continue
+        if t in wrote:
+            (cache_dir / f"{_safe(t)}.json").write_text(
+                json.dumps({"schema": CACHE_SCHEMA, "fetched_at": now.isoformat(), "factset": json.loads(fs.model_dump_json())}), encoding="utf-8")
         if fs.entity.resolution != "resolved":
             failed[t] = fs.entity.resolution_reason or "unresolved"
             continue

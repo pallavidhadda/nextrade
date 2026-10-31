@@ -106,7 +106,7 @@ def _profile_block(profile, is_default: bool, view: str) -> list[str]:
     if late:
         lines.append(f"warning: weight presets review overdue (review_by {late}); treat weights as stale")
     lines += [f"scoring weights for this horizon (preset proposal, not evidence-based): {w}",
-              "profile fit: not scored yet (scoring layer not built). Research only, not a recommendation."]
+              "the profile only changes how factors are weighted in the pool score; it is not a suitability assessment. Research only, not a recommendation."]
     return lines
 
 

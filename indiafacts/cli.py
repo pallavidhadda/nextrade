@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import threading
 import time
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -48,6 +49,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--digest", action="store_true", help="print only the compact evidence digest and narration rules (for Claude Code or any LLM; zero API tokens here)")
     p.add_argument("--changes-only", action="store_true", help="print only the what-changed block")
     p.add_argument("--sector-pool", action="store_true", help="with an NSE index CSV: compare only against the target's NSE industry group (faster, sector-relative scores)")
+    p.add_argument("--pool-size", type=int, default=None, help="use only the first N companies of the pool (plus the target): faster, a smaller comparison")
     p.add_argument("--json", type=Path, default=None, help="also write a compact JSON summary (used by the web app)")
     p.add_argument("--html", type=Path, default=None, help="also write a self-contained HTML report with charts")
     p.add_argument("--no-tej", action="store_true", help="do not use TejHQ open data (identity, corporate actions, universe)")
@@ -163,11 +165,16 @@ class _MemoPrices:
 
     def __init__(self, inner):
         self.inner, self.memo = inner, {}
+        self.lock = threading.Lock()
 
     def history(self, symbol):
-        if symbol not in self.memo:
-            self.memo[symbol] = self.inner.history(symbol)
-        return self.memo[symbol]
+        with self.lock:
+            hit = self.memo.get(symbol)
+        if hit is None:
+            hit = self.inner.history(symbol)
+            with self.lock:
+                self.memo.setdefault(symbol, hit)
+        return hit
 
 
 def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -> dict:
@@ -202,6 +209,8 @@ def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -
                 raise ValueError(f"{target} is not in the index file, so its industry group is unknown")
             tickers = [t for t in tickers if labels.get(t, {}).get("industry") == group]
             label = f"NSE industry group '{group}' (from {(args.labels or path).name})"
+    if getattr(args, "pool_size", None):
+        tickers = [t for t in tickers if t != target][: args.pool_size]
     if target not in tickers:
         tickers.append(target)
     prices = not args.no_prices

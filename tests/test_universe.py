@@ -98,3 +98,29 @@ def test_fresh_target_overrides_a_cached_copy_and_refreshes_the_cache(tmp_path):
     assert calls == [] and float(fs["A.NS"].facts[0].value) == 99.0          # A from fresh, B from cache, no builder call
     again, _ = build_universe(["A.NS"], builder_factory(calls), tmp_path, now=NOW + timedelta(hours=2))
     assert float(again["A.NS"].facts[0].value) == 99.0                       # cache now holds the fresh copy
+
+
+def test_builders_run_concurrently_and_keep_order(tmp_path):
+    import threading
+    import time
+
+    seen = {"max": 0, "now": 0}
+    lock = threading.Lock()
+    tickers = [f"T{i}.NS" for i in range(8)]
+
+    def builder(t):
+        with lock:
+            seen["now"] += 1
+            seen["max"] = max(seen["max"], seen["now"])
+        time.sleep(0.15)
+        with lock:
+            seen["now"] -= 1
+        if t == "T3.NS":
+            raise RuntimeError("boom")
+        return mkfs(t, {"pe_ttm": 10})
+
+    start = time.time()
+    out, failed = build_universe(tickers, builder, cache_dir=tmp_path, workers=4)
+    assert time.time() - start < 0.9 and seen["max"] >= 2
+    assert list(out) == [t for t in tickers if t != "T3.NS"]
+    assert "T3.NS" in failed and "RuntimeError" in failed["T3.NS"]
