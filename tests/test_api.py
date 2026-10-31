@@ -118,3 +118,21 @@ def test_server_never_logs_or_returns_request_secrets(caplog):
     job = _job(c)
     r = c.post(f"/api/jobs/{job}/validate", json={"raw": GOOD}, headers={"x-api-key": "SECRET123", "authorization": "Bearer SECRET123"})
     assert "SECRET123" not in r.text and "SECRET123" not in caplog.text
+
+
+def test_per_client_rate_limit():
+    c = TestClient(create_app(fake_runner, max_running=10, per_minute=3))
+    codes = [c.post("/api/analyze", json={"ticker": f"T{i}.NS"}).status_code for i in range(5)]
+    assert codes[:3] == [202, 202, 202] and codes[3:] == [429, 429]
+
+
+def test_forwarded_for_ignored_unless_trusted(monkeypatch):
+    c = TestClient(create_app(fake_runner, max_running=10, per_minute=1))
+    assert c.post("/api/analyze", json={"ticker": "A.NS"}, headers={"x-forwarded-for": "1.1.1.1"}).status_code == 202
+    assert c.post("/api/analyze", json={"ticker": "B.NS"}, headers={"x-forwarded-for": "2.2.2.2"}).status_code == 429
+
+
+def test_security_headers_on_every_response():
+    r = TestClient(create_app(fake_runner)).get("/api/health")
+    assert r.headers["x-content-type-options"] == "nosniff" and r.headers["referrer-policy"] == "no-referrer"
+    assert r.headers["cache-control"] == "no-store"

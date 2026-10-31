@@ -13,7 +13,7 @@ import uuid
 from pathlib import Path
 from typing import Callable, Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -82,12 +82,27 @@ def subprocess_runner(opts: dict, progress: Callable[[str], None]) -> dict:
         return {"summary": json.loads(out_json.read_text(encoding="utf-8")), "html": out_html.read_text(encoding="utf-8")}
 
 
-def create_app(runner: Runner = subprocess_runner, max_running: int = 2) -> FastAPI:
+def create_app(runner: Runner = subprocess_runner, max_running: int = 2, per_minute: int = 6) -> FastAPI:
     app = FastAPI(title="NexTrade API", docs_url=None, redoc_url=None)
     origins = [o for o in os.environ.get("INDIAFACTS_CORS", "").split(",") if o]
     if origins:
         app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET", "POST"], allow_headers=["content-type"])
     jobs: dict[str, dict] = {}
+    hits: dict[str, list[float]] = {}
+    trust_proxy = os.environ.get("INDIAFACTS_TRUST_PROXY") == "1"
+
+    @app.middleware("http")
+    async def headers(request: Request, call_next):
+        resp = await call_next(request)
+        resp.headers.setdefault("x-content-type-options", "nosniff")
+        resp.headers.setdefault("referrer-policy", "no-referrer")
+        resp.headers.setdefault("cache-control", "no-store")
+        return resp
+
+    def client_key(request: Request) -> str:
+        if trust_proxy and request.headers.get("x-forwarded-for"):
+            return request.headers["x-forwarded-for"].split(",")[0].strip()
+        return request.client.host if request.client else "?"
     cache: dict[str, tuple[float, str]] = {}
     lock = threading.Lock()
 
@@ -110,13 +125,18 @@ def create_app(runner: Runner = subprocess_runner, max_running: int = 2) -> Fast
         return {"ok": True, "disclaimer": DISCLAIMER}
 
     @app.post("/api/analyze", status_code=202)
-    def analyze(req: AnalyzeRequest):
+    def analyze(req: AnalyzeRequest, request: Request):
         opts = req.model_dump()
         key = repr(sorted(opts.items()))
         with lock:
             now = time.time()
             for k in [k for k, j in jobs.items() if now - j["created"] > JOB_KEEP_SECONDS]:
                 jobs.pop(k, None)
+            who, window = client_key(request), hits.setdefault(client_key(request), [])
+            window[:] = [t for t in window if now - t < 60]
+            if len(window) >= per_minute:
+                raise HTTPException(429, "Too many requests from this connection; wait a minute.")
+            window.append(now)
             hit = cache.get(key)
             if hit and now - hit[0] < CACHE_SECONDS and hit[1] in jobs and jobs[hit[1]]["status"] == "done":
                 return {"job_id": hit[1], "cached": True}

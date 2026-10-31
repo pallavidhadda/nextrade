@@ -1,0 +1,9 @@
+.venv
+.git
+TradingAgents
+samples
+reports
+web
+tests
+baseline_*.json
+.env
