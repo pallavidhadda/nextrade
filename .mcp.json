@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "nextrade": { "type": "http", "url": "https://nextrade-api-7z41.onrender.com/mcp" }
+  }
+}

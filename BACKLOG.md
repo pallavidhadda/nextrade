@@ -167,3 +167,6 @@ Done: sector-aware method choice, reverse DCF on trailing earnings (discount x y
 
 ## Raw XBRL samples received 2026-10-31 (samples/, git-ignored)
 `INDAS_104633_...xml` (Reliance standalone) and `INDAS_104634_...xml` (consolidated): filed 2024-04-22, Q4 FY2024 (quarter Jan-Mar 2024) with the full-year FY2023-24 in the same file; old `in-bse-fin` taxonomy (2020-03-31 entry point), contexts OneD (quarter) and FourD (year), ISIN-free but scrip code 500325, rounding Crores. Example values: consolidated FY24 revenue 9,144,720 crore, PBT 1,043,400 crore, profit 790,200 crore, EPS 102.90. Next: instance parser (contexts, dimensions, concept to metric map) and the FY2025-26 / FY2024-25 pages still needed from NSE.
+
+## Live API measured 2026-10-31 (https://nextrade-api-7z41.onrender.com, Render free, Singapore)
+`/api/health` and the MCP handshake pass (checked from the dev Mac). A real TCS.NS analysis with the default 30-company pool had reached only 16/30 after 490 s: about 30 s per company on the free CPU. The `INDIAFACTS_POOL_SIZE=12` setting from render.yaml was evidently not applied (progress counted /30). Actions: set `INDIAFACTS_POOL_SIZE` to 6 in the Render dashboard; speed work (TejHQ-based price metrics, cheaper per-company fetch, precomputed pool snapshot); show "waking up" in the UI.
