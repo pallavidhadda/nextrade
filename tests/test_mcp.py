@@ -68,7 +68,7 @@ def test_pending_job_says_to_wait_not_to_guess():
         return runner(opts, progress)
     with TestClient(create_app(slow)) as c:
         job = json.loads(text_of(call(c, "start_analysis", {"ticker": "INFY.NS"})))["job_id"]
-        out = text_of(call(c, "get_analysis", {"job_id": job}))
+        out = text_of(call(c, "get_analysis", {"job_id": job, "wait_seconds": 0}))
         assert "running" in out.lower() and "do not" in out.lower()
 
 
@@ -94,3 +94,28 @@ def test_without_a_token_the_connector_stays_open(monkeypatch):
     monkeypatch.delenv("INDIAFACTS_MCP_TOKEN", raising=False)
     with TestClient(create_app(runner)) as c:
         assert c.post("/mcp", json={"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}, headers=HEAD).status_code == 200
+
+
+def test_get_analysis_waits_for_the_job_instead_of_returning_instantly():
+    def slow(opts, progress):
+        time.sleep(0.8)
+        return runner(opts, progress)
+    with TestClient(create_app(slow)) as c:
+        job = json.loads(text_of(call(c, "start_analysis", {"ticker": "TCS.NS"})))["job_id"]
+        t0 = time.time()
+        out = text_of(call(c, "get_analysis", {"job_id": job, "wait_seconds": 10}))
+        assert "DIGEST" in out and 0.5 < time.time() - t0 < 5
+
+
+def test_get_analysis_returns_running_after_the_wait_and_caps_it():
+    def slower(opts, progress):
+        time.sleep(3)
+        return runner(opts, progress)
+    with TestClient(create_app(slower)) as c:
+        job = json.loads(text_of(call(c, "start_analysis", {"ticker": "INFY.NS"})))["job_id"]
+        t0 = time.time()
+        out = text_of(call(c, "get_analysis", {"job_id": job, "wait_seconds": 1}))
+        assert "running" in out.lower() and 0.8 < time.time() - t0 < 2.5
+        assert "again" in out.lower()
+        big = call(c, "get_analysis", {"job_id": job, "wait_seconds": 9999})
+        assert big.get("isError") or "wait_seconds" in text_of(big) or "running" in text_of(big).lower() or "DIGEST" in text_of(big)

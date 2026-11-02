@@ -2,12 +2,13 @@
 Claude explains the returned digest in the user's own session; nothing here calls a language model."""
 from __future__ import annotations
 
+import asyncio
 import json
-from typing import Literal
+from typing import Annotated, Literal
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
-from pydantic import ValidationError
+from pydantic import Field, ValidationError
 
 from indiafacts.llm import NARRATION_RULES
 from indiafacts.render import DISCLAIMER
@@ -45,15 +46,22 @@ def build_mcp(app, allowed_hosts: list[str] | None = None) -> FastMCP:
             raise ValueError(str(exc)) from exc
         return json.dumps({"job_id": job_id, "cached": cached, "next": "call get_analysis with this job_id in 15 to 20 seconds"})
 
-    @mcp.tool(description="Get the result of start_analysis. While running it says so (wait and call again; do not guess any figures). "
+    @mcp.tool(description="Get the result of start_analysis. The call waits on the server for up to wait_seconds (default 25) for the job to finish, "
+                          "so just call it again if it says running; do not guess any figures. "
                           "When done it returns an evidence digest with ids F1, F2... plus the narration rules to follow.")
-    def get_analysis(job_id: str) -> str:
-        j = app.state.jobs.get(job_id)
-        if not j:
-            return "Unknown or expired job_id. Call start_analysis again. Do not guess any figures."
+    async def get_analysis(job_id: str, wait_seconds: Annotated[int, Field(ge=0, le=40)] = 25) -> str:
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + wait_seconds
+        while True:
+            j = app.state.jobs.get(job_id)
+            if not j:
+                return "Unknown or expired job_id. Call start_analysis again. Do not guess any figures."
+            if j["status"] not in ("queued", "running") or loop.time() >= deadline:
+                break
+            await asyncio.sleep(1)
         if j["status"] in ("queued", "running"):
-            return (f"Status: running {j.get('progress', '')}. Wait 15 to 20 seconds and call get_analysis again. "
-                    "Do not guess or estimate any figures while waiting.")
+            return (f"Status: still running {j.get('progress', '')} after waiting {wait_seconds} seconds. Call get_analysis again with the same job_id "
+                    "(a first run can take up to 3 minutes). Do not guess or estimate any figures while waiting.")
         if j["status"] == "error":
             return f"The analysis failed: {j.get('error', 'unknown error')}. Tell the user; do not guess any figures."
         s = j["summary"]
