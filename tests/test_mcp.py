@@ -119,3 +119,35 @@ def test_get_analysis_returns_running_after_the_wait_and_caps_it():
         assert "again" in out.lower()
         big = call(c, "get_analysis", {"job_id": job, "wait_seconds": 9999})
         assert big.get("isError") or "wait_seconds" in text_of(big) or "running" in text_of(big).lower() or "DIGEST" in text_of(big)
+
+
+def _done_job(c, name="TCS.NS"):
+    job = json.loads(text_of(call(c, "start_analysis", {"ticker": name})))["job_id"]
+    for _ in range(100):
+        out = text_of(call(c, "get_analysis", {"job_id": job, "wait_seconds": 0}))
+        if "DIGEST" in out:
+            return job, out
+        time.sleep(0.02)
+    raise AssertionError(out)
+
+
+def test_default_result_asks_for_a_structured_full_report():
+    with TestClient(create_app(runner)) as c:
+        _, out = _done_job(c)
+        for section in ("1. Snapshot", "2. How it scores", "4. What the price implies", "8. Data gaps", "9. What would change the picture"):
+            assert section in out
+        assert "cite" in out.lower() and "Not financial" in out
+
+
+def test_brief_detail_keeps_the_short_rules():
+    with TestClient(create_app(runner)) as c:
+        job, _ = _done_job(c, "INFY.NS")
+        out = text_of(call(c, "get_analysis", {"job_id": job, "wait_seconds": 0, "detail": "brief"}))
+        assert "at most 5 short bullet points" in out and "1. Snapshot" not in out
+
+
+def test_report_link_is_added_when_a_public_url_is_configured(monkeypatch):
+    monkeypatch.setenv("INDIAFACTS_PUBLIC_URL", "https://example.test/")
+    with TestClient(create_app(runner)) as c:
+        job, out = _done_job(c)
+        assert f"https://example.test/api/jobs/{job}/report" in out and "interactive report" in out.lower()

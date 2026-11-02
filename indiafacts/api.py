@@ -61,7 +61,7 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
     holder: dict = {}
 
     def log(msg: str) -> None:
-        print(f"{datetime.now(timezone.utc).strftime('%H:%M:%S')} {msg}", flush=True)
+        print(f"{datetime.now(timezone.utc).strftime('%H:%M:%S')} {msg}", file=sys.stderr, flush=True)
 
     log(f"nextrade-api starting: pool_size={os.environ.get('INDIAFACTS_POOL_SIZE', 'default')} "
         f"workers={os.environ.get('INDIAFACTS_WORKERS', 'default')} max_running={max_running} nice={os.environ.get('INDIAFACTS_NICE', '10')}")

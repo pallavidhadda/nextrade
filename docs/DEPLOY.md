@@ -38,3 +38,6 @@ Claude connects from Anthropic's cloud, so the API must be publicly reachable ov
 
 ## Optional lock on the connector (recommended until public launch; full steps in docs/CONNECTOR_LOCK.md)
 Without a lock, anyone who knows `/mcp` can use the connector and spend the free server's CPU (the app also limits requests per minute and runs one analysis at a time). To lock it: in Render set `INDIAFACTS_MCP_TOKEN` to a long random string. Then in claude.ai Customize > Connectors > nextrade > Request headers add `Authorization` = `Bearer <the same string>`. `/api/health` stays open. Do not commit the token anywhere. To open the connector to everyone later, delete the variable.
+
+## Report link in chat results
+Set `INDIAFACTS_PUBLIC_URL` on Render to the service address (for example `https://nextrade-api-7z41.onrender.com`). Finished chat results then include a link to the interactive HTML report (charts and tables). Reports live in server memory for a few hours and vanish when the free server restarts.

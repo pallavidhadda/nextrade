@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 from typing import Annotated, Literal
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import Field, ValidationError
 
-from indiafacts.llm import NARRATION_RULES
+from indiafacts.llm import NARRATION_RULES, NARRATION_RULES_FULL
 from indiafacts.render import DISCLAIMER
 
 INSTRUCTIONS = (
@@ -48,8 +49,9 @@ def build_mcp(app, allowed_hosts: list[str] | None = None) -> FastMCP:
 
     @mcp.tool(description="Get the result of start_analysis. The call waits on the server for up to wait_seconds (default 25) for the job to finish, "
                           "so just call it again if it says running; do not guess any figures. "
-                          "When done it returns an evidence digest with ids F1, F2... plus the narration rules to follow.")
-    async def get_analysis(job_id: str, wait_seconds: Annotated[int, Field(ge=0, le=40)] = 25) -> str:
+                          "When done it returns an evidence digest with ids F1, F2... plus the narration rules to follow (detail=full gives a 9-section report; brief gives 5 bullets).")
+    async def get_analysis(job_id: str, wait_seconds: Annotated[int, Field(ge=0, le=40)] = 25,
+                           detail: Literal["full", "brief"] = "full") -> str:
         loop = asyncio.get_running_loop()
         deadline = loop.time() + wait_seconds
         while True:
@@ -66,6 +68,9 @@ def build_mcp(app, allowed_hosts: list[str] | None = None) -> FastMCP:
             return f"The analysis failed: {j.get('error', 'unknown error')}. Tell the user; do not guess any figures."
         s = j["summary"]
         gaps = "; ".join(f"{g['metric']} ({g['period']}): {g['reason']}" for g in s.get("gaps", [])[:12]) or "none found"
-        return (f"DIGEST for {s['ticker']}\n{s['llm']['digest']}\n\nData gaps: {gaps}\n\n{NARRATION_RULES}\n\n{DISCLAIMER}")
+        base = (os.environ.get("INDIAFACTS_PUBLIC_URL") or "").rstrip("/")
+        link = (f"\n\nFull interactive report (charts, tables; open in a browser): {base}/api/jobs/{job_id}/report" if base else "")
+        rules = NARRATION_RULES_FULL if detail == "full" else NARRATION_RULES
+        return (f"DIGEST for {s['ticker']}\n{s['llm']['digest']}\n\nData gaps: {gaps}\n\n{rules}{link}\n\n{DISCLAIMER}")
 
     return mcp
