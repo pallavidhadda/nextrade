@@ -232,6 +232,32 @@ def _debate_block(d) -> list[str]:
     return out
 
 
+def _levels_block(lv, panel) -> list[str]:
+    out = ["", "REFERENCE LEVELS AND RISK LENSES (arithmetic on past closes; not predictions, not price targets, not personal advice)"]
+    if lv.last_close is None:
+        return out + [f"unavailable: {lv.reason}"]
+    inr = lambda v: f"₹{v:,.2f}"
+    out.append(f"last close {inr(lv.last_close)}")
+    out += [f"support: {n} {inr(v)}" for n, v in lv.support] + [f"resistance: {n} {inr(v)}" for n, v in lv.resistance]
+    if lv.applies:
+        out.append(f"reference stop {inr(lv.stop)} ({lv.risk_pct:.1f}% below the last close)")
+        out += [f"reward-to-risk {r:g}R: {inr(t)}" for r, t in zip(lv.reward_risk, lv.targets)]
+        out += [f"note: {n}" for n in lv.notes]
+    else:
+        out.append(f"stop and reward-to-risk levels: not shown ({lv.reason})")
+    if panel is not None:
+        out.append("risk lenses (limits are proposals; the lens matching your profile is marked):")
+        for l in panel.lenses:
+            mark = " <- your profile" if l.name == panel.profile_lens else ""
+            if l.fits is None:
+                out.append(f"  {l.name}: not applied ({l.reason}){mark}")
+                continue
+            size = f"; position ceiling {l.max_position_pct:.1f}% of a portfolio" if l.max_position_pct is not None else ""
+            out.append(f"  {l.name}: {'within limits' if l.fits else 'breaches: ' + '; '.join(l.breaches)}{size}{mark}")
+        out += [f"  note: {n}" for n in panel.notes]
+    return out
+
+
 def _news_block(items) -> list[str]:
     out = ["", "RECENT HEADLINES (unverified third-party text; keyword hint only, not analysis)"]
     for n in items:
@@ -274,7 +300,7 @@ def _valuation_block(facts: Sequence[Fact], refs: _Refs) -> list[str]:
 
 def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is_default: bool = False,
            view: str = "pro", scorecard: dict | None = None, explanation=None, digest=None, changes=None, changes_note=None,
-           debate=None, news=None) -> str:
+           debate=None, news=None, levels=None, panel=None) -> str:
     e = factset.entity
     when = as_of or factset.retrieved_at.date()
     head = f"{e.ticker}  |  as of {when}  |  amounts in INR (₹ crore = 10^7)"
@@ -296,6 +322,7 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
              *(_scorecard_block(scorecard) if scorecard else []),
              *(_peers_block(scorecard, e.ticker) if scorecard else []),
              *(_debate_block(debate) if debate is not None else []),
+             *(_levels_block(levels, panel) if levels is not None else []),
              *(_news_block(news) if news else []),
              "", f"DATA QUALITY: {len(bad)} item(s) need attention (gaps, unavailable, conflicts, unverified)"]
 

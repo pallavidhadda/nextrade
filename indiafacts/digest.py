@@ -71,13 +71,14 @@ def _latest(facts: list[Fact], metric: str, quarterly: bool = False) -> Fact | N
 KEY_QUARTER = ("net_income", "revenue")
 KEY_POINT = ("net_income_yoy", "revenue_yoy", "net_margin_q", "pe_ttm", "pb", "roe", "debt_to_equity",
              "interest_service_coverage_ratio", "ebitda_derived")
-PRICE_KEYS = ("return_1y", "relative_return_1y", "max_drawdown_3y", "pct_from_52w_high", "volatility_1y", "beta_1y")
+PRICE_KEYS = ("return_1y", "relative_return_1y", "max_drawdown_3y", "pct_from_52w_high", "volatility_1y", "beta_1y", "rsi_14", "macd_hist")
 
 
-def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int = DEFAULT_BUDGET, news=None, debate=None) -> Digest:
+def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int = DEFAULT_BUDGET, news=None, debate=None,
+                 levels=None, panel=None) -> Digest:
     e = fs.entity
     groups: dict[str, list[Item]] = {"header": [], "gaps": [], "scores": [], "checklist": [], "facts": [], "price": [],
-                                     "peers": [], "valuation": [], "debate": [], "news": [], "notices": []}
+                                     "peers": [], "valuation": [], "debate": [], "levels": [], "news": [], "notices": []}
     G = lambda g, key, ref, text: groups[g].append(Item(key, ref, text, g))
     G("header", "entity", "entity",
       f"ENTITY {clean(e.ticker)} | {clean(e.name)} | ISIN {clean(e.isin.value) or 'unavailable'} | sector {clean(e.sector) or 'unavailable'}")
@@ -175,6 +176,24 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
         st = debate.stance
         G("debate", "debate:rating", "debate:rating",
           f"RATING educational: {st.label}, confidence {st.confidence} ({clean(st.reason, 150)}; transparent rule on the evidence, not a prediction or a personal recommendation)")
+    if levels is not None and levels.last_close is not None:
+        inr = lambda v: f"₹{v:,.0f}"
+        parts = [f"last close {inr(levels.last_close)}"]
+        if levels.support:
+            parts.append("support " + ", ".join(f"{n} {inr(v)}" for n, v in levels.support))
+        if levels.resistance:
+            parts.append("resistance " + ", ".join(f"{n} {inr(v)}" for n, v in levels.resistance))
+        if levels.applies:
+            parts.append(f"reference stop {inr(levels.stop)} ({levels.risk_pct:.1f}% below)")
+            parts.append("reward-to-risk levels " + ", ".join(f"{r:g}R {inr(t)}" for r, t in zip(levels.reward_risk, levels.targets)))
+        else:
+            parts.append(clean(levels.reason, 110))
+        G("levels", "levels:main", "levels:main", "LEVELS " + "; ".join(parts) + " (volatility arithmetic on past closes, not predictions or price targets)")
+    if panel is not None:
+        for l in panel.lenses:
+            what = ("not applied: " + clean(l.reason, 90)) if l.fits is None else ("within limits" if l.fits else "breaches: " + "; ".join(clean(b, 80) for b in l.breaches))
+            size = f"; position ceiling {l.max_position_pct:.1f}% of a portfolio" if l.max_position_pct is not None else ""
+            G("levels", f"risk:{l.name}", f"risk:{l.name}", f"RISK {l.name} lens{' (matches your profile)' if l.name == panel.profile_lens else ''}: {what}{size}")
     for i, n in enumerate(news or []):
         when = n.published.date().isoformat() if n.published else "undated"
         G("news", f"news:{i}", f"news:{i}",
@@ -183,13 +202,13 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
         G("notices", f"notice:{len(groups['notices'])}", "notice", f"NOTICE {clean(n, 100)}")
 
     # shrink: drop whole groups from the lowest priority first; gaps and header are never dropped
-    order = ["news", "notices", "peers", "price", "valuation", "facts", "checklist", "scores"]
+    order = ["news", "levels", "notices", "peers", "price", "valuation", "facts", "checklist", "scores"]
     dropped: list[str] = []
 
     def render() -> tuple[str, dict, dict, dict]:
         ids, items, by_key, lines = {}, {}, {}, []
         n = 0
-        for g in ("header", "scores", "checklist", "facts", "price", "peers", "valuation", "debate", "news", "gaps", "notices"):
+        for g in ("header", "scores", "checklist", "facts", "price", "peers", "valuation", "debate", "levels", "news", "gaps", "notices"):
             for it in groups[g]:
                 if it.ref in ("entity", "profile", "notice"):
                     lines.append(it.text)

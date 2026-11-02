@@ -148,6 +148,35 @@ def debate_html(s: dict) -> str:
     return _card("Bull case versus bear case", "educational", body)
 
 
+def levels_html(s: dict) -> str:
+    lv, rp = s.get("levels"), s.get("risk_panel")
+    if not lv or lv.get("last_close") is None:
+        return ""
+    inr = lambda v: f"₹{v:,.2f}"
+    rows = f"<tr><td>Last close</td><td class='num'>{inr(lv['last_close'])}</td></tr>"
+    rows += "".join(f"<tr><td>Support: {e(x['name'])}</td><td class='num'>{inr(x['price'])}</td></tr>" for x in lv["support"])
+    rows += "".join(f"<tr><td>Resistance: {e(x['name'])}</td><td class='num'>{inr(x['price'])}</td></tr>" for x in lv["resistance"])
+    if lv["applies"]:
+        rows += f"<tr><td>Reference stop ({lv['risk_pct']:.1f}% below)</td><td class='num'>{inr(lv['stop'])}</td></tr>"
+        rows += "".join(f"<tr><td>Reward-to-risk {t['r']:g}R</td><td class='num'>{inr(t['price'])}</td></tr>" for t in lv["targets"])
+    body = f"<table><thead><tr><th>Level</th><th class='num'>Price</th></tr></thead><tbody>{rows}</tbody></table>"
+    if not lv["applies"]:
+        body += f"<p class='helper'>Stop and reward-to-risk levels are not shown: {e(lv['reason'])}.</p>"
+    if rp:
+        lens = ""
+        for l in rp["lenses"]:
+            fit = "Not applied" if l["fits"] is None else "Within limits" if l["fits"] else "Breaches"
+            why = e(l["reason"]) if l["fits"] is None else e("; ".join(l["breaches"])) or "None"
+            size = "n/a" if l["max_position_pct"] is None else f"{l['max_position_pct']:.1f}%"
+            mark = " (your profile)" if l["name"] == rp["profile_lens"] else ""
+            lens += f"<tr><td>{e(l['name'].capitalize())}{mark}</td><td>{fit}</td><td>{why}</td><td class='num'>{size}</td></tr>"
+        body += ("<h3 style='margin-top:1rem'>Risk lenses</h3><table><thead><tr><th>Lens</th><th>Fit</th><th>Why</th><th class='num'>Position ceiling</th></tr></thead>"
+                 f"<tbody>{lens}</tbody></table>")
+        body += "".join(f"<p class='helper'>{e(n)}</p>" for n in rp["notes"])
+    body += "<p class='helper'>Arithmetic on past closes. Not predictions, not price targets, not personal advice. Lens limits are proposals.</p>"
+    return _card("Reference levels and risk lenses", "arithmetic", body)
+
+
 def news_html(s: dict) -> str:
     items = s.get("news") or []
     if not items:

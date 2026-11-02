@@ -20,6 +20,8 @@ export type Summary = {
   checklist: Check[]; gaps: Gap[]; notices: string[]; changes: string[];
   valuation: null | { method: "reverse_dcf_earnings" | "justified_pb"; assumptions: string; unavailable_reason: string | null; items: { metric: string; value: number | null; unit: string; fact_id: string }[] };
   debate: null | { bull: { text: string; evidence: string }[]; bear: { text: string; evidence: string }[]; stance: { label: string; confidence: string; reason: string } };
+  levels: null | { applies: boolean; last_close: number | null; stop: number | null; risk_pct: number | null; targets: { r: number; price: number }[]; support: { name: string; price: number }[]; resistance: { name: string; price: number }[]; reason: string; notes: string[] };
+  risk_panel: null | { profile_lens: string; notes: string[]; lenses: { name: string; fits: boolean | null; breaches: string[]; max_position_pct: number | null; reason: string }[] };
   news: { title: string; publisher: string; published: string | null; url: string; sentiment_hint: "positive" | "negative" | "neutral" }[];
   explanation: null | { source: string; summary: string; uncertainty: string; claims: Claim[]; triggers: { text: string; ids: string[] }[]; usage: Record<string, number> };
   llm: null | { system: string; user: string; max_tokens: number; ids: string[]; digest: string };

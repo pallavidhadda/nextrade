@@ -213,5 +213,7 @@ def _price_facts(ticker: str, as_of: date | None, enabled: bool, client, benchma
                    + (f", last bar {q.stale_days} weekdays old" if q.stale_days else "")]
     notes += [f"event: {e}" for e in q.events]
     actions = sorted(set(corporate_action_dates(ticker, load_curated(strict=False))) | set(extra_action_dates))
-    return (price_metrics(series, bench, as_of or date.today(), corporate_actions=actions), notes,
+    from indiafacts.indicators import indicator_facts
+
+    return (price_metrics(series, bench, as_of or date.today(), corporate_actions=actions) + indicator_facts(series), notes,
             chart_data(series, bench))

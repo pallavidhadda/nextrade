@@ -199,3 +199,45 @@ export function News({ s }: { s: Summary }) {
     </section>
   );
 }
+
+export function Levels({ s }: { s: Summary }) {
+  const lv = s.levels, rp = s.risk_panel;
+  if (!lv || lv.last_close === null) return null;
+  const inr = (v: number) => `₹${v.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return (
+    <section className="entry" aria-labelledby="lev-h">
+      <header><h2 id="lev-h">Reference levels and risk lenses</h2><span className="note">arithmetic</span></header>
+      <div className="body">
+        <table>
+          <thead><tr><th>Level</th><th className="num">Price</th></tr></thead>
+          <tbody>
+            <tr><td>Last close</td><td className="num">{inr(lv.last_close)}</td></tr>
+            {lv.support.map((x) => <tr key={x.name}><td>Support: {x.name}</td><td className="num">{inr(x.price)}</td></tr>)}
+            {lv.resistance.map((x) => <tr key={x.name}><td>Resistance: {x.name}</td><td className="num">{inr(x.price)}</td></tr>)}
+            {lv.applies && lv.stop !== null && <tr><td>Reference stop ({lv.risk_pct?.toFixed(1)}% below)</td><td className="num">{inr(lv.stop)}</td></tr>}
+            {lv.applies && lv.targets.map((t) => <tr key={t.r}><td>Reward-to-risk {t.r}R</td><td className="num">{inr(t.price)}</td></tr>)}
+          </tbody>
+        </table>
+        {!lv.applies && <p className="helper">Stop and reward-to-risk levels are not shown: {lv.reason}.</p>}
+        {rp && (
+          <>
+            <h3 style={{ marginTop: "var(--space-md)" }}>Risk lenses</h3>
+            <table>
+              <thead><tr><th>Lens</th><th>Fit</th><th>Why</th><th className="num">Position ceiling</th></tr></thead>
+              <tbody>{rp.lenses.map((l) => (
+                <tr key={l.name}>
+                  <td>{l.name[0].toUpperCase() + l.name.slice(1)}{l.name === rp.profile_lens ? " (your profile)" : ""}</td>
+                  <td>{l.fits === null ? "Not applied" : l.fits ? "Within limits" : "Breaches"}</td>
+                  <td>{l.fits === null ? l.reason : l.breaches.join("; ") || "None"}</td>
+                  <td className="num">{l.max_position_pct === null ? "n/a" : `${l.max_position_pct.toFixed(1)}%`}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+            {rp.notes.map((n, i) => <p className="helper" key={i}>{n}</p>)}
+          </>
+        )}
+        <p className="helper">Arithmetic on past closes. Not predictions, not price targets, not personal advice. Lens limits are proposals.</p>
+      </div>
+    </section>
+  );
+}

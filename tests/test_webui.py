@@ -26,6 +26,12 @@ SUMMARY = {
                "bear": [{"text": "Check failed: price is higher than a year ago", "evidence": "check:positive_1y_return"}],
                "stance": {"label": "Hold", "confidence": "Medium", "reason": "overall score 45.0 of 100 and 1 supporting against 1 cautionary points"}},
     "news": [{"title": "<b>Shares surge</b> on record order", "publisher": "Wire", "published": "2026-11-01", "url": "", "sentiment_hint": "positive"}],
+    "levels": {"applies": True, "last_close": 100.0, "stop": 94.0, "risk_pct": 6.0, "targets": [{"r": 1.5, "price": 109.0}],
+               "support": [{"name": "200-day average", "price": 90.0}], "resistance": [{"name": "52-week high", "price": 130.0}], "reason": "", "notes": []},
+    "risk_panel": {"profile_lens": "neutral", "notes": [], "lenses": [
+        {"name": "aggressive", "fits": True, "breaches": [], "max_position_pct": 10.0, "reason": ""},
+        {"name": "neutral", "fits": False, "breaches": ["volatility 45.0% is above this lens's limit of 40%"], "max_position_pct": 10.0, "reason": ""},
+        {"name": "conservative", "fits": None, "breaches": [], "max_position_pct": None, "reason": "beta not measured"}]},
     "llm": None, "disclaimer": "Research and education only. Not financial, investment or trading advice.",
 }
 
@@ -96,3 +102,9 @@ def test_debate_and_news_cards_escape_and_label():
     n = webui.news_html(SUMMARY)
     assert "&lt;b&gt;Shares surge" in n and "<b>Shares" not in n and "unverified" in n.lower()
     assert webui.debate_html({}) == "" and webui.news_html({"news": []}) == ""
+
+
+def test_levels_card_shows_levels_lenses_and_marks_the_profile_lens():
+    t = webui.levels_html(SUMMARY)
+    assert "₹94.00" in t and "Reward-to-risk 1.5R" in t and "Neutral (your profile)" in t and "Breaches" in t and "Not applied" in t
+    assert "not price targets" in t and webui.levels_html({}) == ""

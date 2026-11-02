@@ -104,3 +104,13 @@ def test_news_is_off_by_default(tmp_path, capsys):
     out = tmp_path / "s.json"
     code, text, _ = run(tmp_path, capsys, "--json", str(out))
     assert "RECENT HEADLINES" not in text and json.loads(out.read_text())["news"] == []
+
+
+def test_levels_and_risk_lenses_flow_through_text_digest_and_json(tmp_path, capsys):
+    out = tmp_path / "s.json"
+    code, text, _ = run(tmp_path, capsys, "--explain", "--json", str(out))
+    d = json.loads(out.read_text())
+    assert code == 0 and "REFERENCE LEVELS AND RISK LENSES" in text and "risk lenses" in text
+    assert d["levels"]["last_close"] and {l["name"] for l in d["risk_panel"]["lenses"]} == {"aggressive", "neutral", "conservative"}
+    assert "LEVELS last close" in d["llm"]["digest"] and "RISK neutral lens" in d["llm"]["digest"]
+    assert "not predictions or price targets" in d["llm"]["digest"]

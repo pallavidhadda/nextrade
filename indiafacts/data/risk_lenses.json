@@ -1,0 +1,11 @@
+{
+  "note": "Three risk lenses replacing TradingAgents' aggressive, neutral and conservative debaters. Limits are PROPOSALS by the project author, not evidence-based. They are checked against the company's own measured volatility, drawdown and beta, and used for a fixed-fractional position ceiling (risk per position divided by the distance to the reference stop).",
+  "reviewed_on": "2026-11-02",
+  "review_by": "2027-05-02",
+  "lenses": {
+    "aggressive": {"risk_per_position_pct": 1.5, "volatility_max": 0.60, "drawdown_max": -0.65, "beta_max": 1.6},
+    "neutral": {"risk_per_position_pct": 1.0, "volatility_max": 0.40, "drawdown_max": -0.45, "beta_max": 1.2},
+    "conservative": {"risk_per_position_pct": 0.5, "volatility_max": 0.30, "drawdown_max": -0.30, "beta_max": 0.9}
+  },
+  "profile_map": {"high": "aggressive", "medium": "neutral", "low": "conservative"}
+}

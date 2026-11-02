@@ -119,13 +119,18 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         news, news_note = fetch_news(fs.entity.ticker, news_client)
         if news_note:
             fs = fs.model_copy(update={"notices": fs.notices + [news_note]})
+    from indiafacts.riskpanel import build_risk_panel
+    from indiafacts.tradeplan import reference_levels
+
     debate = build_debate(fs, scorecard)
+    levels = reference_levels(fs, debate.stance.label)
+    panel = build_risk_panel(fs, profile, levels)
     explanation = digest = None
     if args.explain or args.llm or llm_client is not None:
         from indiafacts.digest import build_digest
         from indiafacts.llm import explain as explain_report
 
-        digest = build_digest(fs, scorecard, profile, news=news, debate=debate)
+        digest = build_digest(fs, scorecard, profile, news=news, debate=debate, levels=levels, panel=panel)
         explanation = explain_report(digest, scorecard, fs, client=llm_client if (args.llm or llm_client) else None)
     if args.changes_only:
         from indiafacts.render import _changes_block
@@ -135,12 +140,12 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         from indiafacts.digest import build_digest as _bd
         from indiafacts.llm import NARRATION_RULES
 
-        dg = digest or _bd(fs, scorecard, profile, news=news, debate=debate)
+        dg = digest or _bd(fs, scorecard, profile, news=news, debate=debate, levels=levels, panel=panel)
         print(f"DIGEST for {fs.entity.ticker} (about {dg.est_tokens} estimated tokens; cite the ids F1, F2...)\n{dg.text}\n\n{NARRATION_RULES}")
     else:
         print(render(fs, as_of=args.as_of, profile=profile, profile_is_default=is_default,
                  view=args.view or profile.view, scorecard=scorecard, explanation=explanation, digest=digest,
-                 changes=changes, changes_note=changes_note if (args.changes or not changes) else None, debate=debate, news=news))
+                 changes=changes, changes_note=changes_note if (args.changes or not changes) else None, debate=debate, news=news, levels=levels, panel=panel))
     if args.json:
         import json as _json
 
@@ -148,7 +153,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         from indiafacts.summary import summarize_run
 
         args.json.parent.mkdir(parents=True, exist_ok=True)
-        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes, digest or _build_digest(fs, scorecard, profile, news=news, debate=debate), news=news, debate=debate), default=str), encoding="utf-8")
+        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes, digest or _build_digest(fs, scorecard, profile, news=news, debate=debate, levels=levels, panel=panel), news=news, debate=debate, levels=levels, panel=panel), default=str), encoding="utf-8")
     if args.html:
         from indiafacts.htmlreport import build_html
 

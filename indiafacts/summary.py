@@ -22,7 +22,7 @@ def _pool_name(sc: dict) -> str | None:
     return str(label)
 
 
-def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, changes=None, digest=None, news=None, debate=None) -> dict:
+def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, changes=None, digest=None, news=None, debate=None, levels=None, panel=None) -> dict:
     e = fs.entity
     gaps = [{"metric": f.metric, "period": str(f.period_end), "status": f.status.value, "reason": f.reason}
             for f in fs.facts if f.status in (Status.gap, Status.unavailable)]
@@ -64,6 +64,16 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
     if debate is not None:
         deb = {"bull": [{"text": p.text, "evidence": p.key} for p in debate.bull], "bear": [{"text": p.text, "evidence": p.key} for p in debate.bear],
                "stance": {"label": debate.stance.label, "confidence": debate.stance.confidence, "reason": debate.stance.reason}}
+    lev = None
+    if levels is not None:
+        lev = {"applies": levels.applies, "last_close": levels.last_close, "stop": levels.stop, "risk_pct": levels.risk_pct,
+               "targets": [{"r": r, "price": t} for r, t in zip(levels.reward_risk, levels.targets)],
+               "support": [{"name": n, "price": v} for n, v in levels.support], "resistance": [{"name": n, "price": v} for n, v in levels.resistance],
+               "reason": levels.reason, "notes": levels.notes}
+    rp = None
+    if panel is not None:
+        rp = {"profile_lens": panel.profile_lens, "notes": panel.notes,
+              "lenses": [{"name": l.name, "fits": l.fits, "breaches": l.breaches, "max_position_pct": l.max_position_pct, "reason": l.reason} for l in panel.lenses]}
     nws = [{"title": n.title, "publisher": n.publisher, "published": n.published.date().isoformat() if n.published else None,
             "url": n.url, "sentiment_hint": n.sentiment_hint} for n in (news or [])]
     return {"ticker": e.ticker, "name": e.name, "sector": e.sector, "industry": e.industry,
@@ -71,4 +81,4 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
             "profile": {"horizon": profile.horizon, "risk": profile.effective_risk, "experience": profile.experience},
             "key_facts": key, "score": score, "checklist": checklist, "gaps": gaps,
             "notices": list(fs.notices), "changes": [str(c) for c in (changes or [])][:20],
-            "valuation": valuation, "debate": deb, "news": nws, "explanation": ex, "llm": llm, "disclaimer": DISCLAIMER}
+            "valuation": valuation, "debate": deb, "levels": lev, "risk_panel": rp, "news": nws, "explanation": ex, "llm": llm, "disclaimer": DISCLAIMER}
