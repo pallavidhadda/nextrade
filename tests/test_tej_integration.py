@@ -65,8 +65,9 @@ def test_tej_unavailable_degrades_with_a_notice_and_the_report_still_renders(tmp
 
 
 def test_cli_universe_tej_top_n_uses_point_in_time_members(tmp_path, capsys):
+    from tests.fixtures.reliance_quarterly import INFO, QUARTERLY
     code = main(["AAA.NS", "--score", "--universe", "tej:5", "--no-prices", "--as-of", "2020-01-15"],
-                client=FakeClient(), sleep=lambda s: None, tej_store=store(tmp_path))
+                client=FakeClient(stmt=QUARTERLY, info=INFO), sleep=lambda s: None, tej_store=store(tmp_path))
     out = capsys.readouterr().out
     assert code == 0 and "SCORECARD" in out and "inside 3 companies" in out and "TejHQ" in out   # 3 members at the 2020-01-01 rebalance
 
