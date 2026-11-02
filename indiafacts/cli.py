@@ -74,6 +74,13 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     except (ValueError, OSError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+    from indiafacts.models import Status as _S
+
+    if not any(f.status == _S.ok for f in fs.facts):
+        print(f"error: could not fetch any data for {fs.entity.ticker}. This usually means this machine cannot reach Yahoo Finance "
+              "(no network, a proxy or a sandbox), or the ticker has changed. Nothing was analysed. "
+              "If the NexTrade connector is available, use it instead; otherwise retry with network access.", file=sys.stderr)
+        return 5
     scorecard = None
     if args.score or args.universe:
         try:

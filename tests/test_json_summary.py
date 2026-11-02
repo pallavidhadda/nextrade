@@ -56,3 +56,18 @@ def test_valuation_block_in_text_digest_and_json(tmp_path, capsys):
     assert "VALUATION price implies earnings growth" in d["llm"]["digest"]
     lowered = (text + d["llm"]["digest"]).lower()
     assert "undervalued" not in lowered and "overvalued" not in lowered and "fair value of" not in lowered
+
+
+def test_no_data_at_all_is_a_clear_error_not_an_empty_digest(tmp_path, capsys, monkeypatch):
+    from indiafacts import cli
+    from indiafacts.models import Entity, FactSet
+    from datetime import datetime, timezone
+
+    empty = FactSet(entity=Entity.from_ticker("TCS.NS"), facts=[], retrieved_at=datetime(2026, 11, 2, tzinfo=timezone.utc),
+                    notices=["TejHQ data unavailable: ProxyError"])
+    monkeypatch.setattr(cli, "build_factset", lambda *a, **k: empty)
+    code = cli.main(["TCS.NS", "--score", "--no-remember", "--digest"])
+    out = capsys.readouterr()
+    assert code == 5
+    assert "could not fetch any data" in out.err and "network" in out.err.lower()
+    assert "DIGEST" not in out.out
