@@ -35,3 +35,6 @@ To switch it on after the API has a public HTTPS address:
 2. `cp connector/mcp.json.example .mcp.json`, put the real URL (`https://your-api-host/mcp`) in it, commit, push.
 3. In claude.ai: Customize > Plugins > Add > Add marketplace > `pallavidhadda/nextrade`, install NexTrade, open its Connectors tab, add and connect the connector. Ask: "Analyse TCS.NS".
 Claude connects from Anthropic's cloud, so the API must be publicly reachable over valid HTTPS. That favours Render (HTTPS included) over a bare Oracle VM, which would need a domain and a certificate or a tunnel. A sleeping free host will make the first tool call slow or fail; the skill tells Claude to retry.
+
+## Optional lock on the connector (recommended until public launch; full steps in docs/CONNECTOR_LOCK.md)
+Without a lock, anyone who knows `/mcp` can use the connector and spend the free server's CPU (the app also limits requests per minute and runs one analysis at a time). To lock it: in Render set `INDIAFACTS_MCP_TOKEN` to a long random string. Then in claude.ai Customize > Connectors > nextrade > Request headers add `Authorization` = `Bearer <the same string>`. `/api/health` stays open. Do not commit the token anywhere. To open the connector to everyone later, delete the variable.

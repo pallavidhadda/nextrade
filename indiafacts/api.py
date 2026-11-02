@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+import hmac
 import os
 import re
 import subprocess
@@ -17,7 +18,7 @@ from typing import Callable, Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from indiafacts.render import DISCLAIMER
@@ -82,8 +83,14 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
     hits: dict[str, list[float]] = {}
     trust_proxy = os.environ.get("INDIAFACTS_TRUST_PROXY") == "1"
 
+    mcp_token = os.environ.get("INDIAFACTS_MCP_TOKEN", "")
+
     @app.middleware("http")
     async def headers(request: Request, call_next):
+        if mcp_token and request.url.path.startswith("/mcp"):
+            given = request.headers.get("authorization", "")
+            if not hmac.compare_digest(given.encode(), f"Bearer {mcp_token}".encode()):
+                return JSONResponse({"error": "unauthorized"}, status_code=401, headers={"www-authenticate": "Bearer"})
         resp = await call_next(request)
         resp.headers.setdefault("x-content-type-options", "nosniff")
         resp.headers.setdefault("referrer-policy", "no-referrer")

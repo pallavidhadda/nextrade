@@ -75,3 +75,22 @@ def test_pending_job_says_to_wait_not_to_guess():
 def test_rest_routes_still_work_next_to_mcp():
     with TestClient(create_app(runner)) as c:
         assert c.get("/api/health").json()["ok"] is True
+
+
+def test_optional_token_locks_the_connector_but_not_health(monkeypatch):
+    monkeypatch.setenv("INDIAFACTS_MCP_TOKEN", "s3cret-token")
+    with TestClient(create_app(runner)) as c:
+        body = {"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}
+        assert c.post("/mcp", json=body, headers=HEAD).status_code == 401
+        assert c.post("/mcp", json=body, headers={**HEAD, "authorization": "Bearer wrong"}).status_code == 401
+        ok = c.post("/mcp", json=body, headers={**HEAD, "authorization": "Bearer s3cret-token"})
+        assert ok.status_code == 200 and "start_analysis" in ok.text
+        assert c.get("/api/health").status_code == 200
+        r = c.post("/mcp", json=body, headers=HEAD)
+        assert "s3cret-token" not in r.text and "www-authenticate" in {k.lower() for k in r.headers}
+
+
+def test_without_a_token_the_connector_stays_open(monkeypatch):
+    monkeypatch.delenv("INDIAFACTS_MCP_TOKEN", raising=False)
+    with TestClient(create_app(runner)) as c:
+        assert c.post("/mcp", json={"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}, headers=HEAD).status_code == 200
