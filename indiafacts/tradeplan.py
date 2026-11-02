@@ -27,6 +27,7 @@ class Levels:
     last_close: float | None = None
     stop: float | None = None
     risk_pct: float | None = None         # distance from the last close to the stop, in percent of the last close
+    sizing_risk_pct: float | None = None  # the same distance, kept for position ceilings even when the rating is not bullish
     targets: list[float] = field(default_factory=list)
     reward_risk: list[float] = field(default_factory=list)
     support: list[tuple[str, float]] = field(default_factory=list)
@@ -52,20 +53,26 @@ def reference_levels(fs: FactSet, rating: str, params: dict | None = None) -> Le
              ("52-week high", _val(fs, "high_52w"))]
     lv.support = [(n, v) for n, v in named if v is not None and v < last]
     lv.resistance = [(n, v) for n, v in named if v is not None and v > last]
+    move = _val(fs, "avg_move_14")
+    stop = low = risk = None
+    if move is not None and move > 0:
+        stop = last - p["stop_multiple"] * move
+        low = _val(fs, "low_52w")
+        held = low is not None and stop < low
+        if held:
+            stop = low
+        risk = last - stop
+        if risk > 0:
+            lv.sizing_risk_pct = risk / last * 100
     if rating not in p["bullish_ratings"]:
         lv.reason = "stop and reward-to-risk levels are shown only when the educational rating is bullish (Overweight or higher)"
         return lv
-    move = _val(fs, "avg_move_14")
     if move is None or move <= 0:
         lv.reason = "the 14-day average move is unavailable, so a volatility-based stop cannot be computed"
         return lv
-    stop = last - p["stop_multiple"] * move
-    low = _val(fs, "low_52w")
-    if low is not None and stop < low:
-        stop = low
+    if low is not None and last - p["stop_multiple"] * move < low:
         lv.notes.append("the stop is held at the 52-week low")
-    risk = last - stop
-    if risk <= 0:
+    if risk is None or risk <= 0:
         lv.reason = "the last close is at or below the 52-week low, so no stop distance exists"
         return lv
     lv.applies, lv.stop, lv.risk_pct = True, stop, risk / last * 100

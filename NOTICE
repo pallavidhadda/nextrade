@@ -4,3 +4,7 @@ Copyright 2026 Pallavi Dhadda
 Educational research tool. Not financial, investment or trading advice.
 Real NSE/BSE filings and third-party datasets are not distributed with this
 project and remain subject to their own terms.
+
+Portions of the approach (rating scale, settlement of past decisions against a benchmark with entry at the first close after the decision)
+are adapted from TradingAgents by Tauric Research, licensed under the Apache License 2.0
+(https://github.com/TauricResearch/TradingAgents). Files that adapt it say so in their header.

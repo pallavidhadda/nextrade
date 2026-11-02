@@ -203,6 +203,13 @@ def render_backtest(res: BacktestResult) -> str:
             a, b = res.signals[n].in_sample, res.signals[n].out_of_sample
             if a and b:
                 lines.append(f"{n:<10} {a.ic_mean:>12.3f} {_pct(a.net_excess_mean):>8} {a.periods:>4}   {b.ic_mean:>16.3f} {_pct(b.net_excess_mean):>8} {b.periods:>4}")
+    comp = res.signals.get("composite")
+    if comp and comp.bucket_means and len(comp.bucket_means) == 5:
+        ratings = ["Sell", "Underweight", "Hold", "Overweight", "Buy"]
+        lines += ["", "Rating buckets (price-only composite sorted into fifths, a stand-in for the five educational ratings; not the full rating, "
+                  "which also uses fundamentals that have no usable history):",
+                  "  " + "   ".join(f"{r}: {_pct(m)}" for r, m in zip(ratings, comp.bucket_means)),
+                  f"  mean forward {c.horizon_days}-session return per bucket; a useful ordering would rise from left to right."]
     lines += ["", "Caveats:"] + [f"- {x}" for x in CAVEATS] + ["", DISCLAIMER]
     return "\n".join(lines)
 

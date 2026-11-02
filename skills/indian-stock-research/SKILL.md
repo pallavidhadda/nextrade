@@ -10,7 +10,7 @@ Use the NexTrade connector tools (`start_analysis`, `get_analysis`). Never run l
 2. Call `get_analysis` with the `job_id`; each call waits up to about 25 seconds on the server, so simply call it again while it says running (a first run can take up to 3 minutes, so expect 5 to 8 calls) and do not stop early or ask the user to wait. If it says the job is unknown or expired, the server restarted: call `start_analysis` again (at most twice), then tell the user plainly.
    Call `get_analysis` with the `job_id`. If it says running, wait 15 to 20 seconds and call again (a first run can take up to 3 minutes). Do not guess or estimate anything while waiting.
 3. When the DIGEST arrives, explain it to the user following the narrator rules printed at its end:
-   - write the full structured report the rules ask for (12 sections, including the bull and bear cases, the educational stance and recent headlines when present) unless the user asked for a short answer, in which case call `get_analysis` with `detail` set to `brief` for 5 bullets;
+   - write the full structured report the rules ask for (up to 14 sections, including the bull and bear cases, the educational rating on the Buy / Overweight / Hold / Underweight / Sell scale, reference levels, risk lenses and recent headlines when present) unless the user asked for a short answer, in which case call `get_analysis` with `detail` set to `brief` for 5 bullets;
    - cite the evidence id (F12) after each claim;
    - copy numbers exactly; do not round, convert or compute new ones;
    - label each statement as a fact (from the digest) or your inference;

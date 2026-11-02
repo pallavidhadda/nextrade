@@ -150,3 +150,12 @@ def test_b15_render_labels_out_of_sample():
     px = _predictive_panel()
     text = render_backtest(run_backtest(FakeSource(px), BacktestConfig(oos_start=px.index[500].date())))
     assert "out-of-sample" in text.lower() and "not untouched" in text.lower()
+
+
+def test_b16_render_maps_the_composite_buckets_to_the_five_ratings():
+    px = _predictive_panel()
+    text = render_backtest(run_backtest(FakeSource(px), BacktestConfig(cost_bps=0)))
+    assert "Rating buckets" in text
+    for r in ("Sell", "Underweight", "Hold", "Overweight", "Buy"):
+        assert r in text
+    assert "price-only" in text.lower() and "not the full rating" in text.lower()

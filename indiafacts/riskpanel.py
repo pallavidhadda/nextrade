@@ -46,7 +46,7 @@ def _val(fs: FactSet, metric: str) -> float | None:
 def build_risk_panel(fs: FactSet, profile, levels: Levels | None, params: dict | None = None) -> RiskPanel:
     p = params or load_risk_lenses(strict=False)
     vol, dd, beta = _val(fs, "volatility_1y"), _val(fs, "max_drawdown_3y"), _val(fs, "beta_1y")
-    stop_pct = levels.risk_pct if levels is not None and levels.applies else None
+    stop_pct = levels.sizing_risk_pct if levels is not None else None
     out: list[Lens] = []
     for name in ("aggressive", "neutral", "conservative"):
         lim = p["lenses"][name]
@@ -67,5 +67,7 @@ def build_risk_panel(fs: FactSet, profile, levels: Levels | None, params: dict |
         out.append(Lens(name, not b, b, size))
     notes = []
     if stop_pct is None:
-        notes.append("no position ceiling: it needs a reference stop, which is shown only for bullish ratings with enough price data")
+        notes.append("no position ceiling: it needs the 14-day average move, which is unavailable")
+    if stop_pct is not None:
+        notes.append(f"position ceiling = risk per position / {stop_pct:.1f}% volatility-based stop distance, capped by your single-stock limit; a sizing rule, not a suggestion to hold the stock")
     return RiskPanel(out, p["profile_map"].get(profile.effective_risk, "neutral"), notes)

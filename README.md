@@ -15,6 +15,8 @@
 uv venv --python 3.12 && uv pip install -e ".[dev,api]"
 python -m indiafacts RELIANCE.NS --score --explain --html report.html     # terminal and HTML report
 python -m indiafacts.backtest --from-year 2016 --oos-start 2023-01-01     # price-signal scorecard
+python -m indiafacts.journal settle                                      # score past educational ratings against the Nifty 50
+python -m indiafacts.journal board                                       # scoreboard by rating
 ```
 Web app (Next.js): [web/README.md](web/README.md). Streamlit app (free, from GitHub): `streamlit run streamlit_app.py`, deploy steps in [docs/DEPLOY_STREAMLIT.md](docs/DEPLOY_STREAMLIT.md). API and Claude connector hosting: [docs/DEPLOY.md](docs/DEPLOY.md); optional connector lock: [docs/CONNECTOR_LOCK.md](docs/CONNECTOR_LOCK.md).
 

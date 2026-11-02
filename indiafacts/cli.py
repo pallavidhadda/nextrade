@@ -18,7 +18,7 @@ from indiafacts.universe import DEFAULT_POOL, build_universe, read_pool
 
 
 def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_client=None, tej_store=None,
-         llm_client=None, brain=None, news_client=None) -> int:
+         llm_client=None, brain=None, news_client=None, journal=None) -> int:
     p = argparse.ArgumentParser(prog="indiafacts", description="Source-linked facts for an NSE/BSE ticker.")
     p.add_argument("ticker", help="e.g. RELIANCE.NS")
     p.add_argument("--as-of", type=date.fromisoformat, default=None, help="YYYY-MM-DD")
@@ -125,6 +125,15 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     debate = build_debate(fs, scorecard)
     levels = reference_levels(fs, debate.stance.label)
     panel = build_risk_panel(fs, profile, levels)
+    if not args.no_remember and debate.stance.label != "No rating":
+        try:
+            from indiafacts.journal import Journal
+
+            (journal or Journal()).record(fs.entity.ticker, args.as_of or date.today(), debate.stance.label, debate.stance.confidence,
+                                          scorecard["result"].overall if scorecard and scorecard.get("result") else None,
+                                          levels.last_close, profile.profile_hash)
+        except Exception as exc:                                         # the journal must never break a report
+            fs = fs.model_copy(update={"notices": fs.notices + [f"could not record the rating in the decision journal ({type(exc).__name__})"]})
     explanation = digest = None
     if args.explain or args.llm or llm_client is not None:
         from indiafacts.digest import build_digest
