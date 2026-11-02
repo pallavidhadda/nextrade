@@ -3,6 +3,7 @@ Education only; not financial, investment or trading advice. No user-supplied pa
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 import os
 import re
 import subprocess
@@ -58,6 +59,12 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
         max_running = int(os.environ.get("INDIAFACTS_MAX_RUNNING", "2"))
     holder: dict = {}
 
+    def log(msg: str) -> None:
+        print(f"{datetime.now(timezone.utc).strftime('%H:%M:%S')} {msg}", flush=True)
+
+    log(f"nextrade-api starting: pool_size={os.environ.get('INDIAFACTS_POOL_SIZE', 'default')} "
+        f"workers={os.environ.get('INDIAFACTS_WORKERS', 'default')} max_running={max_running} nice={os.environ.get('INDIAFACTS_NICE', '10')}")
+
     @asynccontextmanager
     async def lifespan(_app):
         mcp = holder.get("mcp")
@@ -96,13 +103,18 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
     def work(job_id: str, opts: dict) -> None:
         j = jobs[job_id]
         j["status"] = "running"
+        log(f"job {job_id} started {opts.get('ticker')}")
+        t0 = time.time()
         try:
             res = runner(opts, lambda p: j.__setitem__("progress", p))
             j.update(status="done", summary=res["summary"], html=res["html"])
+            log(f"job {job_id} done in {time.time() - t0:.0f}s")
         except (ValueError, TimeoutError) as exc:
             j.update(status="error", error=str(exc)[:300].replace(os.path.expanduser("~"), "~") or "analysis failed")
+            log(f"job {job_id} failed after {time.time() - t0:.0f}s: {type(exc).__name__}")
         except Exception as exc:
             j.update(status="error", error=f"analysis failed ({type(exc).__name__})")
+            log(f"job {job_id} crashed after {time.time() - t0:.0f}s: {type(exc).__name__}")
 
     @app.get("/api/health")
     def health():

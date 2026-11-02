@@ -136,3 +136,15 @@ def test_security_headers_on_every_response():
     r = TestClient(create_app(fake_runner)).get("/api/health")
     assert r.headers["x-content-type-options"] == "nosniff" and r.headers["referrer-policy"] == "no-referrer"
     assert r.headers["cache-control"] == "no-store"
+
+
+def test_startup_and_job_lifecycle_are_logged_without_payloads(capsys, monkeypatch):
+    monkeypatch.setenv("INDIAFACTS_POOL_SIZE", "4")
+    monkeypatch.setenv("INDIAFACTS_WORKERS", "1")
+    c = TestClient(create_app(fake_runner))
+    job = c.post("/api/analyze", json={"ticker": "TCS.NS"}).json()["job_id"]
+    wait(c, job)
+    out = capsys.readouterr().out
+    assert "nextrade-api starting" in out and "pool_size=4" in out and "workers=1" in out and "max_running=" in out
+    assert f"job {job} started TCS.NS" in out and f"job {job} done" in out
+    assert "report" not in out and "html" not in out.lower()               # never the report body

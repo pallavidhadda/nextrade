@@ -51,6 +51,12 @@ def subprocess_runner(opts: dict, progress: Callable[[str], None]) -> dict:
                 proc.kill()
                 raise TimeoutError("analysis took too long")
         code = proc.wait()
+        try:
+            import resource
+
+            print(f"analysis child exit={code} peak_memory_mb={resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss // (1024 if sys.platform != 'darwin' else 1024 * 1024)}", flush=True)
+        except Exception:
+            pass
         if code != 0 or not out_json.exists():
             raise ValueError(next((t[7:] for t in reversed(tail) if t.startswith("error: ")), "analysis failed"))
         return {"summary": json.loads(out_json.read_text(encoding="utf-8")), "html": out_html.read_text(encoding="utf-8")}
