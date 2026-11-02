@@ -23,7 +23,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("ticker", help="e.g. RELIANCE.NS")
     p.add_argument("--as-of", type=date.fromisoformat, default=None, help="YYYY-MM-DD")
     p.add_argument("--filing", type=Path, action="append", default=None,
-                   help="saved NSE results page (.html/.mhtml); repeat it for other quarters or a revised filing")
+                   help="saved NSE results page (.html/.mhtml) or raw XBRL file (.xml); repeat it for other quarters or a revised filing")
     p.add_argument("--symbol-changes", type=Path, default=None, help="NSE symbolchange.csv (default ~/.indiafacts/symbolchange.csv)")
     p.add_argument("--no-prices", action="store_true", help="skip price-history metrics")
     p.add_argument("--profile", type=Path, default=None, help="profile JSON (default ~/.indiafacts/profile.json)")
@@ -249,5 +249,5 @@ def _filing_paths(args) -> list[Path] | None:
     if args.filings_dir:
         if not args.filings_dir.is_dir():
             raise ValueError(f"filings folder not found: {args.filings_dir}")
-        paths += sorted(p for p in args.filings_dir.iterdir() if p.suffix.lower() in (".html", ".htm", ".mhtml", ".mht"))
+        paths += sorted(p for p in args.filings_dir.iterdir() if p.suffix.lower() in (".html", ".htm", ".mhtml", ".mht", ".xml"))
     return paths or None

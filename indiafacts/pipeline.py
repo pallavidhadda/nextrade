@@ -8,6 +8,7 @@ from indiafacts.analysis import add_gaps, check_ebitda, cross_check, growth_yoy,
 from indiafacts.availability import filter_as_of
 from indiafacts.models import AvailabilityKind, Entity, Fact, FactSet, Identifier, PeriodType, Status
 from indiafacts.nsefiling import facts_from_nse_filing, merge_filings
+from indiafacts.xbrl import facts_from_nse_xbrl
 from indiafacts.pricemetrics import price_metrics
 from indiafacts.prices import YfinancePriceClient, chart_data, load_series
 from indiafacts.tej import TejStore, TejUnavailable, isin_for, price_affecting_dates, symbol_changes_from_history
@@ -49,7 +50,7 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
     parsed = []
     for p in paths:
         try:
-            pf = facts_from_nse_filing(p)
+            pf = facts_from_nse_xbrl(p) if Path(p).suffix.lower() == ".xml" else facts_from_nse_filing(p)
         except ValueError as exc:
             if not skip_other_filings:
                 raise
