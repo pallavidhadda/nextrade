@@ -133,6 +133,33 @@ def valuation_html(s: dict) -> str:
     return _card("What the price implies", "arithmetic, not a forecast", body + f'<p class="helper">{e(v["assumptions"])}</p>')
 
 
+def debate_html(s: dict) -> str:
+    d = s.get("debate")
+    if not d:
+        return ""
+    def col(title, pts):
+        items = "".join(f"<li>{e(p['text'])}<span class='ids'>{e(p['evidence'])}</span></li>" for p in pts) or "<li>None found.</li>"
+        return f"<div class='side'><h3>{e(title)}</h3><ul class='plain'>{items}</ul></div>"
+    st = d["stance"]
+    body = (f"<div class='debate'>{col('Bull case', d['bull'])}{col('Bear case', d['bear'])}</div>"
+            f"<p class='stance'><span class='tag stance-tag'>{e(st['label'])}</span> Confidence {e(st['confidence'])}. {e(st['reason'])}.</p>"
+            "<p class='helper'>Educational stance from a transparent rule applied to the evidence on this page. It ignores your own situation, "
+            "is not a prediction, and is not a recommendation.</p>")
+    return _card("Bull case versus bear case", "educational", body)
+
+
+def news_html(s: dict) -> str:
+    items = s.get("news") or []
+    if not items:
+        return ""
+    rows = "".join(f"<tr><td>{e(n.get('published') or 'undated')}</td><td>{e(n['publisher'])}</td><td>{e(n['title'])}</td>"
+                   f"<td><span class='tag {e(n['sentiment_hint'] if n['sentiment_hint'] != 'neutral' else 'hypothesis')}'>{e(n['sentiment_hint'].capitalize())}</span></td></tr>"
+                   for n in items)
+    return _card("Recent headlines", "unverified, keyword hint only",
+                 f"<table><thead><tr><th>Date</th><th>Source</th><th>Headline</th><th>Hint</th></tr></thead><tbody>{rows}</tbody></table>"
+                 "<p class='helper'>Third-party headlines are not verified and are not facts about the company. The hint is a keyword guess, not analysis.</p>")
+
+
 def gaps_html(s: dict) -> str:
     gaps = s.get("gaps") or []
     if not gaps:
@@ -210,5 +237,10 @@ div[data-testid="stButton"] button[kind="primary"], div[data-testid="stFormSubmi
 div[data-testid="stButton"] button { border-radius: 6px; min-height: 44px; font-weight: 500; }
 div[data-testid="stTextInput"] input { font-family: 'Red Hat Mono', monospace; background: var(--paper2); border-radius: 6px; min-height: 52px; }
 button[data-baseweb="tab"] { font-weight: 500; min-height: 44px; }
+.debate { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.debate h3 { font-family: 'Red Hat Display', sans-serif; font-weight: 600; font-size: 1rem; margin: 0 0 .25rem; border-bottom: 1px solid var(--ink); padding-bottom: .25rem; }
+.plain { list-style: none; padding: 0; margin: 0; } .plain li { padding: .5rem 0; border-bottom: 1px solid var(--rule); }
+.stance { margin-top: 1rem; } .stance-tag { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); min-width: 9rem; }
+@media (max-width: 640px) { .debate { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .claims li { grid-template-columns: 1fr; } .factor { grid-template-columns: 5.5rem minmax(0,1fr) 3rem; } }
 """

@@ -159,3 +159,43 @@ export function Valuation({ s }: { s: Summary }) {
     </section>
   );
 }
+
+export function Debate({ s }: { s: Summary }) {
+  const d = s.debate;
+  if (!d) return null;
+  const col = (title: string, pts: { text: string; evidence: string }[]) => (
+    <div>
+      <h3>{title}</h3>
+      <ul className="plain">{pts.length === 0 ? <li>None found.</li> : pts.map((p, i) => <li key={i}>{p.text}<span className="ids">{p.evidence}</span></li>)}</ul>
+    </div>
+  );
+  return (
+    <section className="entry" aria-labelledby="deb-h">
+      <header><h2 id="deb-h">Bull case versus bear case</h2><span className="note">educational</span></header>
+      <div className="body">
+        <div className="debate">{col("Bull case", d.bull)}{col("Bear case", d.bear)}</div>
+        <p className="stance"><span className="tag stance-tag">{d.stance.label}</span> Confidence {d.stance.confidence}. {d.stance.reason}.</p>
+        <p className="helper">Educational stance from a transparent rule applied to the evidence on this page. It ignores your own situation, is not a prediction, and is not a recommendation.</p>
+      </div>
+    </section>
+  );
+}
+
+export function News({ s }: { s: Summary }) {
+  if (!s.news || s.news.length === 0) return null;
+  return (
+    <section className="entry" aria-labelledby="news-h">
+      <header><h2 id="news-h">Recent headlines</h2><span className="note">unverified, keyword hint only</span></header>
+      <div className="body">
+        <table>
+          <thead><tr><th>Date</th><th>Source</th><th>Headline</th><th>Hint</th></tr></thead>
+          <tbody>{s.news.map((n, i) => (
+            <tr key={i}><td>{n.published ?? "undated"}</td><td>{n.publisher}</td><td>{n.title}</td>
+              <td><span className={`tag ${n.sentiment_hint === "neutral" ? "hypothesis" : n.sentiment_hint === "positive" ? "fact" : "fail"}`}>{n.sentiment_hint}</span></td></tr>
+          ))}</tbody>
+        </table>
+        <p className="helper" style={{ marginTop: "var(--space-sm)" }}>Third-party headlines are not verified and are not facts about the company. The hint is a keyword guess, not analysis.</p>
+      </div>
+    </section>
+  );
+}

@@ -71,3 +71,36 @@ def test_no_data_at_all_is_a_clear_error_not_an_empty_digest(tmp_path, capsys, m
     assert code == 5
     assert "could not fetch any data" in out.err and "network" in out.err.lower()
     assert "DIGEST" not in out.out
+
+
+def test_news_debate_and_stance_flow_through_digest_text_and_json(tmp_path, capsys):
+    from datetime import datetime, timezone
+
+    from indiafacts.cli import main
+    from tests.fakes import FakeClient
+    from tests.fixtures.reliance_quarterly import INFO, QUARTERLY
+    from tests.test_explain_cli import INFO2
+    from tests.test_htmlreport import NSE_CSV, SYMS, prices_for
+
+    class N:
+        def news(self, symbol):
+            return [{"title": "Company wins record order; shares surge", "publisher": "Wire", "providerPublishTime": int(datetime.now(timezone.utc).timestamp()) - 3600}]
+
+    c = tmp_path / "ind.csv"
+    c.write_text(NSE_CSV, encoding="utf-8")
+    out = tmp_path / "s.json"
+    code = main(["RELIANCE.NS", "--score", "--universe", str(c), "--no-tej", "--no-remember", "--explain", "--news", "--json", str(out)],
+                client=FakeClient(stmt=QUARTERLY, info=INFO2), sleep=lambda s: None, price_client=prices_for(SYMS), news_client=N())
+    text = capsys.readouterr().out
+    d = json.loads(out.read_text())
+    assert code == 0 and "BULL CASE VERSUS BEAR CASE" in text and "EDUCATIONAL STANCE:" in text and "RECENT HEADLINES" in text
+    assert d["news"][0]["sentiment_hint"] == "positive" and d["debate"]["stance"]["label"]
+    digest = d["llm"]["digest"]
+    assert "STANCE educational:" in digest and "NEWS " in digest and "[[" not in digest and "(see F" in digest
+    assert all("evidence" in p for p in d["debate"]["bull"] + d["debate"]["bear"])
+
+
+def test_news_is_off_by_default(tmp_path, capsys):
+    out = tmp_path / "s.json"
+    code, text, _ = run(tmp_path, capsys, "--json", str(out))
+    assert "RECENT HEADLINES" not in text and json.loads(out.read_text())["news"] == []

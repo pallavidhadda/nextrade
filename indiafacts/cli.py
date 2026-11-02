@@ -18,7 +18,7 @@ from indiafacts.universe import DEFAULT_POOL, build_universe, read_pool
 
 
 def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_client=None, tej_store=None,
-         llm_client=None, brain=None) -> int:
+         llm_client=None, brain=None, news_client=None) -> int:
     p = argparse.ArgumentParser(prog="indiafacts", description="Source-linked facts for an NSE/BSE ticker.")
     p.add_argument("ticker", help="e.g. RELIANCE.NS")
     p.add_argument("--as-of", type=date.fromisoformat, default=None, help="YYYY-MM-DD")
@@ -49,6 +49,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--digest", action="store_true", help="print only the compact evidence digest and narration rules (for Claude Code or any LLM; zero API tokens here)")
     p.add_argument("--changes-only", action="store_true", help="print only the what-changed block")
     p.add_argument("--sector-pool", action="store_true", help="with an NSE index CSV: compare only against the target's NSE industry group (faster, sector-relative scores)")
+    p.add_argument("--news", action="store_true", help="also fetch recent headlines (extra network call; shown as unverified text with a keyword sentiment hint)")
     p.add_argument("--pool-size", type=int, default=None, help="use only the first N companies of the pool (plus the target): faster, a smaller comparison")
     p.add_argument("--json", type=Path, default=None, help="also write a compact JSON summary (used by the web app)")
     p.add_argument("--html", type=Path, default=None, help="also write a self-contained HTML report with charts")
@@ -109,12 +110,22 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         changes_note = "snapshot store is off (--no-remember): nothing to compare"
     if changes_note is None and args.changes and not changes:
         changes_note = "first run: nothing to compare yet"
+    from indiafacts.debate import build_debate
+
+    news, news_note = [], ""
+    if args.news:
+        from indiafacts.news import fetch_news
+
+        news, news_note = fetch_news(fs.entity.ticker, news_client)
+        if news_note:
+            fs = fs.model_copy(update={"notices": fs.notices + [news_note]})
+    debate = build_debate(fs, scorecard)
     explanation = digest = None
     if args.explain or args.llm or llm_client is not None:
         from indiafacts.digest import build_digest
         from indiafacts.llm import explain as explain_report
 
-        digest = build_digest(fs, scorecard, profile)
+        digest = build_digest(fs, scorecard, profile, news=news, debate=debate)
         explanation = explain_report(digest, scorecard, fs, client=llm_client if (args.llm or llm_client) else None)
     if args.changes_only:
         from indiafacts.render import _changes_block
@@ -124,12 +135,12 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         from indiafacts.digest import build_digest as _bd
         from indiafacts.llm import NARRATION_RULES
 
-        dg = digest or _bd(fs, scorecard, profile)
+        dg = digest or _bd(fs, scorecard, profile, news=news, debate=debate)
         print(f"DIGEST for {fs.entity.ticker} (about {dg.est_tokens} estimated tokens; cite the ids F1, F2...)\n{dg.text}\n\n{NARRATION_RULES}")
     else:
         print(render(fs, as_of=args.as_of, profile=profile, profile_is_default=is_default,
                  view=args.view or profile.view, scorecard=scorecard, explanation=explanation, digest=digest,
-                 changes=changes, changes_note=changes_note if (args.changes or not changes) else None))
+                 changes=changes, changes_note=changes_note if (args.changes or not changes) else None, debate=debate, news=news))
     if args.json:
         import json as _json
 
@@ -137,7 +148,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         from indiafacts.summary import summarize_run
 
         args.json.parent.mkdir(parents=True, exist_ok=True)
-        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes, digest or _build_digest(fs, scorecard, profile)), default=str), encoding="utf-8")
+        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes, digest or _build_digest(fs, scorecard, profile, news=news, debate=debate), news=news, debate=debate), default=str), encoding="utf-8")
     if args.html:
         from indiafacts.htmlreport import build_html
 

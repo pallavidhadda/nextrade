@@ -46,8 +46,8 @@ def result_view(res: dict) -> None:
     t1, t2, t3 = st.tabs(["Summary", "Full report", f"Gaps ({len(s['gaps'])})"])
     with t1:
         a, b = st.columns(2)
-        a.markdown(webui.score_html(s) + webui.valuation_html(s) + webui.checklist_html(s), unsafe_allow_html=True)
-        b.markdown(webui.explanation_html(s) + webui.facts_html(s), unsafe_allow_html=True)
+        a.markdown(webui.score_html(s) + webui.debate_html(s) + webui.valuation_html(s) + webui.checklist_html(s), unsafe_allow_html=True)
+        b.markdown(webui.explanation_html(s) + webui.news_html(s) + webui.facts_html(s), unsafe_allow_html=True)
     with t2:
         components.html(res["html"], height=800, scrolling=True)
     with t3:

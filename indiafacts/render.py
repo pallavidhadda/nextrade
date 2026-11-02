@@ -224,6 +224,22 @@ def _filings_block(filings) -> list[str]:
     return lines
 
 
+def _debate_block(d) -> list[str]:
+    out = ["", "BULL CASE VERSUS BEAR CASE (educational; rule-based from the evidence above)"]
+    out += ["bull:"] + ([f"  + {p.text}" for p in d.bull] or ["  (none found)"])
+    out += ["bear:"] + ([f"  - {p.text}" for p in d.bear] or ["  (none found)"])
+    out.append(f"EDUCATIONAL STANCE: {d.stance.label} (confidence {d.stance.confidence}). {d.stance.reason}.")
+    return out
+
+
+def _news_block(items) -> list[str]:
+    out = ["", "RECENT HEADLINES (unverified third-party text; keyword hint only, not analysis)"]
+    for n in items:
+        when = n.published.date().isoformat() if n.published else "undated"
+        out.append(f"- {when} {n.publisher}: {n.title} [{n.sentiment_hint}]")
+    return out
+
+
 def _valuation_block(facts: Sequence[Fact], refs: _Refs) -> list[str]:
     v = [f for f in facts if f.source == "computed:valuation"]
     if not v:
@@ -257,7 +273,8 @@ def _valuation_block(facts: Sequence[Fact], refs: _Refs) -> list[str]:
 
 
 def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is_default: bool = False,
-           view: str = "pro", scorecard: dict | None = None, explanation=None, digest=None, changes=None, changes_note=None) -> str:
+           view: str = "pro", scorecard: dict | None = None, explanation=None, digest=None, changes=None, changes_note=None,
+           debate=None, news=None) -> str:
     e = factset.entity
     when = as_of or factset.retrieved_at.date()
     head = f"{e.ticker}  |  as of {when}  |  amounts in INR (₹ crore = 10^7)"
@@ -278,6 +295,8 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
              *(_explanation_block(explanation, digest) if explanation is not None else []),
              *(_scorecard_block(scorecard) if scorecard else []),
              *(_peers_block(scorecard, e.ticker) if scorecard else []),
+             *(_debate_block(debate) if debate is not None else []),
+             *(_news_block(news) if news else []),
              "", f"DATA QUALITY: {len(bad)} item(s) need attention (gaps, unavailable, conflicts, unverified)"]
 
     parts += ["", "QUARTERLY (Yahoo; availability dates are deadline estimates)", render_table([f for f in facts if view == "pro" or not (f.metric in PRO_ONLY or f.metric.startswith("segment_"))], refs)]

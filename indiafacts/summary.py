@@ -22,7 +22,7 @@ def _pool_name(sc: dict) -> str | None:
     return str(label)
 
 
-def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, changes=None, digest=None) -> dict:
+def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, changes=None, digest=None, news=None, debate=None) -> dict:
     e = fs.entity
     gaps = [{"metric": f.metric, "period": str(f.period_end), "status": f.status.value, "reason": f.reason}
             for f in fs.facts if f.status in (Status.gap, Status.unavailable)]
@@ -60,9 +60,15 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
 
         system, user = build_prompt(digest)
         llm = {"system": system, "user": user, "max_tokens": 700, "ids": sorted(digest.ids, key=lambda i: int(i[1:])), "digest": digest.text}
+    deb = None
+    if debate is not None:
+        deb = {"bull": [{"text": p.text, "evidence": p.key} for p in debate.bull], "bear": [{"text": p.text, "evidence": p.key} for p in debate.bear],
+               "stance": {"label": debate.stance.label, "confidence": debate.stance.confidence, "reason": debate.stance.reason}}
+    nws = [{"title": n.title, "publisher": n.publisher, "published": n.published.date().isoformat() if n.published else None,
+            "url": n.url, "sentiment_hint": n.sentiment_hint} for n in (news or [])]
     return {"ticker": e.ticker, "name": e.name, "sector": e.sector, "industry": e.industry,
             "isin": e.isin.value, "retrieved_at": fs.retrieved_at.isoformat(),
             "profile": {"horizon": profile.horizon, "risk": profile.effective_risk, "experience": profile.experience},
             "key_facts": key, "score": score, "checklist": checklist, "gaps": gaps,
             "notices": list(fs.notices), "changes": [str(c) for c in (changes or [])][:20],
-            "valuation": valuation, "explanation": ex, "llm": llm, "disclaimer": DISCLAIMER}
+            "valuation": valuation, "debate": deb, "news": nws, "explanation": ex, "llm": llm, "disclaimer": DISCLAIMER}

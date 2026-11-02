@@ -134,7 +134,7 @@ def _done_job(c, name="TCS.NS"):
 def test_default_result_asks_for_a_structured_full_report():
     with TestClient(create_app(runner)) as c:
         _, out = _done_job(c)
-        for section in ("1. Snapshot", "2. How it scores", "4. What the price implies", "8. Data gaps", "9. What would change the picture"):
+        for section in ("1. Snapshot", "2. How it scores", "4. What the price implies", "8. Data gaps", "9. What would change the picture", "10. Bull case versus bear case", "11. Educational stance", "12. Recent headlines"):
             assert section in out
         assert "cite" in out.lower() and "Not financial" in out
 

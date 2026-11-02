@@ -14,7 +14,7 @@ from indiafacts.units import format_inr
 
 BANNED_WORDS = ("buy", "sell", "recommend", "recommendation", "target price", "overweight", "underweight",
                 "outperform", "underperform")
-DEFAULT_BUDGET = 1500
+DEFAULT_BUDGET = 1900
 _CTRL = re.compile(r"[\x00-\x1f\x7f]+")
 
 
@@ -74,10 +74,10 @@ KEY_POINT = ("net_income_yoy", "revenue_yoy", "net_margin_q", "pe_ttm", "pb", "r
 PRICE_KEYS = ("return_1y", "relative_return_1y", "max_drawdown_3y", "pct_from_52w_high", "volatility_1y", "beta_1y")
 
 
-def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int = DEFAULT_BUDGET) -> Digest:
+def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int = DEFAULT_BUDGET, news=None, debate=None) -> Digest:
     e = fs.entity
     groups: dict[str, list[Item]] = {"header": [], "gaps": [], "scores": [], "checklist": [], "facts": [], "price": [],
-                                     "peers": [], "valuation": [], "notices": []}
+                                     "peers": [], "valuation": [], "debate": [], "news": [], "notices": []}
     G = lambda g, key, ref, text: groups[g].append(Item(key, ref, text, g))
     G("header", "entity", "entity",
       f"ENTITY {clean(e.ticker)} | {clean(e.name)} | ISIN {clean(e.isin.value) or 'unavailable'} | sector {clean(e.sector) or 'unavailable'}")
@@ -167,17 +167,29 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
     if lo and hi:
         G("valuation", "valuation:justified_pb", lo.fact_id,
           f"VALUATION price-to-book supported by ROE and assumptions {float(lo.value):.2f} to {float(hi.value):.2f} (arithmetic, not a fair value)")
+    if debate is not None:
+        for i, pt in enumerate(debate.bull[:4]):
+            G("debate", f"debate:bull:{i}", f"debate:bull:{i}", f"BULL {clean(pt.text, 140)} [[{pt.key}]]")
+        for i, pt in enumerate(debate.bear[:4]):
+            G("debate", f"debate:bear:{i}", f"debate:bear:{i}", f"BEAR {clean(pt.text, 140)} [[{pt.key}]]")
+        st = debate.stance
+        G("debate", "debate:stance", "debate:stance",
+          f"STANCE educational: {st.label}, confidence {st.confidence} ({clean(st.reason, 150)}; transparent rule, not a prediction or recommendation)")
+    for i, n in enumerate(news or []):
+        when = n.published.date().isoformat() if n.published else "undated"
+        G("news", f"news:{i}", f"news:{i}",
+          f"NEWS {when} {clean(n.publisher, 24)}: {clean(n.title, 110)} [headline only, unverified; keyword hint {n.sentiment_hint}]")
     for n in fs.notices[:3]:
         G("notices", f"notice:{len(groups['notices'])}", "notice", f"NOTICE {clean(n, 100)}")
 
     # shrink: drop whole groups from the lowest priority first; gaps and header are never dropped
-    order = ["notices", "peers", "price", "valuation", "facts", "checklist", "scores"]
+    order = ["news", "notices", "peers", "price", "valuation", "facts", "checklist", "scores"]
     dropped: list[str] = []
 
     def render() -> tuple[str, dict, dict, dict]:
         ids, items, by_key, lines = {}, {}, {}, []
         n = 0
-        for g in ("header", "scores", "checklist", "facts", "price", "peers", "valuation", "gaps", "notices"):
+        for g in ("header", "scores", "checklist", "facts", "price", "peers", "valuation", "debate", "news", "gaps", "notices"):
             for it in groups[g]:
                 if it.ref in ("entity", "profile", "notice"):
                     lines.append(it.text)
@@ -186,6 +198,7 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
                 sid = f"F{n}"
                 ids[sid], items[sid], by_key[it.key] = it.ref, it, sid
                 lines.append(f"{sid} {it.text}")
+        lines = [re.sub(r"\s*\[\[([^\]]+)\]\]", lambda m: f" (see {by_key[m.group(1)]})" if m.group(1) in by_key else "", ln) for ln in lines]
         if dropped:
             lines.append("DROPPED for length: " + ", ".join(dropped))
         return "\n".join(lines), ids, items, by_key

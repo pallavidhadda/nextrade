@@ -54,3 +54,6 @@ Free data (Yahoo) is unofficial; label-based filing parser is fragile; NSE/TejHQ
 4. **Beginner mode.** Plain definitions beside every number, what a gap means, why a score is pool-relative.
 5. **Open verified-facts dataset** (with licence checks) to attract contributors.
 6. **Honesty page** with backtest results, including the null ones.
+
+## 6. Added 2026-11-02 (closing the gap with TradingAgents)
+Done: recent headlines with a keyword sentiment hint (Google News RSS), a rule-based bull case versus bear case, an educational stance with confidence, a 12-section report brief in chat, price and EPS fallbacks when Yahoo's overview is empty. Still missing against TradingAgents: LLM-written analyst debates and a trader/risk-manager chain (we use rules plus the user's own model for narration), social-media sentiment, filings and earnings-call text, portfolio-level risk.

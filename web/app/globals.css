@@ -81,6 +81,11 @@ td.num, th.num { text-align: right; padding-right: var(--space-md); padding-left
 .claims { list-style: none; margin: var(--space-sm) 0 0; padding: 0; border-top: var(--rule-hair) solid var(--color-ink); }
 .claims li { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); align-items: start; gap: var(--space-sm); padding: var(--space-sm) 0; border-bottom: var(--rule-hair) solid var(--color-rule); }
 .ids { font-family: var(--font-outlier); font-size: var(--text-xs); color: var(--color-muted); display: block; margin-top: var(--space-3xs); overflow-wrap: anywhere; }
+.debate { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }
+.debate h3 { border-bottom: var(--rule-hair) solid var(--color-ink); padding-bottom: var(--space-2xs); margin-bottom: var(--space-2xs); max-width: none; }
+.plain { list-style: none; margin: 0; padding: 0; } .plain li { padding: var(--space-xs) 0; border-bottom: var(--rule-hair) solid var(--color-rule); }
+.stance { margin-top: var(--space-md); } .stance-tag { background: var(--color-accent-soft); border-color: var(--color-accent); color: var(--color-ink); min-width: 9rem; }
+@media (max-width: 40rem) { .debate { grid-template-columns: minmax(0, 1fr); } }
 .stack { display: grid; gap: var(--space-lg); }
 .sheet { background: var(--color-sheet); border: var(--rule-hair) solid var(--color-rule); border-radius: 3px; overflow: auto; }
 iframe.report { width: 100%; height: 78vh; min-height: 560px; border: var(--rule-hair) solid var(--color-ink); border-radius: var(--radius-card); background: var(--color-sheet); }
