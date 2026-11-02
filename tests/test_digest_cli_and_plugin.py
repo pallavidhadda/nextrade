@@ -42,19 +42,25 @@ def test_dg2_digest_with_html_still_writes_the_report(tmp_path, capsys):
 def test_dg3_plugin_manifest_and_commands_are_present_and_sane():
     m = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text())
     assert m["name"] == "indiafacts" and m["version"] and m["description"]
-    for name in ("analyze", "changes"):
+    for name in ("analyze-local", "changes-local"):
         text = (ROOT / "commands" / f"{name}.md").read_text(encoding="utf-8")
         head = text.split("---")[1]
         assert "description:" in head and "$ARGUMENTS" in text
         assert "CLAUDE_PLUGIN_ROOT" in text and "indiafacts" in text
-    analyze = (ROOT / "commands" / "analyze.md").read_text(encoding="utf-8")
+    analyze = (ROOT / "commands" / "analyze-local.md").read_text(encoding="utf-8")
     assert "--digest" in analyze and "not financial" in analyze.lower() and "narrator rules" in analyze.lower()
+    conn = (ROOT / "commands" / "analyze.md").read_text(encoding="utf-8")
+    assert "start_analysis" in conn and "get_analysis" in conn and "$ARGUMENTS" in conn
+    assert "!`" not in conn and "uv run" not in conn                     # the connector command never runs local code
+    assert "not financial" in conn.lower() and "do not run any local code" in conn.lower()
+    skill = (ROOT / "skills" / "indian-stock-research" / "SKILL.md").read_text(encoding="utf-8")
+    assert "start_analysis" in skill and "Never run local code" in skill
     blob = " ".join(p.read_text(encoding="utf-8") for p in (ROOT / "commands").glob("*.md")).lower()
     assert not any(re.search(rf"\b{re.escape(w)}\b", blob.replace("never advise buying, selling", "")) for w in ("buy", "sell"))
 
 
 def test_dg4_no_secrets_in_plugin_files():
-    for p in list((ROOT / "commands").glob("*.md")) + [ROOT / ".claude-plugin" / "plugin.json"]:
+    for p in list((ROOT / "commands").glob("*.md")) + [ROOT / ".claude-plugin" / "plugin.json", ROOT / ".mcp.json"]:
         t = p.read_text(encoding="utf-8")
         assert "API_KEY=" not in t and "AIza" not in t and "sk-" not in t
 

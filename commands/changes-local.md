@@ -1,5 +1,5 @@
 ---
-description: What changed for one NSE/BSE company since the last indiafacts run (restatements, new filings, flipped checks)
+description: Claude Code only: what changed since your last local NexTrade run on this computer (education only, not advice)
 argument-hint: TICKER [--filings-dir DIR]
 allowed-tools: Bash(uv run:*)
 ---

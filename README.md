@@ -21,7 +21,8 @@ Web app (Next.js): [web/README.md](web/README.md). Streamlit app (free, from Git
 Claude Code plugin (private repo for now):
 ```
 /plugin install indiafacts --marketplace pallavidhadda/nextrade
-/indiafacts:analyze RELIANCE.NS
+/indiafacts:analyze RELIANCE.NS          # uses the NexTrade connector (works in chat and Cowork)
+/indiafacts:analyze-local RELIANCE.NS    # Claude Code only: runs locally, needs network and uv
 ```
 
 ## Where it stands
