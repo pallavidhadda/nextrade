@@ -213,7 +213,12 @@ def run_analysis(opts: dict, progress) -> dict:
         res = RUNNER(opts, progress)
     finally:
         SLOTS.release()
-    CACHE[key] = (time.time(), res)
+    now = time.time()
+    for k in [k for k, (t, _) in CACHE.items() if now - t >= CACHE_SECONDS]:
+        CACHE.pop(k, None)
+    if len(CACHE) >= 200:                                                     # bounded memory on a small host
+        CACHE.pop(min(CACHE, key=lambda k: CACHE[k][0]), None)
+    CACHE[key] = (now, res)
     return res
 
 

@@ -49,20 +49,32 @@ def build_mcp(app, allowed_hosts: list[str] | None = None) -> FastMCP:
 
     @mcp.tool(description="Get the result of start_analysis. The call waits on the server for up to wait_seconds (default 25) for the job to finish, "
                           "so just call it again if it says running; do not guess any figures. "
-                          "When done it returns an evidence digest with ids F1, F2... plus the narration rules to follow (detail=full gives a 9-section report; brief gives 5 bullets).")
+                          "Pass the ticker too: if the server restarted and lost the job, a new run starts automatically and the answer says which job_id to use. When done it returns an evidence digest with ids F1, F2... plus the narration rules to follow (detail=full gives a 9-section report; brief gives 5 bullets).")
     async def get_analysis(job_id: str, wait_seconds: Annotated[int, Field(ge=0, le=40)] = 25,
-                           detail: Literal["full", "brief"] = "full") -> str:
+                           detail: Literal["full", "brief"] = "full", ticker: str | None = None) -> str:
+        from indiafacts.api import AnalyzeRequest, Busy
+
         loop = asyncio.get_running_loop()
         deadline = loop.time() + wait_seconds
+        restarted = ""
         while True:
             j = app.state.jobs.get(job_id)
             if not j:
+                if ticker and not restarted:
+                    try:
+                        req = AnalyzeRequest(ticker=ticker)
+                        job_id, _ = app.state.submit(req.model_dump(), "mcp")
+                    except (ValidationError, Busy):
+                        return "Unknown or expired job_id. Call start_analysis again. Do not guess any figures."
+                    restarted = (f"The server restarted and lost the earlier job, so a fresh run for {req.ticker} was started. "
+                                 f"Use this new job_id from now on: {job_id}. ")
+                    continue
                 return "Unknown or expired job_id. Call start_analysis again. Do not guess any figures."
             if j["status"] not in ("queued", "running") or loop.time() >= deadline:
                 break
             await asyncio.sleep(1)
         if j["status"] in ("queued", "running"):
-            return (f"Status: still running {j.get('progress', '')} after waiting {wait_seconds} seconds. Call get_analysis again with the same job_id "
+            return (f"{restarted}Status: still running {j.get('progress', '')} after waiting {wait_seconds} seconds. Call get_analysis again with the same job_id "
                     "(a first run can take up to 3 minutes). Do not guess or estimate any figures while waiting.")
         if j["status"] == "error":
             return f"The analysis failed: {j.get('error', 'unknown error')}. Tell the user; do not guess any figures."
@@ -71,6 +83,6 @@ def build_mcp(app, allowed_hosts: list[str] | None = None) -> FastMCP:
         base = (os.environ.get("INDIAFACTS_PUBLIC_URL") or "").rstrip("/")
         link = (f"\n\nFull interactive report (charts, tables; open in a browser): {base}/api/jobs/{job_id}/report" if base else "")
         rules = NARRATION_RULES_FULL if detail == "full" else NARRATION_RULES
-        return (f"DIGEST for {s['ticker']}\n{s['llm']['digest']}\n\nData gaps: {gaps}\n\n{rules}{link}\n\n{DISCLAIMER}")
+        return (f"{restarted}DIGEST for {s['ticker']}\n{s['llm']['digest']}\n\nData gaps: {gaps}\n\n{rules}{link}\n\n{DISCLAIMER}")
 
     return mcp

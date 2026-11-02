@@ -151,3 +151,23 @@ def test_report_link_is_added_when_a_public_url_is_configured(monkeypatch):
     with TestClient(create_app(runner)) as c:
         job, out = _done_job(c)
         assert f"https://example.test/api/jobs/{job}/report" in out and "interactive report" in out.lower()
+
+
+def test_m1_lost_job_restarts_when_the_ticker_is_supplied():
+    with TestClient(create_app(runner)) as c:
+        out = text_of(call(c, "get_analysis", {"job_id": "gone", "ticker": "tcs.ns", "wait_seconds": 0}))
+        assert "restarted" in out.lower() and "new job_id" in out.lower()
+        import re
+        new_id = re.search(r"new job_id from now on: (\w+)", out).group(1)
+        for _ in range(100):
+            res = text_of(call(c, "get_analysis", {"job_id": new_id, "wait_seconds": 0}))
+            if "DIGEST" in res:
+                break
+            time.sleep(0.02)
+        assert "DIGEST for TCS.NS" in res
+
+
+def test_m1_unknown_job_without_a_valid_ticker_stays_an_error():
+    with TestClient(create_app(runner)) as c:
+        assert "unknown" in text_of(call(c, "get_analysis", {"job_id": "gone"})).lower()
+        assert "unknown" in text_of(call(c, "get_analysis", {"job_id": "gone", "ticker": "../x"})).lower()

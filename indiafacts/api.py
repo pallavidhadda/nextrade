@@ -133,6 +133,10 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
             now = time.time()
             for k in [k for k, j in jobs.items() if now - j["created"] > JOB_KEEP_SECONDS]:
                 jobs.pop(k, None)
+            for k in [k for k, w in hits.items() if not w or now - w[-1] >= 60]:          # forget connections idle for a minute
+                hits.pop(k, None)
+            for k in [k for k, (t, jid) in cache.items() if now - t >= CACHE_SECONDS or jid not in jobs]:
+                cache.pop(k, None)
             window = hits.setdefault(who, [])
             window[:] = [t for t in window if now - t < 60]
             if len(window) >= per_minute:

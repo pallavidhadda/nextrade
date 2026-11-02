@@ -114,3 +114,26 @@ def test_levels_and_risk_lenses_flow_through_text_digest_and_json(tmp_path, caps
     assert d["levels"]["last_close"] and {l["name"] for l in d["risk_panel"]["lenses"]} == {"aggressive", "neutral", "conservative"}
     assert "LEVELS last close" in d["llm"]["digest"] and "RISK neutral lens" in d["llm"]["digest"]
     assert "not predictions or price targets" in d["llm"]["digest"]
+
+
+def test_html_report_includes_debate_levels_and_escapes_headlines(tmp_path, capsys):
+    from datetime import datetime, timezone
+
+    from indiafacts.cli import main
+    from tests.fakes import FakeClient
+    from tests.fixtures.reliance_quarterly import QUARTERLY
+    from tests.test_explain_cli import INFO2
+    from tests.test_htmlreport import NSE_CSV, SYMS, prices_for
+
+    class N:
+        def news(self, symbol):
+            return [{"title": "<script>alert(1)</script> wins deal", "publisher": "Wire", "providerPublishTime": int(datetime.now(timezone.utc).timestamp()) - 60}]
+
+    c = tmp_path / "ind.csv"
+    c.write_text(NSE_CSV, encoding="utf-8")
+    page = tmp_path / "r.html"
+    main(["RELIANCE.NS", "--score", "--universe", str(c), "--no-tej", "--no-remember", "--news", "--html", str(page)],
+         client=FakeClient(stmt=QUARTERLY, info=INFO2), sleep=lambda s: None, price_client=prices_for(SYMS), news_client=N())
+    html = page.read_text(encoding="utf-8")
+    assert "Bull case versus bear case" in html and "Educational rating:" in html and "Reference levels and risk lenses" in html
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html and "<script>alert(1)" not in html

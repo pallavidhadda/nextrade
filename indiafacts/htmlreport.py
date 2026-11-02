@@ -476,8 +476,43 @@ def _explanation_card(ex, digest) -> str:
                  body, twin)
 
 
+def _extra_cards(debate, news, levels, panel) -> str:
+    out = ""
+    if debate is not None:
+        def lst(pts):
+            return "<ul>" + ("".join(f"<li>{esc(p.text)} <span class='sub'>[{esc(p.key)}]</span></li>" for p in pts) or "<li>None found.</li>") + "</ul>"
+        st = debate.stance
+        body = (f"<div class='grid two'><div><h3>Bull case</h3>{lst(debate.bull)}</div><div><h3>Bear case</h3>{lst(debate.bear)}</div></div>"
+                f"<p><b>Educational rating: {esc(st.label)}</b> (confidence {esc(st.confidence)}). {esc(st.reason)}.</p>"
+                "<p class='sub'>A transparent rule on the evidence on this page; it ignores your own situation and is not a prediction or a personal recommendation.</p>")
+        out += _card("debate", "Bull case versus bear case", "Educational, rule-based.", body)
+    if levels is not None and levels.last_close is not None:
+        inr = lambda v: f"₹{v:,.2f}"
+        rows = [["Last close", inr(levels.last_close)]] + [[f"Support: {n}", inr(v)] for n, v in levels.support] + \
+               [[f"Resistance: {n}", inr(v)] for n, v in levels.resistance]
+        if levels.applies:
+            rows += [[f"Reference stop ({levels.risk_pct:.1f}% below)", inr(levels.stop)]] + [[f"Reward-to-risk {r:g}R", inr(t)] for r, t in zip(levels.reward_risk, levels.targets)]
+        body = _table(["Level", "Price"], rows, num=(1,))
+        if not levels.applies:
+            body += f"<p class='sub'>Stop and reward-to-risk levels not shown: {esc(levels.reason)}.</p>"
+        if panel is not None:
+            lens = [[l.name.capitalize() + (" (your profile)" if l.name == panel.profile_lens else ""),
+                     "Not applied" if l.fits is None else "Within limits" if l.fits else "Breaches",
+                     l.reason if l.fits is None else "; ".join(l.breaches) or "None",
+                     "n/a" if l.max_position_pct is None else f"{l.max_position_pct:.1f}%"] for l in panel.lenses]
+            body += "<h3>Risk lenses</h3>" + _table(["Lens", "Fit", "Why", "Position ceiling"], lens, num=(3,))
+        body += "<p class='sub'>Arithmetic on past closes: not predictions, not price targets, not personal advice.</p>"
+        out += _card("levels", "Reference levels and risk lenses", "Volatility-based.", body)
+    if news:
+        rows = [[(n.published.date().isoformat() if n.published else "undated"), n.publisher, n.title, n.sentiment_hint] for n in news]
+        out += _card("news", "Recent headlines", "Unverified third-party titles; keyword hint only.",
+                     _table(["Date", "Source", "Headline", "Hint"], rows) + "<p class='sub'>Not facts about the company; the hint is a keyword guess.</p>")
+    return out
+
+
 def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view: str = "pro", scorecard: dict | None = None,
-               as_of: date | None = None, now: datetime | None = None, explanation=None, digest=None, changes=None) -> str:
+               as_of: date | None = None, now: datetime | None = None, explanation=None, digest=None, changes=None,
+               debate=None, news=None, levels=None, panel=None) -> str:
     e = fs.entity
     now = now or datetime.now()
     ctx = _Ctx()
@@ -512,6 +547,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
             f"{p.ticker} ({'same industry' if p.tier == 1 else 'same sector'}, {p.size_ratio:.2f}x size)" for p in g.picks))
             + (". " + esc("; ".join(g.notes)) if g.notes else "") + "</p>")
     seg = _segment_cards(facts, ctx)
+    extra = _extra_cards(debate, news, levels, panel)
 
     bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified)]
     dq_rows = [[f.metric, f.fiscal_label or f.period_end.isoformat(), f.status.value, f.reason] for f in bad[:60]]
@@ -551,6 +587,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
 <div class="grid">{charts}</div>
 <div class="grid two">{q}</div>
 <div class="grid two">{sc_block}</div>
+<div class="grid two">{extra}</div>
 {peer_note}<div class="grid two">{peers}</div>
 <div class="grid two">{seg}</div>
 <div class="grid">{dq}{sources}</div>

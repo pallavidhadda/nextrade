@@ -15,6 +15,7 @@ from indiafacts.calendar import fiscal_label
 from indiafacts.models import (AvailabilityKind, Basis, Entity, Fact, FactSet, FilingMeta, Identifier, PeriodType, Status)
 
 SOURCE = "nse_xbrl"
+MAX_BYTES = 20 * 1024 * 1024
 _TS = re.compile(r"_(\d{2})(\d{2})(\d{4})\d{6}\.xml$", re.I)
 _XBRLI = "{http://www.xbrl.org/2003/instance}"
 
@@ -54,6 +55,8 @@ def _iso(text: str | None) -> date | None:
 
 
 def facts_from_nse_xbrl(path: Path, retrieved_at: datetime | None = None) -> FactSet:
+    if Path(path).stat().st_size > MAX_BYTES:
+        raise ValueError("refusing an XBRL file larger than 20 MB")
     raw = Path(path).read_bytes()
     head = raw.lower()
     if b"<!doctype" in head or b"<!entity" in head:

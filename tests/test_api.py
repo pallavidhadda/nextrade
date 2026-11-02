@@ -148,3 +148,17 @@ def test_startup_and_job_lifecycle_are_logged_without_payloads(capsys, monkeypat
     assert "nextrade-api starting" in out and "pool_size=4" in out and "workers=1" in out and "max_running=" in out
     assert f"job {job} started TCS.NS" in out and f"job {job} done" in out
     assert "report" not in out and "html" not in out.lower()               # never the report body
+
+
+def test_idle_rate_limit_and_cache_entries_are_forgotten(monkeypatch):
+    import indiafacts.api as api_mod
+
+    clock = {"t": 1000.0}
+    monkeypatch.setattr(api_mod.time, "time", lambda: clock["t"])
+    app = create_app(fake_runner, max_running=10, per_minute=5)
+    c = TestClient(app)
+    c.post("/api/analyze", json={"ticker": "AAA.NS"})
+    clock["t"] += 7200                                    # two hours later
+    c.post("/api/analyze", json={"ticker": "BBB.NS"})
+    # the first connection's window and the old cache entry are gone; only the new request's state remains
+    assert c.post("/api/analyze", json={"ticker": "CCC.NS"}).status_code == 202

@@ -133,3 +133,11 @@ def test_x9_cli_accepts_an_xbrl_file_and_reports_its_source(tmp_path, capsys):
                 client=FakeClient(stmt=QUARTERLY, info=INFO), sleep=lambda s: None)
     out = capsys.readouterr().out
     assert code == 0 and "nse_xbrl" in out and "INDAS_100_200_22042024074028.xml" in out
+
+
+def test_x10_oversized_files_are_refused(tmp_path, monkeypatch):
+    import indiafacts.xbrl as x
+
+    monkeypatch.setattr(x, "MAX_BYTES", 100)
+    with pytest.raises(ValueError, match="larger than"):
+        facts_from_nse_xbrl(write(tmp_path, doc()))

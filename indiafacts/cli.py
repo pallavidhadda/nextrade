@@ -166,7 +166,8 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     if args.html:
         from indiafacts.htmlreport import build_html
 
-        page = build_html(fs, profile, is_default, args.view or profile.view, scorecard, args.as_of, explanation=explanation, digest=digest, changes=changes)
+        page = build_html(fs, profile, is_default, args.view or profile.view, scorecard, args.as_of, explanation=explanation, digest=digest, changes=changes,
+                          debate=debate, news=news, levels=levels, panel=panel)
         args.html.parent.mkdir(parents=True, exist_ok=True)
         tmp = args.html.with_suffix(args.html.suffix + ".tmp")
         tmp.write_text(page, encoding="utf-8")
