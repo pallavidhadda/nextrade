@@ -31,7 +31,14 @@ def subprocess_runner(opts: dict, progress: Callable[[str], None]) -> dict:
             if opts.get(key):
                 argv += [flag, opts[key]]
         env = {k: v for k, v in os.environ.items() if not k.endswith("_API_KEY")}      # the analysis needs no keys
-        proc = subprocess.Popen(argv, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, env=env)
+        def _lower_priority() -> None:                                                         # keep the web server answering health checks
+            try:
+                os.nice(int(os.environ.get("INDIAFACTS_NICE", "10")))
+            except (AttributeError, OSError, ValueError):
+                pass
+
+        proc = subprocess.Popen(argv, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, env=env,
+                                preexec_fn=_lower_priority if os.name == "posix" else None)
         tail: list[str] = []
         deadline = time.time() + 600
         for line in proc.stderr:                                                       # type: ignore[union-attr]
