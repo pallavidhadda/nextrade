@@ -4,6 +4,9 @@
 
 > Research and education only. Not financial, investment or trading advice. Free data (Yahoo Finance) is unofficial and can be late, incomplete or wrong. A historical test of simple price signals ([result](docs/2026-10-26-backtest-result.md)) is not evidence that any score predicts returns.
 
+## What it produces
+Per company: source-linked facts with gaps, a pool-relative score, a nine-point checklist, what the price implies (reverse DCF grid), deterministic indicators, a bull case versus bear case, an educational rating on the Buy / Overweight / Hold / Underweight / Sell scale with confidence, volatility-based reference levels, three risk lenses with position ceilings, recent headlines with a keyword hint, a decision journal that settles each rating against the Nifty 50, and a claim checker for figures you read elsewhere. One model call at most, on a digest of about 2k tokens; see [docs/TOKEN_COMPARISON.md](docs/TOKEN_COMPARISON.md). Priorities: [docs/MOSCOW_PRIORITIES.md](docs/MOSCOW_PRIORITIES.md).
+
 ## What makes it different
 - **Provenance first.** Every figure carries period, unit, source and basis, or is marked unavailable with a reason. Missing quarters are flagged, never filled.
 - **India aware.** Renames (Zomato to Eternal), demergers (Tata Motors), NSE results pages you save, a point-in-time liquid universe from TejHQ open data.
@@ -15,6 +18,7 @@
 uv venv --python 3.12 && uv pip install -e ".[dev,api]"
 python -m indiafacts RELIANCE.NS --score --explain --html report.html     # terminal and HTML report
 python -m indiafacts.backtest --from-year 2016 --oos-start 2023-01-01     # price-signal scorecard
+python -m indiafacts.claims TCS.NS eps 142.66 --unit per_share            # check a stated figure against sourced facts
 python -m indiafacts.journal settle                                      # score past educational ratings against the Nifty 50
 python -m indiafacts.journal board                                       # scoreboard by rating
 ```

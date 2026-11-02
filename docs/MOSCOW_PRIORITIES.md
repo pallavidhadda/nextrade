@@ -5,9 +5,9 @@ Research/education only; not financial, investment or trading advice. Goal: an i
 ## Must have (the product is untrustworthy or unusable without these)
 | # | Item | Status | Needs you |
 |---|---|---|---|
-| M1 | A chat result must not vanish when the free server restarts (auto-restart a lost job) | doing now | no |
-| M2 | Self review of the API, connector, runner and web code for security and correctness; fix findings | doing now | no |
-| M3 | Like-for-like token and quality measurement against TradingAgents on the same ticker, date and free Gemini model | doing now | no (key already in TradingAgents/.env) |
+| M1 | A chat result must not vanish when the free server restarts (auto-restart a lost job) | DONE 2026-11-02: `get_analysis` takes the ticker and restarts a lost job; tested offline, not yet seen on the live server | no |
+| M2 | Self review of the API, connector, runner and web code for security and correctness; fix findings | DONE 2026-11-02: server runs no longer remember anything, secrets and tokens are stripped from the child, hung children are killed, caches are bounded, XBRL size cap. A review by someone else is still missing | no |
+| M3 | Like-for-like token and quality measurement against TradingAgents on the same ticker, date and free Gemini model | DONE for tokens: `docs/TOKEN_COMPARISON.md` (43,025 vs 2,296 tokens, 16 vs 1 calls). Quality comparison still open | no |
 | M4 | Find why the free Render server restarts | logging added; needs the Render logs | yes |
 | M5 | Securities-lawyer answers to the five questions before any public launch | questions written | yes |
 | M6 | Docs and README claims match what is built and measured | ongoing | no |
@@ -15,7 +15,7 @@ Research/education only; not financial, investment or trading advice. Goal: an i
 ## Should have (high value, not blocking)
 | # | Item | Status | Needs you |
 |---|---|---|---|
-| S1 | Claim checker: verify a claim such as "TCS EPS was 142.66" against the facts, with sources | doing now | no |
+| S1 | Claim checker: verify a claim such as "TCS EPS was 142.66" against the facts, with sources | DONE 2026-11-02: `python -m indiafacts.claims` and the connector tool `check_claim` | no |
 | S2 | Official annual and quarterly NSE pages (confirms year figures, fixes growth) | parser ready | yes: save the FY2025-26 and FY2024-25 pages |
 | S3 | EV/EBITDA versus peers | after S2 data | partly |
 | S4 | Free cash flow in the valuation | blocked on S2 confirming year-to-date values | yes (via S2) |
