@@ -93,6 +93,7 @@ def price_metrics(series: PriceSeries, benchmark: PriceSeries | None, as_of: dat
             out += [mk.make(f"benchmark_return_{n}y", None, "ratio", w, reason=bnote),
                     mk.make(f"relative_return_{n}y", None, "ratio", w, reason=bnote)]
 
+    out.append(mk.make("last_close", float(c[-1]), "INR", "last"))
     i1 = _start_index(d, end, 1)
     if i1 is None:
         why = _short(1)

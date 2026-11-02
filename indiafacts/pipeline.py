@@ -129,6 +129,13 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
                                             _tej_action_dates(store, tej_hist, fs.entity.ticker, as_of, prices, notices))
     from indiafacts.valuation import valuation_facts
 
+    lc = next((f for f in price_facts if f.metric == "last_close" and f.status == Status.ok), None)
+    if lc is not None and not any(f.metric == "price" and f.status == Status.ok for f in facts):
+        extra.append(Fact.make(entity_key=lc.entity_key, metric="price", value=lc.value, unit="INR", period_end=lc.period_end,
+                               period_type=PeriodType.point, source="computed:chart", source_field="last close from the price history",
+                               retrieved_at=lc.retrieved_at, status=Status.ok, related_fact_ids=[lc.fact_id]))
+        notices.append("Yahoo's company overview returned no price, so the price is the last close from the price history; "
+                       "ratios that need the overview (P/E, P/B, ROE, market value) may be unavailable")
     base_facts = facts + extra + price_facts
     val_facts = valuation_facts(fs.model_copy(update={"facts": base_facts}), today=as_of or fs.retrieved_at.date(), now=fs.retrieved_at)
     return fs.model_copy(update={"facts": base_facts + val_facts, "not_yet_public": pending,

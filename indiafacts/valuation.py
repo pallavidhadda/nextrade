@@ -61,11 +61,12 @@ def applicable_methods(entity: Entity, params: dict | None = None) -> list[str]:
     return ["reverse_dcf_earnings"]
 
 
-def _latest_ok(fs: FactSet, metric: str) -> tuple[Fact | None, str]:
-    cands = sorted([f for f in fs.facts if f.metric == metric and f.period_type == "point"], key=lambda f: f.period_end)
+def _latest_ok(fs: FactSet, metric: str, kinds: tuple[str, ...] = ("point",)) -> tuple[Fact | None, str]:
+    cands = sorted([f for f in fs.facts if f.metric == metric and f.period_type in kinds], key=lambda f: f.period_end)
     if not cands:
         return None, f"{metric} not available"
-    f = cands[-1]
+    good = [f for f in cands if f.status == Status.ok and f.value is not None]
+    f = good[-1] if good else cands[-1]
     if f.status != Status.ok or f.value is None:
         return None, f"{metric} is {f.status.value}: {f.reason}"
     return f, ""
@@ -88,6 +89,12 @@ def valuation_facts(fs: FactSet, params: dict | None = None, today: date | None 
     if method == "reverse_dcf_earnings":
         price, why_p = _latest_ok(fs, "price")
         eps, why_e = _latest_ok(fs, "eps_ttm")
+        if eps is None:                                                        # fall back to four reported quarters
+            eps2, why2 = _latest_ok(fs, "eps_diluted_ttm", ("TTM",))
+            if eps2 is not None:
+                eps = eps2
+            else:
+                why_e = f"{why_e}; {why2}"
         reason = ""
         if price is None:
             reason = why_p

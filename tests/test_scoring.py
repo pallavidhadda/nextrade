@@ -139,10 +139,10 @@ def test_s9_low_coverage_gives_unavailable_with_reason(cfg):
     assert r.factors["quality"].score is None and "coverage" in r.factors["quality"].reason
 
 
-def test_s10_fewer_than_two_valid_factors_abstains(cfg):
+def test_s10_fewer_than_three_valid_factors_abstains(cfg):
     only_value = {m: None for m in SPEC if m not in ("pe_ttm", "pb")}
     r = run(universe(**{"A05.NS": only_value}), cfg)["A05.NS"]
-    assert r.status == "abstain" and r.overall is None and "fewer than 2 valid factors" in r.reason and r.rank is None
+    assert r.status == "abstain" and r.overall is None and "fewer than 3 valid factors" in r.reason and r.rank is None
 
 
 def test_s11_absurd_outliers_do_not_reshuffle_the_rest(cfg):

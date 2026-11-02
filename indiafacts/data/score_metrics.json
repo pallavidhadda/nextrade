@@ -3,7 +3,7 @@
   "reviewed_on": "2026-10-26",
   "review_by": "2027-04-26",
   "params": {"winsorise_low": 0.05, "winsorise_high": 0.95, "winsorise_min_n": 10, "min_universe": 5,
-             "min_factor_coverage": 0.6, "min_valid_factors": 2, "max_age_days": 7},
+             "min_factor_coverage": 0.6, "min_valid_factors": 3, "max_age_days": 7},
   "metrics": [
     {"id": "pe_ttm", "factor": "value", "direction": "lower", "valid_min": 0, "valid_max": 75, "exclusive_min": true},
     {"id": "pb", "factor": "value", "direction": "lower", "valid_min": 0, "valid_max": 50, "exclusive_min": true},
