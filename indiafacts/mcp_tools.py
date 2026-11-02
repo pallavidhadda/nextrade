@@ -85,4 +85,26 @@ def build_mcp(app, allowed_hosts: list[str] | None = None) -> FastMCP:
         rules = NARRATION_RULES_FULL if detail == "full" else NARRATION_RULES
         return (f"{restarted}DIGEST for {s['ticker']}\n{s['llm']['digest']}\n\nData gaps: {gaps}\n\n{rules}{link}\n\n{DISCLAIMER}")
 
+    @mcp.tool(description="Check one stated figure about an Indian listed company (for example 'TCS EPS was 142.66') against sourced facts. "
+                          "Returns supported, contradicted, supported only by an unverified source, or unverifiable, with the sources. "
+                          "State the unit (crore, lakh_crore, inr, per_share, ratio or percent) and, for quarterly or annual figures, the period such as 'Q2 FY27' or 'FY26'.")
+    async def check_claim(ticker: str, metric: str, value: float, unit: Literal["inr", "crore", "lakh_crore", "per_share", "ratio", "percent"],
+                          period: str | None = None) -> str:
+        from indiafacts.api import AnalyzeRequest
+
+        try:
+            tk = AnalyzeRequest(ticker=ticker).ticker
+        except ValidationError as exc:
+            raise ValueError("ticker must look like RELIANCE or RELIANCE.NS") from exc
+        opts = {"ticker": tk, "metric": metric[:60], "value": value, "unit": unit, "period": (period or "")[:20] or None}
+        try:
+            r = await asyncio.to_thread(app.state.claim_runner, opts)
+        except Exception:
+            return "The claim could not be checked right now (data source unreachable or no data). Do not guess; tell the user it is unverified."
+        lines = [f"CLAIM CHECK for {tk}: {r['verdict'].upper()}", r["explanation"]]
+        for m in r.get("matches", [])[:4]:
+            lines.append(f"- {m['source']} {m['period']} = {m['value']} ({m['status']}); {m['evidence'] or 'no evidence note'}")
+        lines.append(DISCLAIMER)
+        return "\n".join(lines)
+
     return mcp

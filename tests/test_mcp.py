@@ -35,7 +35,7 @@ def text_of(res):
 def test_tools_are_listed_and_described_for_claude():
     with TestClient(create_app(runner)) as c:
         tools = {t["name"]: t for t in rpc(c, "tools/list")["result"]["tools"]}
-        assert set(tools) == {"start_analysis", "get_analysis"}
+        assert set(tools) == {"start_analysis", "get_analysis", "check_claim"}
         assert "education" in tools["start_analysis"]["description"].lower()
         assert tools["start_analysis"]["inputSchema"]["required"] == ["ticker"]
 
@@ -171,3 +171,29 @@ def test_m1_unknown_job_without_a_valid_ticker_stays_an_error():
     with TestClient(create_app(runner)) as c:
         assert "unknown" in text_of(call(c, "get_analysis", {"job_id": "gone"})).lower()
         assert "unknown" in text_of(call(c, "get_analysis", {"job_id": "gone", "ticker": "../x"})).lower()
+
+
+def test_check_claim_tool_is_listed_and_returns_the_verdict():
+    seen = {}
+
+    def fake_claim(opts):
+        seen.update(opts)
+        return {"verdict": "contradicted", "explanation": "The claim (59.69) differs from the closest sourced figure by -58.2%.", "matches": []}
+
+    with TestClient(create_app(runner, claim_runner=fake_claim)) as c:
+        names = {t["name"] for t in rpc(c, "tools/list")["result"]["tools"]}
+        assert names == {"start_analysis", "get_analysis", "check_claim"}
+        out = text_of(call(c, "check_claim", {"ticker": "tcs.ns", "metric": "eps", "value": 59.69, "unit": "per_share"}))
+        assert "CONTRADICTED" in out and "differs" in out and "Not financial" in out
+        assert seen["ticker"] == "TCS.NS" and seen["metric"] == "eps"
+
+
+def test_check_claim_rejects_bad_input_and_reports_failures_plainly():
+    def boom(opts):
+        raise ValueError("no data")
+
+    with TestClient(create_app(runner, claim_runner=boom)) as c:
+        bad = call(c, "check_claim", {"ticker": "../x", "metric": "eps", "value": 1, "unit": "per_share"})
+        assert bad.get("isError") or "ticker" in text_of(bad).lower()
+        out = text_of(call(c, "check_claim", {"ticker": "TCS.NS", "metric": "eps", "value": 1, "unit": "per_share"}))
+        assert "could not" in out.lower() and "do not guess" in out.lower()

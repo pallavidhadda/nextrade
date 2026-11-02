@@ -73,3 +73,20 @@ def subprocess_runner(opts: dict, progress: Callable[[str], None]) -> dict:
         if code != 0 or not out_json.exists():
             raise ValueError(next((t[7:] for t in reversed(tail) if t.startswith("error: ")), "analysis failed"))
         return {"summary": json.loads(out_json.read_text(encoding="utf-8")), "html": out_html.read_text(encoding="utf-8")}
+
+
+def claim_runner(opts: dict) -> dict:
+    """Run the claim checker in its own process (no keys, nothing remembered)."""
+    argv = [sys.executable, "-m", "indiafacts.claims", opts["ticker"], opts["metric"], str(opts["value"]), "--json"]
+    if opts.get("unit"):
+        argv += ["--unit", opts["unit"]]
+    if opts.get("period"):
+        argv += ["--period", opts["period"]]
+    env = {k: v for k, v in os.environ.items() if not _SECRET_NAME.search(k)}
+    try:
+        done = subprocess.run(argv, capture_output=True, text=True, timeout=120, env=env)
+    except subprocess.TimeoutExpired as exc:
+        raise TimeoutError("the claim check took too long") from exc
+    if done.returncode != 0:
+        raise ValueError("the claim check could not run")
+    return json.loads(done.stdout.strip().splitlines()[-1])

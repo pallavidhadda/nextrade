@@ -74,6 +74,12 @@ KEY_POINT = ("net_income_yoy", "revenue_yoy", "net_margin_q", "pe_ttm", "pb", "r
 PRICE_KEYS = ("return_1y", "relative_return_1y", "max_drawdown_3y", "pct_from_52w_high", "volatility_1y", "beta_1y", "rsi_14", "macd_hist")
 
 
+def _resolve_items(items: dict, by_key: dict) -> None:
+    """Item texts keep [[key]] placeholders until ids exist; resolve them the same way the digest lines are."""
+    for it in items.values():
+        it.text = re.sub(r"\s*\[\[([^\]]+)\]\]", lambda m: f" (see {by_key[m.group(1)]})" if m.group(1) in by_key else "", it.text)
+
+
 def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int = DEFAULT_BUDGET, news=None, debate=None,
                  levels=None, panel=None) -> Digest:
     e = fs.entity
@@ -223,6 +229,7 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
         return "\n".join(lines), ids, items, by_key
 
     text, ids, items, by_key = render()
+    _resolve_items(items, by_key)
     for g in order:
         if est_tokens(text) <= budget_tokens:
             break
@@ -230,4 +237,5 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
             groups[g] = []
             dropped.append(g)
             text, ids, items, by_key = render()
+            _resolve_items(items, by_key)
     return Digest(text, ids, items, by_key, est_tokens(text), dropped, hashlib.sha256(text.encode()).hexdigest()[:12])

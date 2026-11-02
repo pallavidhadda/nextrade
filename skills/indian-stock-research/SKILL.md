@@ -21,3 +21,6 @@ Use the NexTrade connector tools (`start_analysis`, `get_analysis`). Never run l
 5. If the result is an error or "unresolved", say so plainly and stop.
 
 The score is a percentile inside a small pool of companies, not an absolute quality rating. Say that whenever you quote it.
+
+## Checking a claim
+If the user quotes a figure about an Indian company (from another AI, a post or an article), call `check_claim` with the ticker, the measure, the number, its unit and the period. Report the verdict exactly (supported, contradicted, supported only by an unverified source, or unverifiable), the sources and the gap, and never soften a contradiction. If it says unverifiable, say what could not be checked and why.

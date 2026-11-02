@@ -137,3 +137,11 @@ def test_html_report_includes_debate_levels_and_escapes_headlines(tmp_path, caps
     html = page.read_text(encoding="utf-8")
     assert "Bull case versus bear case" in html and "Educational rating:" in html and "Reference levels and risk lenses" in html
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html and "<script>alert(1)" not in html
+
+
+def test_evidence_index_lines_have_no_unresolved_placeholders(tmp_path, capsys):
+    out = tmp_path / "s.json"
+    code, text, _ = run(tmp_path, capsys, "--explain", "--json", str(out))
+    assert "[[" not in text and "]]" not in text
+    d = json.loads(out.read_text())
+    assert "[[" not in d["llm"]["digest"]

@@ -55,7 +55,7 @@ class ValidateRequest(BaseModel):
     model: str | None = Field(default=None, max_length=80)
 
 
-def create_app(runner: Runner = subprocess_runner, max_running: int | None = None, per_minute: int = 6) -> FastAPI:
+def create_app(runner: Runner = subprocess_runner, max_running: int | None = None, per_minute: int = 6, claim_runner=None) -> FastAPI:
     if max_running is None:
         max_running = int(os.environ.get("INDIAFACTS_MAX_RUNNING", "2"))
     holder: dict = {}
@@ -153,7 +153,10 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
         threading.Thread(target=work, args=(job_id, opts), daemon=True).start()
         return job_id, False
 
+    from indiafacts.runner import claim_runner as _default_claim
+
     app.state.submit, app.state.jobs = submit, jobs
+    app.state.claim_runner = claim_runner or _default_claim
 
     @app.post("/api/analyze", status_code=202)
     def analyze(req: AnalyzeRequest, request: Request):
