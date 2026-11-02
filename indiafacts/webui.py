@@ -143,7 +143,7 @@ def debate_html(s: dict) -> str:
     st = d["stance"]
     body = (f"<div class='debate'>{col('Bull case', d['bull'])}{col('Bear case', d['bear'])}</div>"
             f"<p class='stance'><span class='tag stance-tag'>{e(st['label'])}</span> Confidence {e(st['confidence'])}. {e(st['reason'])}.</p>"
-            "<p class='helper'>Educational stance from a transparent rule applied to the evidence on this page. It ignores your own situation, "
+            "<p class='helper'>Educational rating from a transparent rule applied to the evidence on this page. It ignores your own situation, "
             "is not a prediction, and is not a recommendation.</p>")
     return _card("Bull case versus bear case", "educational", body)
 

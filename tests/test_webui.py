@@ -24,7 +24,7 @@ SUMMARY = {
                     "claims": [{"type": "fact", "text": "Score is 45.0.", "ids": ["F1"]}], "triggers": [], "usage": {}},
     "debate": {"bull": [{"text": "Quality scores 80 of 100 against the comparison pool", "evidence": "score:quality"}],
                "bear": [{"text": "Check failed: price is higher than a year ago", "evidence": "check:positive_1y_return"}],
-               "stance": {"label": "Neutral", "confidence": "Medium", "reason": "overall score 45.0 of 100 and 1 supporting against 1 cautionary points"}},
+               "stance": {"label": "Hold", "confidence": "Medium", "reason": "overall score 45.0 of 100 and 1 supporting against 1 cautionary points"}},
     "news": [{"title": "<b>Shares surge</b> on record order", "publisher": "Wire", "published": "2026-11-01", "url": "", "sentiment_hint": "positive"}],
     "llm": None, "disclaimer": "Research and education only. Not financial, investment or trading advice.",
 }
@@ -92,7 +92,7 @@ def test_app_runs_and_shows_result(monkeypatch):
 
 def test_debate_and_news_cards_escape_and_label():
     d = webui.debate_html(SUMMARY)
-    assert "Bull case" in d and "Bear case" in d and "Neutral" in d and "not a recommendation" in d
+    assert "Bull case" in d and "Bear case" in d and "Hold" in d and "not a recommendation" in d
     n = webui.news_html(SUMMARY)
     assert "&lt;b&gt;Shares surge" in n and "<b>Shares" not in n and "unverified" in n.lower()
     assert webui.debate_html({}) == "" and webui.news_html({"news": []}) == ""

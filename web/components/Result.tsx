@@ -175,7 +175,7 @@ export function Debate({ s }: { s: Summary }) {
       <div className="body">
         <div className="debate">{col("Bull case", d.bull)}{col("Bear case", d.bear)}</div>
         <p className="stance"><span className="tag stance-tag">{d.stance.label}</span> Confidence {d.stance.confidence}. {d.stance.reason}.</p>
-        <p className="helper">Educational stance from a transparent rule applied to the evidence on this page. It ignores your own situation, is not a prediction, and is not a recommendation.</p>
+        <p className="helper">Educational rating from a transparent rule applied to the evidence on this page. It ignores your own situation, is not a prediction, and is not a recommendation.</p>
       </div>
     </section>
   );

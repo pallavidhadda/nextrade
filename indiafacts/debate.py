@@ -30,7 +30,7 @@ class Point:
 
 @dataclass
 class Stance:
-    label: str               # Strong positive lean | Positive lean | Neutral | Negative lean | Strong negative lean | No stance
+    label: str               # Buy | Overweight | Hold | Underweight | Sell | No rating
     confidence: str          # High | Medium | Low | n/a
     reason: str
     value: float | None = None
@@ -40,7 +40,7 @@ class Stance:
 class Debate:
     bull: list[Point] = field(default_factory=list)
     bear: list[Point] = field(default_factory=list)
-    stance: Stance = field(default_factory=lambda: Stance("No stance", "n/a", "no score available"))
+    stance: Stance = field(default_factory=lambda: Stance("No rating", "n/a", "no score available"))
 
 
 def _fact(fs: FactSet, metric: str):
@@ -54,7 +54,7 @@ def build_debate(fs: FactSet, sc: dict | None, params: dict | None = None) -> De
     r = sc.get("result") if sc else None
     if r is None or r.status != "ok" or r.overall is None:
         reason = (r.reason if r is not None and r.reason else "no score available") if sc else "no score available"
-        d.stance = Stance("No stance", "n/a", f"no stance because the score could not be computed ({reason})")
+        d.stance = Stance("No rating", "n/a", f"no rating because the score could not be computed ({reason})")
         return d
 
     scored = {k: v.score for k, v in r.factors.items() if v.score is not None}
@@ -87,8 +87,9 @@ def build_debate(fs: FactSet, sc: dict | None, params: dict | None = None) -> De
     ratio = (nb - nr) / max(1, nb + nr)
     s = p["weight_score"] * (r.overall - 50) / 50 + p["weight_points"] * ratio
     b = p["label_bounds"]
-    label = ("Strong positive lean" if s >= b["strong_positive"] else "Positive lean" if s >= b["positive"] else
-             "Neutral" if s > b["negative"] else "Negative lean" if s > b["strong_negative"] else "Strong negative lean")
+    L = p["labels"]
+    label = (L["strong_positive"] if s >= b["strong_positive"] else L["positive"] if s >= b["positive"] else
+             L["neutral"] if s > b["negative"] else L["negative"] if s > b["strong_negative"] else L["strong_negative"])
     cp = p["confidence"]
     unavailable = sum(1 for c in (sc.get("checklist") or []) if c.result == "unavailable")
     if len(scored) >= cp["high_min_factors"] and unavailable <= cp["max_unavailable_checks_for_high"]:

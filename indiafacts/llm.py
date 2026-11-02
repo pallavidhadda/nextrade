@@ -49,9 +49,9 @@ NARRATION_RULES_FULL = (
     "9. What would change the picture: only items grounded in the digest; label each as a hypothesis.\n"
     "10. Bull case versus bear case: present the BULL and BEAR lines as a short debate, strongest points first, each with its evidence id; "
     "the two sides must be weighed fairly, never leave one side out.\n"
-    "11. Educational stance: quote the STANCE line exactly, with its confidence and reason, and say it is a transparent rule applied to the evidence, "
-    "not a prediction or a recommendation, and that the reader's own situation is not considered. Never rephrase it as an instruction to act "
-    "and never add a price target. If the digest has no STANCE line, say a stance could not be formed and why.\n"
+    "11. Educational rating: quote the RATING line exactly, writing it as 'Educational rating: <label>', with its confidence and reason, and say it is a transparent rule applied to the evidence, "
+    "not a prediction or a personal recommendation, and that the reader's own situation is not considered. Never rephrase it as an instruction to act "
+    "and never add a price target. If the digest has no RATING line, say a rating could not be formed and why.\n"
     "12. Recent headlines (only if the digest has NEWS lines): list at most 4, each with its date and publisher and the keyword hint, say they are "
     "unverified third-party headlines, and do not treat them as facts about the company.\n"
     "Rules for every sentence: cite the evidence id (like F12) after each claim; copy numbers exactly, never round, convert or compute new ones; "
@@ -78,8 +78,11 @@ def _norm_numbers(text: str) -> set[str]:
     return {m.replace(",", "") for m in _NUM.findall(text)}
 
 
+_RATING_OK = re.compile(r"educational rating(?: is|:)?\s*(?:buy|overweight|hold|underweight|sell)\b", re.I)
+
+
 def _advice(text: str) -> str | None:
-    low = text.lower()
+    low = _RATING_OK.sub(" ", text).lower()                 # the quoted educational rating is allowed; any other advice wording is not
     return next((w for w in BANNED_WORDS if re.search(rf"\b{re.escape(w)}\b", low)), None)
 
 

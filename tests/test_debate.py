@@ -37,27 +37,27 @@ WEAK = sc_with(25, {"value": 20, "quality": 30, "growth": 15, "momentum": 22, "r
 
 def test_d1_strong_profile_leans_positive_with_cited_bull_points():
     d = build_debate(fs_with(implied_growth_r12_n10=0.07 * 100, max_drawdown_3y=-0.2, volatility_1y=0.2), STRONG)
-    assert d.stance.label in ("Positive lean", "Strong positive lean") and d.stance.confidence in ("Medium", "High")
+    assert d.stance.label in ("Overweight", "Buy") and d.stance.confidence in ("Medium", "High")
     assert len(d.bull) >= 3 and len(d.bull) > len(d.bear)
     assert all(p.key for p in d.bull + d.bear)
 
 
 def test_d2_weak_profile_leans_negative_with_bear_points():
     d = build_debate(fs_with(implied_growth_r12_n10=22.0, max_drawdown_3y=-0.55, volatility_1y=0.42), WEAK)
-    assert d.stance.label in ("Negative lean", "Strong negative lean") and len(d.bear) > len(d.bull)
+    assert d.stance.label in ("Underweight", "Sell") and len(d.bear) > len(d.bull)
     assert any("implies" in p.text.lower() for p in d.bear) and any("drawdown" in p.text.lower() for p in d.bear)
 
 
 def test_d3_mixed_profile_is_neutral():
     mixed = sc_with(50, {"value": 60, "quality": 40, "growth": 50, "momentum": 45, "risk": 55},
                     {"profitable_latest_quarter": "pass", "positive_1y_return": "fail"})
-    assert build_debate(fs_with(), mixed).stance.label == "Neutral"
+    assert build_debate(fs_with(), mixed).stance.label == "Hold"
 
 
 def test_d4_abstained_or_missing_score_gives_no_stance():
     d = build_debate(fs_with(), sc_with(None, {"momentum": 50, "risk": 40}, {}, status="abstain"))
-    assert d.stance.label == "No stance" and "too few" in d.stance.reason
-    assert build_debate(fs_with(), None).stance.label == "No stance"
+    assert d.stance.label == "No rating" and "too few" in d.stance.reason
+    assert build_debate(fs_with(), None).stance.label == "No rating"
 
 
 def test_d5_confidence_drops_with_thin_coverage():

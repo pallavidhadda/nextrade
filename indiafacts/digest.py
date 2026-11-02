@@ -173,8 +173,8 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
         for i, pt in enumerate(debate.bear[:4]):
             G("debate", f"debate:bear:{i}", f"debate:bear:{i}", f"BEAR {clean(pt.text, 140)} [[{pt.key}]]")
         st = debate.stance
-        G("debate", "debate:stance", "debate:stance",
-          f"STANCE educational: {st.label}, confidence {st.confidence} ({clean(st.reason, 150)}; transparent rule, not a prediction or recommendation)")
+        G("debate", "debate:rating", "debate:rating",
+          f"RATING educational: {st.label}, confidence {st.confidence} ({clean(st.reason, 150)}; transparent rule on the evidence, not a prediction or a personal recommendation)")
     for i, n in enumerate(news or []):
         when = n.published.date().isoformat() if n.published else "undated"
         G("news", f"news:{i}", f"news:{i}",

@@ -228,7 +228,7 @@ def _debate_block(d) -> list[str]:
     out = ["", "BULL CASE VERSUS BEAR CASE (educational; rule-based from the evidence above)"]
     out += ["bull:"] + ([f"  + {p.text}" for p in d.bull] or ["  (none found)"])
     out += ["bear:"] + ([f"  - {p.text}" for p in d.bear] or ["  (none found)"])
-    out.append(f"EDUCATIONAL STANCE: {d.stance.label} (confidence {d.stance.confidence}). {d.stance.reason}.")
+    out.append(f"EDUCATIONAL RATING: {d.stance.label} (confidence {d.stance.confidence}). {d.stance.reason}.")
     return out
 
 

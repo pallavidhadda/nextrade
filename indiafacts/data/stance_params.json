@@ -1,15 +1,31 @@
 {
-  "note": "Thresholds for the bull/bear lists and the educational stance. PROPOSALS by the project author, not evidence-based and not backtested. Shown to the reader. The stance is a transparent rule, not a prediction.",
+  "note": "Thresholds for the bull/bear lists and the educational rating (Buy, Overweight, Hold, Underweight, Sell, the TradingAgents scale). PROPOSALS by the project author, not evidence-based and not backtested. The rating is a transparent rule on the evidence, not a prediction or a personal recommendation.",
   "reviewed_on": "2026-11-02",
   "review_by": "2027-05-02",
   "bull_factor_min": 65,
   "bear_factor_max": 35,
   "implied_growth_modest_max": 10.0,
   "implied_growth_demanding_min": 18.0,
-  "drawdown_deep": -0.40,
+  "drawdown_deep": -0.4,
   "volatility_high": 0.35,
   "weight_score": 0.5,
   "weight_points": 0.5,
-  "label_bounds": {"strong_positive": 0.45, "positive": 0.15, "negative": -0.15, "strong_negative": -0.45},
-  "confidence": {"high_min_factors": 4, "medium_min_factors": 3, "max_unavailable_checks_for_high": 2}
+  "label_bounds": {
+    "strong_positive": 0.45,
+    "positive": 0.15,
+    "negative": -0.15,
+    "strong_negative": -0.45
+  },
+  "confidence": {
+    "high_min_factors": 4,
+    "medium_min_factors": 3,
+    "max_unavailable_checks_for_high": 2
+  },
+  "labels": {
+    "strong_positive": "Buy",
+    "positive": "Overweight",
+    "neutral": "Hold",
+    "negative": "Underweight",
+    "strong_negative": "Sell"
+  }
 }

@@ -204,3 +204,13 @@ def test_claims_citing_a_mixed_source_figure_get_the_caveat_added_by_code(digest
     out = explain(d, sc, fs, client=FakeLLM(raw), cache=LLMCache(tmp_path / "c"), log=TokenLog(tmp_path / "l.jsonl"))
     first = out.claims[0].text
     assert "compares the official filing with Yahoo" in first and out.claims[1].text == "Several checks did not pass."
+
+
+def test_quoted_educational_rating_is_allowed_but_other_advice_is_not():
+    from indiafacts.llm import _advice
+
+    assert _advice("Educational rating: Overweight, a transparent rule on the evidence.") is None
+    assert _advice("Educational rating is Hold with medium confidence.") is None
+    assert _advice("You should buy this stock now.") == "buy"
+    assert _advice("Educational rating: Buy, so go ahead and sell your other shares.") == "sell"
+    assert _advice("We recommend an overweight position.") in ("recommend", "overweight")

@@ -93,10 +93,10 @@ def test_news_debate_and_stance_flow_through_digest_text_and_json(tmp_path, caps
                 client=FakeClient(stmt=QUARTERLY, info=INFO2), sleep=lambda s: None, price_client=prices_for(SYMS), news_client=N())
     text = capsys.readouterr().out
     d = json.loads(out.read_text())
-    assert code == 0 and "BULL CASE VERSUS BEAR CASE" in text and "EDUCATIONAL STANCE:" in text and "RECENT HEADLINES" in text
+    assert code == 0 and "BULL CASE VERSUS BEAR CASE" in text and "EDUCATIONAL RATING:" in text and "RECENT HEADLINES" in text
     assert d["news"][0]["sentiment_hint"] == "positive" and d["debate"]["stance"]["label"]
     digest = d["llm"]["digest"]
-    assert "STANCE educational:" in digest and "NEWS " in digest and "[[" not in digest and "(see F" in digest
+    assert "RATING educational:" in digest and "NEWS " in digest and "[[" not in digest and "(see F" in digest
     assert all("evidence" in p for p in d["debate"]["bull"] + d["debate"]["bear"])
 
 
