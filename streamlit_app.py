@@ -1,9 +1,22 @@
 """NexTrade, Streamlit edition. Research and education only; not financial, investment or trading advice.
 Runs the analysis in-process on the server. It never asks for or stores API keys; for your own model use the Claude connector."""
+import sys
+from pathlib import Path
+
+# Always run the checked-out source, never a copy installed earlier. On Streamlit Cloud the package is built once and a later
+# "Updated app" pulls new files without rebuilding, which left a new page calling functions the old installed copy lacked.
+_ROOT = str(Path(__file__).resolve().parent)
+if _ROOT not in sys.path[:1]:
+    sys.path.insert(0, _ROOT)
+for _name in [m for m in sys.modules if m == "indiafacts" or m.startswith("indiafacts.")]:
+    _f = getattr(sys.modules[_name], "__file__", "") or ""
+    if _f and not _f.startswith(_ROOT):
+        del sys.modules[_name]
+
 import streamlit as st
 import streamlit.components.v1 as components
 
-from indiafacts import webui
+from indiafacts import companies, webui
 from indiafacts.render import DISCLAIMER
 
 st.set_page_config(page_title="NexTrade: research assistant for Indian stocks", page_icon="📈", layout="wide")
@@ -34,6 +47,12 @@ def start(ticker: str, profile: dict) -> None:
     st.rerun()
 
 
+def _pick(ticker: str) -> None:
+    """Button callback: put the chosen ticker in the box and run it on the next pass."""
+    ss["q"] = ticker
+    ss["run_now"] = True
+
+
 def result_view(res: dict) -> None:
     s = res["summary"]
     sub = ", ".join(x for x in [s["ticker"] if s.get("name") else None, s.get("industry") or s.get("sector"), s.get("isin")] if x)
@@ -50,7 +69,10 @@ def result_view(res: dict) -> None:
         a.markdown(webui.score_html(s) + webui.debate_html(s) + webui.health_html(s) + webui.ownership_html(s) + webui.levels_html(s) + webui.valuation_html(s) + webui.checklist_html(s), unsafe_allow_html=True)
         b.markdown(webui.explanation_html(s) + webui.news_html(s) + webui.flows_html(s) + webui.facts_html(s), unsafe_allow_html=True)
     with t2:
-        components.html(res["html"], height=800, scrolling=True)
+        try:
+            components.html(res["html"], height=800, scrolling=True)
+        except (AttributeError, TypeError):                      # components.html is being removed from Streamlit
+            st.iframe(res["html"], height=800)
     with t3:
         st.markdown(webui.gaps_html(s), unsafe_allow_html=True)
 
@@ -67,23 +89,33 @@ else:
             st.caption("Sets which factors weigh more. Skip it and a labelled default is used. Kept only for this browser session.")
             for key, (label, options) in GROUPS.items():
                 st.pills(label, options, key=f"p_{key}")
-        with st.form("analyse"):
-            ticker = st.text_input("Company name or ticker", value=ss.get("ticker", ""), placeholder="Infosys or INFY.NS", max_chars=24,
-                                   help="Add .NS for NSE or .BO for BSE. Without a suffix, NSE is assumed.")
-            go = st.form_submit_button("Analyse", type="primary")
+        q = st.text_input("Company name or ticker", key="q", placeholder="Infosys or INFY.NS", max_chars=40,
+                          help="Type a company name, even with a typo, or a ticker. Add .BO for BSE; NSE is the default. Press Enter to see matches.")
+        chosen, sugg = companies.resolve(q)
+        if q.strip() and chosen is None and sugg:
+            st.caption(f'No exact match for "{q.strip()}". Did you mean:')
+            for i, m in enumerate(sugg[:5]):
+                st.button(f"{m.name}  ·  {m.ticker}", key=f"sg_{i}", on_click=_pick, args=(m.ticker,))
+        elif q.strip() and chosen and not q.strip().upper().endswith((".NS", ".BO")):
+            names = companies.search(chosen.split(".")[0], 1)
+            st.caption(f"Will analyse {names[0].name} ({chosen})" if names else f"Will analyse {chosen}")
+        go = st.button("Analyse", type="primary")
+        st.caption("Quick picks")
         cols = st.columns(len(EXAMPLES))
         for c, x in zip(cols, EXAMPLES):
-            if c.button(x, key=f"ex_{x}"):
-                ss["ticker"] = x
-                st.rerun()
+            c.button(x, key=f"ex_{x}", on_click=_pick, args=(x,))
         profile = {k: ss.get(f"p_{k}") for k in GROUPS if ss.get(f"p_{k}")}
+        if ss.pop("run_now", False):
+            go = True
         if go:
-            t = webui.valid_ticker(ticker)
-            if t is None:
-                st.error("Enter a ticker such as RELIANCE or TCS.NS (letters, digits, & or -, optional .NS or .BO).")
+            if chosen is None:
+                if sugg:
+                    st.error(f'"{q.strip()}" is not a listed name or ticker. Pick one of the matches above.')
+                else:
+                    st.error("Enter a company name such as Infosys, or a ticker such as RELIANCE or TCS.NS.")
             else:
-                ss["ticker"] = t
-                start(t, profile)
+                ss["ticker"] = chosen
+                start(chosen, profile)
         st.markdown('<p class="helper">Nothing about you is stored on our servers. No API keys are requested here; for your own model, use the Claude connector.</p>', unsafe_allow_html=True)
     with right:
         st.markdown("""<section class="entry notebook"><header><h2>What a result contains</h2><span class="note">read before you run</span></header><div class="body">

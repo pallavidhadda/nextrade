@@ -42,6 +42,11 @@ class AnalyzeRequest(BaseModel):
         v = v.strip().upper()
         if not TICKER.match(v) or v.startswith("-"):
             raise ValueError("ticker must look like RELIANCE or RELIANCE.NS")
+        from indiafacts.companies import resolve
+
+        chosen, sugg = resolve(v)
+        if chosen is None and sugg:
+            raise ValueError(f"{v} is not a listed ticker. Did you mean: " + ", ".join(m.label for m in sugg[:3]) + "?")
         return v
 
 

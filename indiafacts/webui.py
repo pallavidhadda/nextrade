@@ -274,15 +274,7 @@ def run_analysis(opts: dict, progress) -> dict:
     return res
 
 
-CSS = """.glance{margin:1rem 0;border:1px solid var(--color-ink,#1d1b16);border-radius:12px;background:var(--color-sheet,#fff);padding:1rem}
-.glance-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem}
-.glance-k{display:block;font-size:.72rem;font-weight:500;color:#6b675e;text-transform:uppercase;letter-spacing:.04em}
-.glance-v{display:block;font-size:1.25rem;margin-top:.15rem}.glance-s{display:block;font-size:.85rem;color:#6b675e;margin-top:.15rem}
-.glance-why{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1rem;padding-top:1rem;border-top:1px solid #d9d4c7}
-.glance-why h3{font-size:.85rem;margin:0 0 .3rem}.glance-why ul{margin:0;padding-left:1.1em;font-size:.88rem}
-@media(max-width:720px){.glance-row{grid-template-columns:1fr 1fr}.glance-why{grid-template-columns:1fr}}
-
-@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@600&family=Red+Hat+Text:wght@400;500&family=Red+Hat+Mono:wght@400;500&display=swap');
+CSS = """@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@600&family=Red+Hat+Text:wght@400;500&family=Red+Hat+Mono:wght@400;500&display=swap');
 :root { --paper: #f6f1e7; --paper2: #fffdf8; --paper3: #ece5d4; --ink: #1b1815; --ink2: #3a342d; --muted: #6b6258; --rule: #e0d8c6;
   --accent: #f4793c; --accent-soft: #fbd9c4; --green: #2f6b45; --green-soft: #dcebdc; --grid: #e6dfcd; }
 html, body, .stApp, .stApp p, .stApp label, .stApp input, .stApp button, .stApp textarea, .stApp li, .stApp td, .stApp th { font-family: 'Red Hat Text', system-ui, sans-serif; }
@@ -336,4 +328,13 @@ button[data-baseweb="tab"] { font-weight: 500; min-height: 44px; }
 .stance { margin-top: 1rem; } .stance-tag { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); min-width: 9rem; }
 @media (max-width: 640px) { .debate { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .claims li { grid-template-columns: 1fr; } .factor { grid-template-columns: 5.5rem minmax(0,1fr) 3rem; } }
+
+.glance{margin:1rem 0;border:1px solid var(--color-ink,#1d1b16);border-radius:12px;background:var(--color-sheet,#fff);padding:1rem}
+.glance-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem}
+.glance-k{display:block;font-size:.72rem;font-weight:500;color:#6b675e;text-transform:uppercase;letter-spacing:.04em}
+.glance-v{display:block;font-size:1.25rem;margin-top:.15rem}.glance-s{display:block;font-size:.85rem;color:#6b675e;margin-top:.15rem}
+.glance-why{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1rem;padding-top:1rem;border-top:1px solid #d9d4c7}
+.glance-why h3{font-size:.85rem;margin:0 0 .3rem}.glance-why ul{margin:0;padding-left:1.1em;font-size:.88rem}
+@media(max-width:720px){.glance-row{grid-template-columns:1fr 1fr}.glance-why{grid-template-columns:1fr}}
+
 """

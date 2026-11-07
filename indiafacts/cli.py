@@ -84,8 +84,12 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     from indiafacts.models import Status as _S
 
     if not any(f.status == _S.ok for f in fs.facts) and not fs.not_yet_public:
-        print(f"error: could not fetch any data for {fs.entity.ticker}. This usually means this machine cannot reach Yahoo Finance "
-              "(no network, a proxy or a sandbox), or the ticker has changed. Nothing was analysed. "
+        from indiafacts.companies import resolve
+
+        _, sugg = resolve(args.ticker)
+        hint = ("The ticker may be mistyped. Did you mean: " + ", ".join(m.label for m in sugg[:3]) + "? ") if sugg else ""
+        print(f"error: could not fetch any data for {fs.entity.ticker}. {hint}Otherwise this usually means this machine cannot reach "
+              "Yahoo Finance (no network, a proxy or a sandbox), or the ticker has changed. Nothing was analysed. "
               "If the NexTrade connector is available, use it instead; otherwise retry with network access.", file=sys.stderr)
         return 5
     scorecard = None
