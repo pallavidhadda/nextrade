@@ -1,0 +1,6 @@
+symbol,isin,as_on,promoter,pledged_of_promoter,foreign_inst,domestic_inst,mutual_funds,insurance,public,retail,shareholders,source,fetched_on
+ONEPOINT,INE840Y01029,2026-11-07,0.522800,0.394428,0.051300,0.007100,,,0.477200,0.134300,52694,https://nsearchives.nseindia.com/corporate/xbrl/SHP_1755485_07112026071034_WEB.xml,2026-11-07
+TCI,INE688A01022,2026-10-30,0.700800,,0.028100,0.124300,0.108300,0.008700,0.299200,0.084900,48689,https://nsearchives.nseindia.com/corporate/xbrl/SHP_1755369_07112026030050_WEB.xml,2026-11-07
+NGIL,INE236Y01012,2026-10-30,0.557100,0.089568,0.000000,,,,0.442900,0.150200,6785,https://nsearchives.nseindia.com/corporate/xbrl/SHP_1755339_07112026023030_WEB.xml,2026-11-07
+DEVX,INE0VOV01021,2026-11-03,0.372900,,0.010400,0.018800,,0.004000,0.627100,0.100100,17598,https://nsearchives.nseindia.com/corporate/xbrl/SHP_1755315_07112026014738_WEB.xml,2026-11-07
+KIRIINDUS,INE415I01015,2026-11-07,0.417100,0.002191,0.165900,0.014700,0.000000,,0.582900,0.198400,41041,https://nsearchives.nseindia.com/corporate/xbrl/SHP_1755286_07112026120221_WEB.xml,2026-11-07
