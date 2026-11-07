@@ -6,6 +6,7 @@ import ProfileChooser from "@/components/Profile";
 import OwnModelPanel from "@/components/OwnModel";
 import { AtAGlance, Checklist, Debate, Health, MarketFlows, Ownership, Explanation, Gaps, KeyFacts, Levels, News, Score, Valuation } from "@/components/Result";
 import companies from "@/lib/companies.json";
+import { suggest } from "@/lib/search";
 import { ApiError, poll, reportUrl, submit } from "@/lib/api";
 import type { Job, Profile, Summary } from "@/lib/types";
 
@@ -130,6 +131,19 @@ function Home() {
               </div>
               <button className="key primary" type="submit" disabled={busy}>{busy ? "Starting" : "Analyse"}</button>
             </div>
+            {(() => {
+              const t = ticker.trim();
+              if (t.length < 2 || /\.(NS|BO)$/i.test(t)) return null;
+              const sg = suggest(t).filter((c) => `${c.s}.NS` !== t.toUpperCase());
+              if (sg.length === 0) return null;
+              const exact = COMPANIES.some((c) => c.s === t.toUpperCase() || c.n.toLowerCase() === t.toLowerCase());
+              return (
+                <div className="chips" aria-label="Matching companies">
+                  <span className="helper">{exact ? "Also matches:" : "Did you mean:"}</span>
+                  {sg.map((c) => <button key={c.s} type="button" className="chip" onClick={() => setTicker(`${c.s}.NS`)}>{c.n}</button>)}
+                </div>
+              );
+            })()}
             <datalist id="company-list">{COMPANIES.map((c) => <option key={c.s} value={`${c.s}.NS`}>{c.n}</option>)}</datalist>
             <p id="ticker-help" className={`helper${fieldError ? " err" : ""}`} role={fieldError ? "alert" : undefined}>{fieldError || "Type a company name (for example Infosys) or a ticker. Add .BO for BSE; NSE is the default."}</p>
             <div className="chips" aria-label="Example tickers">{EXAMPLES.map((x) => <button key={x} type="button" className="chip mono" onClick={() => setTicker(x)}>{x}</button>)}</div>

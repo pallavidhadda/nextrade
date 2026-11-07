@@ -136,9 +136,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     if args.flows:
         from indiafacts import flows as _flows
 
-        flows = _flows.summary(_flows.history()) or {"unavailable": True}
-        if flows.get("unavailable"):
-            flows = None
+        flows = _flows.combined()
     debate = build_debate(fs, scorecard)
     levels = reference_levels(fs, debate.stance.label)
     panel = build_risk_panel(fs, profile, levels)

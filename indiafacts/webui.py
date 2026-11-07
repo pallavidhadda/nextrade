@@ -97,10 +97,17 @@ def flows_html(s: dict) -> str:
     f = s.get("market_flows")
     if not f:
         return ""
+    cash = f.get("cash")
+    cash_html = ""
+    if cash:
+        cb = "".join(f'<tr><td>{e(r["category"])}<span class="ids">{r["streak"]} session(s) in a row of {e(r["streak_word"])}; {r["window_net"]:+,.0f} over {r["sessions"]} sessions</span></td>'
+                     f'<td class="num">{r["last_net"]:+,.0f}</td></tr>' for r in cash["rows"])
+        cash_html = f'<h3>Cash market, rupees crore (latest {e(cash["as_of"])})</h3><table><thead><tr><th>Group</th><th class="num">Latest net</th></tr></thead><tbody>{cb}</tbody></table>'
     body = "".join(f'<tr><td>{e(r["participant"])}<span class="ids">{r["long_share"]:.0%} long'
                    + (f'; {r["change"]:+,} since {e(f["since"])}' if r["change"] is not None else "") + f'</span></td>'
                    f'<td class="num">{abs(r["net"]):,} <span class="tag">{e(r["stance"])}</span></td></tr>' for r in f["rows"])
-    return _card("Market flows", f"as of {f['as_of']}", f'<table><thead><tr><th>Who</th><th class="num">Index futures</th></tr></thead><tbody>{body}</tbody></table><p class="helper">{e(f["note"])}</p>')
+    fut = f'<table><thead><tr><th>Who</th><th class="num">Index futures</th></tr></thead><tbody>{body}</tbody></table>' if body else ""
+    return _card("Market flows", f"as of {f['as_of']}", fut + cash_html + f'<p class="helper">{e(f["note"] or (cash or {}).get("note", ""))}</p>')
 
 
 def glance_html(s: dict) -> str:

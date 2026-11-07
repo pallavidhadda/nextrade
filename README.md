@@ -23,6 +23,7 @@ python -m indiafacts.journal settle                                      # score
 python -m indiafacts.journal board                                       # scoreboard by rating
 python -m indiafacts.journal log --limit 6                               # rate a slice of the pool and record it (also runs weekdays via GitHub Actions)
 python -m indiafacts TCS.NS --shareholding SHP_file.xml --flows        # ownership from a saved NSE file, plus market flows
+python -m indiafacts.fiidii import saved_nse_fii_dii.csv                # cash-market FII/DII from a file you saved from NSE (csv or json)
 python -m indiafacts.shareholding poll                                   # store the newest filings from NSE's public feed
 python -m indiafacts TCS.NS --announcements                              # latest exchange filings from NSE's public RSS feed
 ```

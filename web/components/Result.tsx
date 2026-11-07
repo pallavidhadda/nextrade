@@ -328,7 +328,7 @@ export function MarketFlows({ s }: { s: Summary }) {
     <section className="entry" aria-labelledby="flow-h">
       <header><h2 id="flow-h">Market flows</h2><span className="note">as of {f.as_of}</span></header>
       <div className="body">
-        <table>
+        {f.rows.length > 0 && <table>
           <thead><tr><th>Who</th><th>Index futures</th></tr></thead>
           <tbody>
             {f.rows.map((r) => (
@@ -338,8 +338,21 @@ export function MarketFlows({ s }: { s: Summary }) {
               </tr>
             ))}
           </tbody>
-        </table>
-        <p className="helper" style={{ marginTop: "var(--space-sm)" }}>{f.note}</p>
+        </table>}
+        {f.cash && (
+          <table style={{ marginTop: "var(--space-sm)" }}>
+            <thead><tr><th>Cash market, ₹ crore</th><th>Latest net</th></tr></thead>
+            <tbody>
+              {f.cash.rows.map((r) => (
+                <tr key={r.category}>
+                  <td>{r.category}<span className="ids">{r.streak} session(s) in a row of {r.streak_word}; {r.window_net.toLocaleString("en-IN")} over {r.sessions} sessions</span></td>
+                  <td><span className="num">{r.last_net.toLocaleString("en-IN")}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <p className="helper" style={{ marginTop: "var(--space-sm)" }}>{f.note || f.cash?.note}</p>
       </div>
     </section>
   );

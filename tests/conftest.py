@@ -41,3 +41,4 @@ def _isolated_shareholding_store(monkeypatch, tmp_path):
     """Tests never read or write the real shareholding store."""
     monkeypatch.setenv("INDIAFACTS_SHP_STORE", str(tmp_path / "shp_home.csv"))
     monkeypatch.setenv("INDIAFACTS_SHP_REPO", str(tmp_path / "shp_repo.csv"))
+    monkeypatch.setenv("INDIAFACTS_FIIDII_STORE", str(tmp_path / "fiidii.csv"))

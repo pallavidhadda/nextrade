@@ -422,8 +422,13 @@ def _flows_card(flows) -> str:
         return ""
     rows = [[r["participant"], r["stance"], f'{abs(r["net"]):,}', f'{r["long_share"]:.0%}',
              "" if r["change"] is None else f'{r["change"]:+,}'] for r in flows["rows"]]
-    return _card("flows", f"Market flows (as of {flows['as_of']})", flows["note"],
-                 _table(["Participant", "Index futures", "Contracts", "Long share", f"Change since {flows['since']}"], rows, num=(2, 3, 4)))
+    inner = _table(["Participant", "Index futures", "Contracts", "Long share", f"Change since {flows['since']}"], rows, num=(2, 3, 4)) if rows else ""
+    cash = flows.get("cash")
+    if cash:
+        crow = [[r["category"], f'{r["last_net"]:+,.0f}', r["last_day"], f'{r["window_net"]:+,.0f}', f'{r["streak"]} of {r["streak_word"]}'] for r in cash["rows"]]
+        inner += "<h3>Cash market, rupees crore (from files you saved from NSE)</h3>" + _table(
+            ["Group", "Latest net", "Day", "Net over window", "Run"], crow, num=(1, 3))
+    return _card("flows", f"Market flows (as of {flows['as_of']})", flows["note"] or (cash or {}).get("note", ""), inner)
 
 
 def _peer_card(sc: dict | None, metric: str, target: str) -> str:

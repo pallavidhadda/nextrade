@@ -107,12 +107,30 @@ def summary(days: list[Day]) -> dict | None:
     return {"as_of": latest.day.isoformat(), "since": oldest.day.isoformat(), "sessions": len(days), "rows": rows, "note": NOTE}
 
 
+def combined(days: list[Day] | None = None) -> dict | None:
+    """Derivatives positioning plus any cash-market FII/DII data the person imported. None when there is neither."""
+    from indiafacts import fiidii
+
+    d = summary(days if days is not None else history())
+    cash = fiidii.summary()
+    if d is None and cash is None:
+        return None
+    out = d or {"as_of": cash["as_of"], "since": cash["as_of"], "sessions": 0, "rows": [], "note": ""}
+    out["cash"] = cash
+    return out
+
+
 def lines(s: dict | None) -> list[str]:
+    from indiafacts import fiidii
+
     if not s:
         return ["", "MARKET FLOWS: the exchange's participant file could not be read just now"]
+    cash = fiidii.lines(s.get("cash"))
+    if not s["rows"]:
+        return cash
     out = ["", f"MARKET FLOWS (index-futures positions by participant, as of {s['as_of']}; whole market, not this stock)"]
     for r in s["rows"]:
         ch = "" if r["change"] is None else f", {r['change']:+,} contracts since {s['since']}"
         out.append(f"  {r['participant']}: {r['stance']} {abs(r['net']):,} contracts, {r['long_share']:.0%} of their positions are long{ch}")
     out.append("  " + s["note"])
-    return out
+    return out + cash
