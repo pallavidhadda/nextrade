@@ -93,7 +93,7 @@ def test_app_runs_and_shows_result(monkeypatch):
     assert not at.exception
     joined = " ".join(m.value for m in at.markdown)
     assert "45.0" in joined and "TCS.NS" in joined
-    assert [t.label for t in at.tabs] == ["Summary", "Full report", "Gaps (1)"]
+    assert [t.label for t in at.tabs] == ["Summary", "Full report", "Gaps (1)", "AI analysts"]
 
 
 def test_debate_and_news_cards_escape_and_label():
