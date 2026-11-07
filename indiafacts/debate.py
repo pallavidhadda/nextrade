@@ -93,16 +93,9 @@ def build_debate(fs: FactSet, sc: dict | None, params: dict | None = None) -> De
     L = p["labels"]
     label = (L["strong_positive"] if s >= b["strong_positive"] else L["positive"] if s >= b["positive"] else
              L["neutral"] if s > b["negative"] else L["negative"] if s > b["strong_negative"] else L["strong_negative"])
-    cp = p["confidence"]
-    unavailable = sum(1 for c in (sc.get("checklist") or []) if c.result == "unavailable")
-    if len(scored) >= cp["high_min_factors"] and unavailable <= cp["max_unavailable_checks_for_high"]:
-        conf = "High"
-    elif len(scored) >= cp["medium_min_factors"]:
-        conf = "Medium"
-    else:
-        conf = "Low"
+    conf, why = _confidence(fs, sc, scored, s, b, ratio, p)
     d.stance = Stance(label, conf, f"overall score {r.overall:.1f} of 100 and {nb} supporting against {nr} cautionary points; "
-                                   f"{len(scored)} of 5 factors had enough data; a rule-based reading, not a prediction", round(s, 3))
+                                   f"{len(scored)} of 5 factors had enough data; confidence {conf.lower()} because {why}; a rule-based reading, not a prediction", round(s, 3))
     return d
 
 
@@ -148,3 +141,50 @@ def _health_points(fs: FactSet, d: Debate, p: dict) -> None:
             d.bear.append(Point(f"Profit shrank {abs(pg):.1%} a year on average over three years", "health:fy_net_income_cagr_3y"))
     elif rg is not None and rg < h["growth_weak"]:
         d.bear.append(Point(f"Sales shrank {abs(rg):.1%} a year on average over three years", "health:fy_revenue_cagr_3y"))
+
+
+def _confidence(fs: FactSet, sc: dict, scored: dict, s: float, bounds: dict, ratio: float, p: dict) -> tuple[str, str]:
+    """Confidence in the rating, from six visible ingredients. It says how well-supported the reading is, not how likely it is to be right.
+    1) factors with data, 2) size of the comparison pool, 3) checks that could be measured, 4) distance from a rating boundary,
+    5) whether the score and the evidence points lean the same way, 6) annual business-health data present."""
+    cp = {"high_min": 6, "medium_min": 4, "pool_large": 25, "pool_ok": 12, "edge_margin": 0.08, **p.get("confidence", {})}
+    r = sc["result"]
+    pts, good, weak = 0, [], []
+    nf = len(scored)
+    if nf >= 5:
+        pts += 2; good.append("all five factors had data")
+    elif nf == 4:
+        pts += 1; weak.append("one factor lacked data")
+    else:
+        weak.append(f"only {nf} factors had data")
+    n = sc.get("n") or r.n or 0
+    if n >= cp["pool_large"]:
+        pts += 2; good.append(f"a comparison pool of {n}")
+    elif n >= cp["pool_ok"]:
+        pts += 1; weak.append(f"a smallish comparison pool ({n})")
+    else:
+        weak.append(f"a small comparison pool ({n})")
+    unavailable = sum(1 for c in (sc.get("checklist") or []) if c.result == "unavailable")
+    if unavailable <= 1:
+        pts += 1; good.append("nearly every check measurable")
+    else:
+        weak.append(f"{unavailable} checks unavailable")
+    cuts = [bounds[k] for k in ("strong_positive", "positive", "negative", "strong_negative")]
+    if min(abs(s - c) for c in cuts) >= cp["edge_margin"]:
+        pts += 1; good.append("clear of a rating boundary")
+    else:
+        weak.append("close to a rating boundary")
+    lean_score = r.overall - 50
+    if lean_score * ratio >= 0 and not (abs(lean_score) > 10 and ratio * lean_score < 0):
+        pts += 1; good.append("score and evidence points agree")
+    else:
+        weak.append("the score and the evidence points disagree")
+    if _fact(fs, "fy_free_cash_flow") is not None or _fact(fs, "fy_roce") is not None or _fact(fs, "fy_equity_multiplier") is not None:
+        pts += 1; good.append("annual business-health data present")
+    else:
+        weak.append("no annual business-health data")
+    conf = "High" if pts >= cp["high_min"] else "Medium" if pts >= cp["medium_min"] else "Low"
+    if nf < 4:
+        conf = "Low"                                   # a rating built on fewer than four factors is never better than low confidence
+    reasons = (weak if conf != "High" and weak else good)[:3]
+    return conf, ", ".join(reasons) if reasons else "all ingredients present"

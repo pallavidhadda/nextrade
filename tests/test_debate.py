@@ -79,3 +79,29 @@ def test_d7_params_have_review_date_and_strict_overdue_fails():
     assert load_stance_params(today=ASOF)["bull_factor_min"] > load_stance_params(today=ASOF)["bear_factor_max"]
     with pytest.raises(ValueError):
         load_stance_params(today=date(2031, 1, 1), strict=True)
+
+
+def test_d7_confidence_uses_pool_size_edges_and_disagreement():
+    strong = dict(STRONG)
+    big = {**strong, "n": 30}
+    small = {**strong, "n": 8}
+    hi = build_debate(fs_with(fy_roce=0.2), big).stance
+    lo = build_debate(fs_with(fy_roce=0.2), small).stance
+    order = {"Low": 0, "Medium": 1, "High": 2}
+    assert order[lo.confidence] <= order[hi.confidence]
+    assert "small comparison pool" in lo.reason or lo.confidence == "High"
+    # score says strong, evidence points say weak: disagreement must not give High
+    conflict = sc_with(72, {"value": 70, "quality": 80, "growth": 66, "momentum": 60, "risk": 70},
+                       {"debt_moderate": "fail", "revenue_growing": "fail", "positive_1y_return": "fail", "beats_nifty_1y": "fail", "near_52w_high": "fail"})
+    assert build_debate(fs_with(), conflict).stance.confidence != "High"
+
+
+def test_d8_confidence_is_not_nearly_always_high():
+    """Across varied inputs the label must spread; the old rule gave High almost every time."""
+    labels = set()
+    for overall, n in ((52, 8), (45, 12), (70, 30), (30, 30)):
+        sc = sc_with(overall, {"value": overall, "quality": overall + 5, "growth": overall - 5, "momentum": overall, "risk": overall},
+                     {"profitable_latest_quarter": "pass", "debt_moderate": "unavailable", "revenue_growing": "unavailable"})
+        sc["n"] = n
+        labels.add(build_debate(fs_with(), sc).stance.confidence)
+    assert len(labels) >= 2
