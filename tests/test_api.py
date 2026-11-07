@@ -162,3 +162,15 @@ def test_idle_rate_limit_and_cache_entries_are_forgotten(monkeypatch):
     c.post("/api/analyze", json={"ticker": "BBB.NS"})
     # the first connection's window and the old cache entry are gone; only the new request's state remains
     assert c.post("/api/analyze", json={"ticker": "CCC.NS"}).status_code == 202
+
+
+def test_report_download_sets_a_safe_filename_and_typo_gets_suggestion():
+    c = TestClient(create_app(fake_runner))
+    job = c.post("/api/analyze", json={"ticker": "RELIANCE.NS"}).json()["job_id"]
+    wait(c, job)
+    rep = c.get(f"/api/jobs/{job}/report?download=1")
+    cd = rep.headers["content-disposition"]
+    assert cd.startswith('attachment; filename="nextrade_RELIANCE_') and cd.endswith('.html"')
+    assert "content-disposition" not in c.get(f"/api/jobs/{job}/report").headers
+    bad = c.post("/api/analyze", json={"ticker": "INFOSIS"})
+    assert bad.status_code == 422 and "Did you mean" in bad.text and "INFY.NS" in bad.text

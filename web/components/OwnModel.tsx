@@ -2,11 +2,12 @@
 import { useState } from "react";
 import { validate } from "@/lib/api";
 import { DEFAULT_MODELS, complete, destination, type Provider } from "@/lib/llm";
-import type { Summary } from "@/lib/types";
+import type { PanelResult, Summary } from "@/lib/types";
 
-type Props = { jobId: string; summary: Summary; onExplanation: (e: NonNullable<Summary["explanation"]>) => void };
+type Props = { jobId: string; summary: Summary; onExplanation: (e: NonNullable<Summary["explanation"]>) => void; onPanel: (r: PanelResult[]) => void };
 
-export default function OwnModelPanel({ jobId, summary, onExplanation }: Props) {
+export default function OwnModelPanel({ jobId, summary, onExplanation, onPanel }: Props) {
+  const [mode, setMode] = useState<"single" | "panel">("single");
   const [provider, setProvider] = useState<Provider>("gemini");
   const [model, setModel] = useState(DEFAULT_MODELS.gemini);
   const [baseUrl, setBaseUrl] = useState("http://localhost:11434/v1");
@@ -24,6 +25,33 @@ export default function OwnModelPanel({ jobId, summary, onExplanation }: Props) 
     if (!model.trim()) { setMsg({ kind: "err", text: "Enter the model name." }); return; }
     setBusy(true); setMsg(null);
     try {
+      if (mode === "panel" && llm.roles?.length) {
+        const cfg = { provider, model: model.trim(), baseUrl, apiKey };
+        const out: PanelResult[] = [];
+        let notes = "";
+        for (const role of llm.roles) {
+          const isManager = role.id === "manager";
+          if (isManager && !notes) { out.push({ id: role.id, title: role.title, explanation: null, error: "no analyst produced a valid note to combine" }); break; }
+          const user = isManager
+            ? `DIGEST:\n${llm.digest}\n\nANALYST NOTES (already checked against the digest):\n${notes}\n\nWrite the JSON now.`
+            : `DIGEST:\n${llm.digest}\n\nWrite the JSON now.`;
+          setMsg({ kind: "ok", text: `Asking the ${role.title.toLowerCase()}...` });
+          try {
+            const c = await complete(cfg, role.system, user, 600);
+            const v = await validate(jobId, c.text, model.trim());
+            if (v.explanation) {
+              out.push({ id: role.id, title: role.title, explanation: v.explanation, error: "" });
+              const ex = v.explanation;
+              notes += `- ${role.title}: ${ex.summary} ` + ex.claims.slice(0, 3).map((x) => `[${x.ids.join(", ")}] ${x.text}`).join(" ") + "\n";
+            } else out.push({ id: role.id, title: role.title, explanation: null, error: `answer failed the checks: ${v.reasons.slice(0, 2).join("; ")}` });
+          } catch (err) {
+            out.push({ id: role.id, title: role.title, explanation: null, error: err instanceof Error ? err.message : "the model call failed" });
+          }
+          onPanel([...out]);
+        }
+        setMsg({ kind: "ok", text: `Done. ${out.filter((r) => r.explanation).length} of ${out.length} answers passed the checks.` });
+        return;
+      }
       const c = await complete({ provider, model: model.trim(), baseUrl, apiKey }, llm.system, llm.user, llm.max_tokens);
       const v = await validate(jobId, c.text, model.trim());
       if (!v.explanation) { setMsg({ kind: "err", text: `Your model's answer failed the checks: ${v.reasons.join("; ") || "unknown reason"}. Nothing was shown from it.` }); return; }
@@ -47,6 +75,10 @@ export default function OwnModelPanel({ jobId, summary, onExplanation }: Props) 
           {([["gemini", "Gemini"], ["anthropic", "Anthropic"], ["openai", "OpenAI-compatible"]] as [Provider, string][]).map(([p, label]) => (
             <button key={p} type="button" className="chip" aria-pressed={provider === p} onClick={() => pick(p)}>{label}</button>
           ))}
+        </div>
+        <div className="chips" role="group" aria-label="What to run" style={{ marginTop: "var(--space-sm)" }}>
+          <button type="button" className="chip" aria-pressed={mode === "single"} onClick={() => setMode("single")}>One explanation</button>
+          <button type="button" className="chip" aria-pressed={mode === "panel"} onClick={() => setMode("panel")} disabled={!llm.roles?.length}>Analyst panel (6 calls)</button>
         </div>
         <div className="row" style={{ marginTop: "var(--space-sm)" }}>
           <div className="field"><label htmlFor="own-model">Model</label><input id="own-model" name="model" value={model} onChange={(e) => setModel(e.target.value)} autoComplete="off" spellCheck={false} /></div>

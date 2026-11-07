@@ -106,3 +106,12 @@ def test_checklist_falls_back_to_last_financial_year_and_says_so():
     assert res["earnings_growing"].result == "pass" and "last financial year" in res["earnings_growing"].display
     assert res["revenue_growing"].result == "pass"
     assert res["interest_cover"].result == "pass"                     # 150 / 20 = 7.5 times
+
+
+def test_a_year_with_no_data_at_all_is_skipped_not_reported_as_many_gaps():
+    st = stmts()
+    for df in st.values():
+        df[YEARS[3]] = float("nan")                    # Yahoo's oldest column is often entirely empty
+    facts = annual_facts("ABC.NS", st, "Energy", None, NOW)
+    assert not any(f.period_end == YEARS[3].date() for f in facts)
+    assert any(f.period_end == YEARS[2].date() for f in facts)

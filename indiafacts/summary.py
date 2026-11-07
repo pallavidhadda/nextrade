@@ -63,7 +63,9 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
         from indiafacts.llm import build_prompt
 
         system, user = build_prompt(digest)
-        llm = {"system": system, "user": user, "max_tokens": 700, "ids": sorted(digest.ids, key=lambda i: int(i[1:])), "digest": digest.text}
+        from indiafacts.agents import roles_for_prompts
+
+        llm = {"system": system, "user": user, "max_tokens": 700, "roles": roles_for_prompts(), "ids": sorted(digest.ids, key=lambda i: int(i[1:])), "digest": digest.text}
     deb = None
     if debate is not None:
         deb = {"bull": [{"text": p.text, "evidence": p.key} for p in debate.bull], "bear": [{"text": p.text, "evidence": p.key} for p in debate.bear],

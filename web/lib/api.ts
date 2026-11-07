@@ -33,6 +33,7 @@ export async function poll(jobId: string): Promise<Job> {
 }
 
 export const reportUrl = (jobId: string) => `${API_BASE}/api/jobs/${encodeURIComponent(jobId)}/report`;
+export const reportDownloadUrl = (jobId: string) => `${reportUrl(jobId)}?download=1`;
 
 export type Validated = { explanation: import("./types").Summary["explanation"]; reasons: string[] };
 

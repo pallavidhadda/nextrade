@@ -110,6 +110,56 @@ def flows_html(s: dict) -> str:
     return _card("Market flows", f"as of {f['as_of']}", fut + cash_html + f'<p class="helper">{e(f["note"] or (cash or {}).get("note", ""))}</p>')
 
 
+PROVIDER_KEYS = {"Gemini": ("gemini", "GOOGLE_API_KEY", "gemini-3.1-flash-lite"),
+                 "Anthropic": ("anthropic", "ANTHROPIC_API_KEY", "claude-haiku-5-5"),
+                 "OpenAI-compatible": ("openai", "OPENAI_API_KEY", "")}
+
+
+def _result_dict(title: str, ex, error: str = "") -> dict:
+    if ex is None:
+        return {"title": title, "summary": "", "claims": [], "uncertainty": "", "error": error or "no valid answer"}
+    return {"title": title, "summary": ex.summary, "claims": [{"type": c.type, "text": c.text, "ids": c.ids} for c in ex.claims],
+            "uncertainty": ex.uncertainty, "error": ""}
+
+
+def ai_run(llm_block: dict, provider_label: str, model: str, base_url: str, key: str, panel: bool, post=None) -> dict:
+    """Run the person's own model over the stored digest. The key lives only in this call: it is placed in a private dict for the
+    client and never logged, cached or returned. Every answer is checked against the digest before it is shown."""
+    from indiafacts.agents import run_panel
+    from indiafacts.digest import Digest
+    from indiafacts.llm import make_client, validate_llm_output
+
+    provider, env_name, default_model = PROVIDER_KEYS[provider_label]
+    env = {env_name: key}
+    if provider == "openai":
+        env["INDIAFACTS_LLM_BASE_URL"] = base_url.strip()
+    client = make_client(provider, (model or default_model).strip() or None, env=env, post=post)
+    digest = Digest(text=llm_block["digest"], ids={i: "" for i in llm_block["ids"]}, items={}, by_key={}, est_tokens=0)
+    if not panel:
+        res = client.complete(llm_block["system"], llm_block["user"], llm_block.get("max_tokens", 700))
+        ex, reasons = validate_llm_output(res.text, digest)
+        return {"mode": "single", "results": [_result_dict("Plain-English explanation", ex, "; ".join(reasons[:2]))],
+                "tokens": (res.input_tokens or 0) + (res.output_tokens or 0)}
+    results = run_panel(client, digest)
+    return {"mode": "panel", "results": [_result_dict(r.title, r.explanation, r.error) for r in results],
+            "tokens": sum(r.input_tokens + r.output_tokens for r in results)}
+
+
+def ai_html(res: dict | None) -> str:
+    if not res:
+        return ""
+    cards = ""
+    for r in res["results"]:
+        if r["error"]:
+            cards += _card(r["title"], "not shown", f"<p>{e(r['error'])}. Nothing from this answer was shown.</p>")
+            continue
+        claims = "".join(f'<li><span class="tag {e(c["type"])}">{e(c["type"].capitalize())}</span> {e(c["text"])} <span class="ids">{e(", ".join(c["ids"]))}</span></li>' for c in r["claims"])
+        unc = f'<p class="helper">{e(r["uncertainty"])}</p>' if r["uncertainty"] else ""
+        cards += _card(r["title"], "checked against the facts", f'<p>{e(r["summary"])}</p><ul class="claims">{claims}</ul>{unc}')
+    foot = f'<p class="helper">About {res["tokens"]:,} tokens used. Every claim cites a fact id and was checked against the digest; answers that failed the checks were dropped. Education only, not advice.</p>'
+    return cards + foot
+
+
 def glance_html(s: dict) -> str:
     st = (s.get("debate") or {}).get("stance")
     sc = s.get("score") or {}

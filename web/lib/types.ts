@@ -12,6 +12,7 @@ export type OwnRow = { metric: string; label: string; display: string; reading: 
 export type Ownership = { source: "official" | "proxy" | "none"; as_on: string; rows: OwnRow[]; how_to: string };
 export type CashFlows = { as_of: string; note: string; rows: { category: string; last_day: string; last_net: number; window_net: number; sessions: number; streak: number; streak_word: string }[] };
 export type Flows = { as_of: string; since: string; sessions: number; note: string; cash?: CashFlows | null; rows: { participant: string; net: number; long_share: number; change: number | null; stance: string }[] };
+export type PanelResult = { id: string; title: string; explanation: Summary["explanation"]; error: string };
 export type Gap = { metric: string; period: string; status: string; reason: string };
 export type Claim = { type: "fact" | "inference" | "hypothesis"; text: string; ids: string[] };
 export type Summary = {
@@ -32,7 +33,7 @@ export type Summary = {
   risk_panel: null | { profile_lens: string; notes: string[]; lenses: { name: string; fits: boolean | null; breaches: string[]; max_position_pct: number | null; reason: string }[] };
   news: { title: string; publisher: string; published: string | null; url: string; sentiment_hint: "positive" | "negative" | "neutral" }[];
   explanation: null | { source: string; summary: string; uncertainty: string; claims: Claim[]; triggers: { text: string; ids: string[] }[]; usage: Record<string, number> };
-  llm: null | { system: string; user: string; max_tokens: number; ids: string[]; digest: string };
+  llm: null | { system: string; user: string; max_tokens: number; ids: string[]; digest: string; roles?: { id: string; title: string; system: string }[] };
   disclaimer: string;
 };
 export type Job = { status: "queued" | "running" | "done" | "error"; progress?: string; summary?: Summary; error?: string };

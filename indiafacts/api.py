@@ -197,11 +197,16 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
         return {"explanation": body, "reasons": reasons}
 
     @app.get("/api/jobs/{job_id}/report", response_class=HTMLResponse)
-    def report(job_id: str):
+    def report(job_id: str, download: int = 0):
         j = jobs.get(job_id)
         if not j or j["status"] != "done":
             raise HTTPException(404, "no report for this job")
-        return HTMLResponse(j["html"], headers={
+        extra = {}
+        if download:
+            t = re.sub(r"[^A-Za-z0-9_-]", "", str((j.get("summary") or {}).get("ticker", "report")).split(".")[0]) or "report"
+            d = str((j.get("summary") or {}).get("retrieved_at", ""))[:10]
+            extra["content-disposition"] = f'attachment; filename="nextrade_{t}_{d}.html"'
+        return HTMLResponse(j["html"], headers={**extra,
             "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; font-src data:",
             "x-content-type-options": "nosniff"})
 

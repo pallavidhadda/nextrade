@@ -1,5 +1,6 @@
 """NexTrade, Streamlit edition. Research and education only; not financial, investment or trading advice.
 Runs the analysis in-process on the server. It never asks for or stores API keys; for your own model use the Claude connector."""
+import json
 import sys
 from pathlib import Path
 
@@ -53,13 +54,53 @@ def _pick(ticker: str) -> None:
     ss["run_now"] = True
 
 
+def ai_panel(s: dict) -> None:
+    """Optional: the person's own model explains the digest, alone or as a panel of analysts. The key is used for one call only."""
+    llm = s.get("llm")
+    if not llm:
+        return
+    with st.expander("Explain with your own AI model, or run an analyst panel (optional, needs your API key)"):
+        st.caption("A model only narrates the facts already collected: about 2,000 tokens in. Its answer is checked against those facts and any "
+                   "claim with an unknown id, an invented number or advice wording is dropped. Your key is used for this one request, is not "
+                   "stored or logged, and the field is cleared afterwards. This is a shared server, so use a key with a spending limit, or run "
+                   "the app on your own machine for full privacy.")
+        with st.form("ai", clear_on_submit=True):
+            c1, c2 = st.columns(2)
+            provider = c1.selectbox("Provider", list(webui.PROVIDER_KEYS))
+            model = c2.text_input("Model (blank for the default)", placeholder="gemini-3.1-flash-lite")
+            base = st.text_input("Address, for OpenAI-compatible only", placeholder="http://localhost:11434/v1")
+            key = st.text_input("API key", type="password", autocomplete="off")
+            mode = st.radio("What to run", ["One plain-English explanation (1 call, about 2.5k tokens)",
+                                            "Analyst panel: fundamentals, price, ownership, news, risk, then a manager (6 calls, about 15k tokens)"])
+            go = st.form_submit_button("Run")
+        if go:
+            if not key and provider != "OpenAI-compatible":
+                st.error("Paste your API key to run this.")
+            else:
+                try:
+                    with st.spinner("Asking your model..."):
+                        ss["ai"] = {s["ticker"]: webui.ai_run(llm, provider, model, base, key, mode.startswith("Analyst"))}
+                except Exception as exc:                                  # never echo the key or a path
+                    st.error(str(exc) if isinstance(exc, ValueError) else f"The model call failed ({type(exc).__name__}). Check the key, model name and address.")
+        shown = (ss.get("ai") or {}).get(s["ticker"])
+        if shown:
+            st.markdown(webui.ai_html(shown), unsafe_allow_html=True)
+
+
 def result_view(res: dict) -> None:
     s = res["summary"]
     sub = ", ".join(x for x in [s["ticker"] if s.get("name") else None, s.get("industry") or s.get("sector"), s.get("isin")] if x)
     p = s["profile"]
     st.markdown(f'<div class="head"><h1>{webui.e(s.get("name") or s["ticker"])}</h1><p class="sub">{webui.e(sub)}. Profile: '
                 f'{webui.e(p["horizon"])}, {webui.e(p["risk"])} risk, {webui.e(p["experience"])}.</p></div>', unsafe_allow_html=True)
-    if st.button("Analyse another"):
+    c1, c2, c3, _ = st.columns([2, 2, 2, 5])
+    stamp = str(s.get("retrieved_at", ""))[:10] or "report"
+    base = f"{s['ticker'].split('.')[0]}_{stamp}"
+    c1.download_button("Download report (HTML)", res["html"], file_name=f"nextrade_{base}.html", mime="text/html", type="primary",
+                       help="One self-contained file with the charts and every source. Open it in any browser; print it to save as PDF.")
+    c2.download_button("Download data (JSON)", json.dumps(s, default=str, indent=1), file_name=f"nextrade_{base}.json", mime="application/json",
+                       help="The same facts, scores and gaps as structured data.")
+    if c3.button("Analyse another"):
         ss.pop("result", None)
         st.rerun()
     t1, t2, t3 = st.tabs(["Summary", "Full report", f"Gaps ({len(s['gaps'])})"])
@@ -75,6 +116,8 @@ def result_view(res: dict) -> None:
             st.iframe(res["html"], height=800)
     with t3:
         st.markdown(webui.gaps_html(s), unsafe_allow_html=True)
+    with t1:
+        ai_panel(s)
 
 
 if "result" in ss:

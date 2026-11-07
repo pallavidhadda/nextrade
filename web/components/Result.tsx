@@ -357,3 +357,29 @@ export function MarketFlows({ s }: { s: Summary }) {
     </section>
   );
 }
+
+export function AnalystPanel({ results }: { results: import("@/lib/types").PanelResult[] }) {
+  if (results.length === 0) return null;
+  return (
+    <>
+      {results.map((r) => (
+        <section className="entry" key={r.id} aria-label={r.title}>
+          <header><h2>{r.title}</h2><span className="note">{r.explanation ? "checked against the facts" : "not shown"}</span></header>
+          <div className="body">
+            {r.explanation ? (
+              <>
+                <p>{r.explanation.summary}</p>
+                <ul className="claims">
+                  {r.explanation.claims.map((c) => (
+                    <li key={c.text}><span className={`tag ${c.type}`}>{c.type}</span> {c.text} <span className="ids">{c.ids.join(", ")}</span></li>
+                  ))}
+                </ul>
+                {r.explanation.uncertainty && <p className="helper">{r.explanation.uncertainty}</p>}
+              </>
+            ) : <p>{r.error || "No valid answer."} Nothing from this answer was shown.</p>}
+          </div>
+        </section>
+      ))}
+    </>
+  );
+}

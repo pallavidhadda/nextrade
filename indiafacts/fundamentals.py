@@ -94,6 +94,8 @@ def annual_facts(ticker: str, statements: dict[str, pd.DataFrame | None], sector
                 out.append(Fact.make(value=None, status=Status.unavailable, reason=LENDER_REASON,
                                      source_field="n/a", **common))
                 continue
+            if stmt is not None and col in stmt.columns and stmt[col].isna().all():
+                continue                               # Yahoo lists the year but has no data for it at all: not a gap worth reporting
             if stmt is None or col not in stmt.columns:
                 out.append(Fact.make(value=None, status=Status.unavailable,
                                      reason=f"Yahoo returned no annual {st_name} statement", source_field="n/a", **common))

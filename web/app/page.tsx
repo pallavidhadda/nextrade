@@ -2,13 +2,13 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ContourMap from "@/components/ContourMap";
+import TickerBox from "@/components/TickerBox";
 import ProfileChooser from "@/components/Profile";
 import OwnModelPanel from "@/components/OwnModel";
-import { AtAGlance, Checklist, Debate, Health, MarketFlows, Ownership, Explanation, Gaps, KeyFacts, Levels, News, Score, Valuation } from "@/components/Result";
+import { AnalystPanel, AtAGlance, Checklist, Debate, Health, MarketFlows, Ownership, Explanation, Gaps, KeyFacts, Levels, News, Score, Valuation } from "@/components/Result";
 import companies from "@/lib/companies.json";
-import { suggest } from "@/lib/search";
-import { ApiError, poll, reportUrl, submit } from "@/lib/api";
-import type { Job, Profile, Summary } from "@/lib/types";
+import { ApiError, poll, reportDownloadUrl, reportUrl, submit } from "@/lib/api";
+import type { Job, PanelResult, Profile, Summary } from "@/lib/types";
 
 const EXAMPLES = ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ITC.NS"];
 const DISCLAIMER = "Research and education only. Not financial, investment or trading advice. Data may be late, incomplete or wrong; check primary sources.";
@@ -125,27 +125,10 @@ function Home() {
           <p className="lead">NexTrade collects the numbers behind an NSE or BSE company, shows the period and source of each, says what is missing, and compares it with peers. It never says buy or sell.</p>
           <form className="form" onSubmit={onSubmit} noValidate>
             <div className="row">
-              <div className="field">
-                <label htmlFor="ticker">Company or ticker</label>
-                <input id="ticker" name="ticker" value={ticker} onChange={(e) => setTicker(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} placeholder="Company name or ticker" list="company-list" aria-describedby="ticker-help" aria-invalid={!!fieldError} />
-              </div>
+              <TickerBox value={ticker} onChange={setTicker} error={fieldError} helpId="ticker-help" />
               <button className="key primary" type="submit" disabled={busy}>{busy ? "Starting" : "Analyse"}</button>
             </div>
-            {(() => {
-              const t = ticker.trim();
-              if (t.length < 2 || /\.(NS|BO)$/i.test(t)) return null;
-              const sg = suggest(t).filter((c) => `${c.s}.NS` !== t.toUpperCase());
-              if (sg.length === 0) return null;
-              const exact = COMPANIES.some((c) => c.s === t.toUpperCase() || c.n.toLowerCase() === t.toLowerCase());
-              return (
-                <div className="chips" aria-label="Matching companies">
-                  <span className="helper">{exact ? "Also matches:" : "Did you mean:"}</span>
-                  {sg.map((c) => <button key={c.s} type="button" className="chip" onClick={() => setTicker(`${c.s}.NS`)}>{c.n}</button>)}
-                </div>
-              );
-            })()}
-            <datalist id="company-list">{COMPANIES.map((c) => <option key={c.s} value={`${c.s}.NS`}>{c.n}</option>)}</datalist>
-            <p id="ticker-help" className={`helper${fieldError ? " err" : ""}`} role={fieldError ? "alert" : undefined}>{fieldError || "Type a company name (for example Infosys) or a ticker. Add .BO for BSE; NSE is the default."}</p>
+            <p id="ticker-help" className={`helper${fieldError ? " err" : ""}`} role={fieldError ? "alert" : undefined}>{fieldError || "Type a company name (for example Infosys, even misspelled) or a ticker. Add .BO for BSE; NSE is the default."}</p>
             <div className="chips" aria-label="Example tickers">{EXAMPLES.map((x) => <button key={x} type="button" className="chip mono" onClick={() => setTicker(x)}>{x}</button>)}</div>
             <ProfileChooser value={profile} onChange={setProfile} />
           </form>
@@ -166,6 +149,7 @@ function Home() {
 
 function ResultView({ s: base, jobId, tab, onTab, onNew }: { s: Summary; jobId: string; tab: string; onTab: (t: string) => void; onNew: () => void }) {
   const [own, setOwn] = useState<Summary["explanation"]>(null);
+  const [panel, setPanel] = useState<PanelResult[]>([]);
   const s: Summary = own ? { ...base, explanation: own } : base;
   return (
     <>
@@ -174,7 +158,11 @@ function ResultView({ s: base, jobId, tab, onTab, onNew }: { s: Summary; jobId: 
           <h1>{s.name ?? COMPANIES.find((c) => `${c.s}.NS` === s.ticker)?.n ?? s.ticker}</h1>
           <p className="sub">{[s.name ? s.ticker : null, s.industry ?? s.sector, s.isin].filter(Boolean).join(", ")}. Profile: {s.profile.horizon}, {s.profile.risk} risk, {s.profile.experience}.</p>
         </div>
-        <button className="key" type="button" onClick={onNew}>Analyse another</button>
+        <div className="row" style={{ flexWrap: "nowrap", gap: "var(--space-xs)" }}>
+          <a className="key primary" href={reportDownloadUrl(jobId)} download style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>Download report</a>
+          <button className="key" type="button" onClick={() => window.print()}>Print or save PDF</button>
+          <button className="key" type="button" onClick={onNew}>Analyse another</button>
+        </div>
       </div>
       <div className="tabs" role="tablist" aria-label="Result sections">
         {TABS.map((t) => (
@@ -193,7 +181,7 @@ function ResultView({ s: base, jobId, tab, onTab, onNew }: { s: Summary; jobId: 
       ) : (
         <div className="grid">
           <div className="stack"><Score s={s} /><Debate s={s} /><Health s={s} /><Ownership s={s} /><Levels s={s} /><Valuation s={s} /><Checklist s={s} /></div>
-          <div className="stack"><Explanation s={s} /><News s={s} /><OwnModelPanel jobId={jobId} summary={base} onExplanation={setOwn} /><MarketFlows s={s} /><KeyFacts s={s} /></div>
+          <div className="stack"><Explanation s={s} /><News s={s} /><OwnModelPanel jobId={jobId} summary={base} onExplanation={setOwn} onPanel={setPanel} /><AnalystPanel results={panel} /><MarketFlows s={s} /><KeyFacts s={s} /></div>
         </div>
       )}
     </>
