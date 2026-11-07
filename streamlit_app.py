@@ -54,37 +54,46 @@ def _pick(ticker: str) -> None:
     ss["run_now"] = True
 
 
+def _ai_submit() -> None:
+    """Button callback: take the typed key out of the widget at once, so it is never kept in the page state after this run."""
+    ss["_ai_pending"] = {"provider": ss.get("ai_provider"), "model": ss.get("ai_model", ""), "base": ss.get("ai_base", ""),
+                         "key": ss.get("ai_key", ""), "panel": str(ss.get("ai_mode", "")).startswith("Analyst")}
+    ss["ai_key"] = ""
+
+
 def ai_panel(s: dict) -> None:
     """Optional: the person's own model explains the digest, alone or as a panel of analysts. The key is used for one call only."""
     llm = s.get("llm")
     if not llm:
+        st.info("This result has no digest to send to a model.")
         return
-    with st.expander("Explain with your own AI model, or run an analyst panel (optional, needs your API key)"):
-        st.caption("A model only narrates the facts already collected: about 2,000 tokens in. Its answer is checked against those facts and any "
-                   "claim with an unknown id, an invented number or advice wording is dropped. Your key is used for this one request, is not "
-                   "stored or logged, and the field is cleared afterwards. This is a shared server, so use a key with a spending limit, or run "
-                   "the app on your own machine for full privacy.")
-        with st.form("ai", clear_on_submit=True):
-            c1, c2 = st.columns(2)
-            provider = c1.selectbox("Provider", list(webui.PROVIDER_KEYS))
-            model = c2.text_input("Model (blank for the default)", placeholder="gemini-3.1-flash-lite")
-            base = st.text_input("Address, for OpenAI-compatible only", placeholder="http://localhost:11434/v1")
-            key = st.text_input("API key", type="password", autocomplete="off")
-            mode = st.radio("What to run", ["One plain-English explanation (1 call, about 2.5k tokens)",
-                                            "Analyst panel: fundamentals, price, ownership, news, risk, then a manager (6 calls, about 15k tokens)"])
-            go = st.form_submit_button("Run")
-        if go:
-            if not key and provider != "OpenAI-compatible":
-                st.error("Paste your API key to run this.")
-            else:
-                try:
-                    with st.spinner("Asking your model..."):
-                        ss["ai"] = {s["ticker"]: webui.ai_run(llm, provider, model, base, key, mode.startswith("Analyst"))}
-                except Exception as exc:                                  # never echo the key or a path
-                    st.error(str(exc) if isinstance(exc, ValueError) else f"The model call failed ({type(exc).__name__}). Check the key, model name and address.")
-        shown = (ss.get("ai") or {}).get(s["ticker"])
-        if shown:
-            st.markdown(webui.ai_html(shown), unsafe_allow_html=True)
+    st.markdown("#### Use your own AI model")
+    st.caption("A model only narrates the facts already collected (about 2,000 tokens in). Its answer is checked against those facts; any claim with an "
+               "unknown id, an invented number or advice wording is dropped. Your key is used for this one request, is not stored or logged, and the "
+               "field is cleared right after you press Run. This is a shared server, so use a key with a spending limit, or run the app on your own machine.")
+    c1, c2 = st.columns(2)
+    c1.selectbox("Provider", list(webui.PROVIDER_KEYS), key="ai_provider")
+    c2.text_input("Model (blank for the default)", key="ai_model", placeholder="gemini-3.1-flash-lite")
+    st.text_input("Address, for OpenAI-compatible only", key="ai_base", placeholder="http://localhost:11434/v1")
+    st.text_input("API key (paste it here)", type="password", key="ai_key", autocomplete="off", placeholder="Paste your key")
+    st.radio("What to run", ["One plain-English explanation (1 call, about 2.5k tokens)",
+                             "Analyst panel: fundamentals, price, ownership, news, risk, then a manager (6 calls, about 15k tokens)"], key="ai_mode")
+    st.button("Run", type="primary", key="ai_run", on_click=_ai_submit)
+    job = ss.pop("_ai_pending", None)
+    if job:
+        if not job["key"] and job["provider"] != "OpenAI-compatible":
+            st.error("The key box was empty. Paste your API key, then press Run.")
+        else:
+            try:
+                with st.spinner("Asking your model..."):
+                    ss["ai"] = {s["ticker"]: webui.ai_run(llm, job["provider"], job["model"], job["base"], job["key"], job["panel"])}
+            except Exception as exc:                                  # never echo the key or a path
+                st.error(str(exc) if isinstance(exc, ValueError) else f"The model call failed ({type(exc).__name__}). Check the key, model name and address.")
+            finally:
+                job["key"] = ""
+    shown = (ss.get("ai") or {}).get(s["ticker"])
+    if shown:
+        st.markdown(webui.ai_html(shown), unsafe_allow_html=True)
 
 
 def result_view(res: dict) -> None:
@@ -103,7 +112,7 @@ def result_view(res: dict) -> None:
     if c3.button("Analyse another"):
         ss.pop("result", None)
         st.rerun()
-    t1, t2, t3 = st.tabs(["Summary", "Full report", f"Gaps ({len(s['gaps'])})"])
+    t1, t2, t3, t4 = st.tabs(["Summary", "Full report", f"Gaps ({len(s['gaps'])})", "AI analysts"])
     with t1:
         st.markdown(webui.glance_html(s), unsafe_allow_html=True)
         a, b = st.columns(2)
@@ -116,7 +125,7 @@ def result_view(res: dict) -> None:
             st.iframe(res["html"], height=800)
     with t3:
         st.markdown(webui.gaps_html(s), unsafe_allow_html=True)
-    with t1:
+    with t4:
         ai_panel(s)
 
 

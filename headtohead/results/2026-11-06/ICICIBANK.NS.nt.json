@@ -1,0 +1,31 @@
+{
+ "ticker": "ICICIBANK.NS",
+ "status": "ok",
+ "seconds": 13.4,
+ "rating": "Buy",
+ "confidence": "High",
+ "score": 72.2727,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 1698,
+  "out": 416,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 55,
+ "health_rows": 5,
+ "bull": [
+  "Momentum scores 98 of 100 against the comparison pool",
+  "Growth scores 83 of 100 against the comparison pool",
+  "Risk scores 82 of 100 against the comparison pool",
+  "Quality scores 71 of 100 against the comparison pool",
+  "Check passed: Profit is higher than a year earlier (+22.3%)",
+  "Check passed: Revenue is higher than a year earlier (+16.0%)",
+  "Check passed: Price is higher than a year ago (+19.0%)",
+  "Check passed: Price did better than the Nifty 50 over a year (+20.9%)",
+  "Check passed: Price is within 25% of its 52-week high (+0.0%)",
+  "Profit grew 16.8% a year on average over three years"
+ ],
+ "bear": [],
+ "summary": "ICICIBANK.NS is a financial services company that currently shows strong momentum and growth scores within its comparison pool."
+}
