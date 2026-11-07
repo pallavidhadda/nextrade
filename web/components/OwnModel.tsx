@@ -7,7 +7,7 @@ import type { PanelResult, Summary } from "@/lib/types";
 type Props = { jobId: string; summary: Summary; onExplanation: (e: NonNullable<Summary["explanation"]>) => void; onPanel: (r: PanelResult[]) => void };
 
 export default function OwnModelPanel({ jobId, summary, onExplanation, onPanel }: Props) {
-  const [mode, setMode] = useState<"single" | "panel">("single");
+  const [mode, setMode] = useState<"single" | "panel" | "debate">("single");
   const [provider, setProvider] = useState<Provider>("gemini");
   const [model, setModel] = useState(DEFAULT_MODELS.gemini);
   const [baseUrl, setBaseUrl] = useState("http://localhost:11434/v1");
@@ -25,12 +25,13 @@ export default function OwnModelPanel({ jobId, summary, onExplanation, onPanel }
     if (!model.trim()) { setMsg({ kind: "err", text: "Enter the model name." }); return; }
     setBusy(true); setMsg(null);
     try {
-      if (mode === "panel" && llm.roles?.length) {
+      const steps = mode === "panel" ? llm.roles?.map((r) => ({ ...r, uses_notes: r.id === "manager" })) : mode === "debate" ? llm.debate : undefined;
+      if (steps?.length) {
         const cfg = { provider, model: model.trim(), baseUrl, apiKey };
         const out: PanelResult[] = [];
         let notes = "";
-        for (const role of llm.roles) {
-          const isManager = role.id === "manager";
+        for (const role of steps) {
+          const isManager = role.uses_notes;
           if (isManager && !notes) { out.push({ id: role.id, title: role.title, explanation: null, error: "no analyst produced a valid note to combine" }); break; }
           const user = isManager
             ? `DIGEST:\n${llm.digest}\n\nANALYST NOTES (already checked against the digest):\n${notes}\n\nWrite the JSON now.`
@@ -78,6 +79,7 @@ export default function OwnModelPanel({ jobId, summary, onExplanation, onPanel }
         </div>
         <div className="chips" role="group" aria-label="What to run" style={{ marginTop: "var(--space-sm)" }}>
           <button type="button" className="chip" aria-pressed={mode === "single"} onClick={() => setMode("single")}>One explanation</button>
+          <button type="button" className="chip" aria-pressed={mode === "debate"} onClick={() => setMode("debate")} disabled={!llm.debate?.length}>Bull vs bear debate (3 calls)</button>
           <button type="button" className="chip" aria-pressed={mode === "panel"} onClick={() => setMode("panel")} disabled={!llm.roles?.length}>Analyst panel (6 calls)</button>
         </div>
         <div className="row" style={{ marginTop: "var(--space-sm)" }}>

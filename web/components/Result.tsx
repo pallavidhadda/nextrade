@@ -44,10 +44,10 @@ export function Checklist({ s }: { s: Summary }) {
           <table>
             <thead><tr><th>Test</th><th>Result</th></tr></thead>
             <tbody>
-              {s.checklist.map((c) => (
+              {s.checklist.map((c, i) => (
                 <tr key={c.label}>
                   <td>{c.label}<span className="ids">{c.display ? `${c.display}, needs ${c.threshold}` : c.reason}</span></td>
-                  <td><span className={`tag ${c.result}`}>{c.result === "unavailable" ? "Unavailable" : c.result === "pass" ? "Pass" : "Fail"}</span></td>
+                  <td><span className={`tag resolve ${c.result}`} style={{ ["--i" as string]: i }}>{c.result === "unavailable" ? "Unavailable" : c.result === "pass" ? "Pass" : "Fail"}</span></td>
                 </tr>
               ))}
             </tbody>
@@ -173,6 +173,7 @@ export function Debate({ s }: { s: Summary }) {
     <section className="entry" aria-labelledby="deb-h">
       <header><h2 id="deb-h">Bull case versus bear case</h2><span className="note">educational</span></header>
       <div className="body">
+        {s.prose && (<><p>{s.prose.favour}</p><p>{s.prose.against}</p><p><strong>{s.prose.weighing}</strong></p></>)}
         <div className="debate">{col("Bull case", d.bull)}{col("Bear case", d.bear)}</div>
         <p className="stance"><span className="tag stance-tag">{d.stance.label}</span> Confidence {d.stance.confidence}. {d.stance.reason}.</p>
         <p className="helper">Educational rating from a transparent rule applied to the evidence on this page. It ignores your own situation, is not a prediction, and is not a recommendation.</p>
@@ -381,5 +382,33 @@ export function AnalystPanel({ results }: { results: import("@/lib/types").Panel
         </section>
       ))}
     </>
+  );
+}
+
+export function ScenarioPlan({ s }: { s: Summary }) {
+  const sc = s.scenario;
+  if (!sc) return null;
+  const list = (title: string, items: string[]) => items.length > 0 && (<><h3 style={{ marginTop: "var(--space-sm)" }}>{title}</h3><ul className="plain">{items.map((x) => <li key={x}>{x}</li>)}</ul></>);
+  return (
+    <section className="entry" aria-labelledby="scn-h">
+      <header><h2 id="scn-h">Scenario plan</h2><span className="note">{sc.tone}, educational</span></header>
+      <div className="body">
+        <p><strong>{sc.headline}</strong></p>
+        <p>{sc.summary}</p>
+        <table style={{ marginTop: "var(--space-sm)" }}>
+          <thead><tr><th>Level</th><th>Price</th></tr></thead>
+          <tbody>{sc.levels.map((l) => <tr key={l.label}><td>{l.label}<span className="ids">{l.meaning}</span></td><td><span className="num">₹{l.price.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></td></tr>)}</tbody>
+        </table>
+        <table style={{ marginTop: "var(--space-sm)" }}>
+          <thead><tr><th>Staged exposure</th><th>Size</th></tr></thead>
+          <tbody>{sc.stages.map((g) => <tr key={g.label}><td>{g.label}<span className="ids">{g.condition}</span></td><td><span className="num">{g.pct === null ? "depends on your ceiling" : `up to ${g.pct.toFixed(1)}% of a portfolio`}</span></td></tr>)}</tbody>
+        </table>
+        {list("Would turn more positive if these improve", sc.more_positive_if)}
+        {list("Would turn more cautious if these fade", sc.more_cautious_if)}
+        {list("Dates and things to watch", sc.watch)}
+        {sc.notes.map((n) => <p className="helper" key={n}>{n}</p>)}
+        <p className="helper">Educational arithmetic on measured prices and stated risk limits. Not a forecast, not a price target, not advice.</p>
+      </div>
+    </section>
   );
 }

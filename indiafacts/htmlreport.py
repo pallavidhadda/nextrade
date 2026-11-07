@@ -431,6 +431,26 @@ def _flows_card(flows) -> str:
     return _card("flows", f"Market flows (as of {flows['as_of']})", flows["note"] or (cash or {}).get("note", ""), inner)
 
 
+def _scenario_card(sc, prose) -> str:
+    inner = ""
+    if prose is not None and prose.favour:
+        inner += f'<p>{esc(prose.favour)}</p><p>{esc(prose.against)}</p><p><strong>{esc(prose.weighing)}</strong></p>'
+    if sc is not None and sc.applies:
+        lv = "".join(f'<li class="check na"><span class="icon" aria-hidden="true">·</span><span>{esc(l)}<br><small>{esc(m)}</small></span><span class="val">₹{v:,.2f}</span></li>' for l, v, m in sc.levels)
+        st = "".join(f'<li class="check na"><span class="icon" aria-hidden="true">·</span><span>{esc(l)}<br><small>{esc(c)}</small></span><span class="val">{"depends on your ceiling" if p is None else f"up to {p:.1f}% of a portfolio"}</span></li>' for l, p, c in sc.stages)
+        more = ""
+        if sc.more_positive_if:
+            more += "<h3>Would turn more positive if these improve</h3><ul>" + "".join(f"<li>{esc(x)}</li>" for x in sc.more_positive_if) + "</ul>"
+        if sc.more_cautious_if:
+            more += "<h3>Would turn more cautious if these fade</h3><ul>" + "".join(f"<li>{esc(x)}</li>" for x in sc.more_cautious_if) + "</ul>"
+        watch = "<h3>Dates and things to watch</h3><ul>" + "".join(f"<li>{esc(w)}</li>" for w in sc.watch) + "</ul>"
+        inner += f'<h3>{esc(sc.headline)}</h3><p>{esc(sc.summary)}</p><h3>Levels</h3><ul class="checks">{lv}</ul><h3>Staged exposure</h3><ul class="checks">{st}</ul>{more}{watch}'
+        inner += "".join(f'<p class="sub">{esc(n)}</p>' for n in sc.notes)
+    if not inner:
+        return ""
+    return _card("scenario", "Scenario plan", "Educational arithmetic on measured prices and stated risk limits. Not a forecast, not a price target, not advice.", inner)
+
+
 def _peer_card(sc: dict | None, metric: str, target: str) -> str:
     ident = f"chart-peers-{metric}"
     title = {"pe_ttm": "P/E against peers", "pb": "Price-to-book against peers"}[metric]
@@ -566,7 +586,7 @@ def _extra_cards(debate, news, levels, panel) -> str:
 
 def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view: str = "pro", scorecard: dict | None = None,
                as_of: date | None = None, now: datetime | None = None, explanation=None, digest=None, changes=None,
-               debate=None, news=None, levels=None, panel=None, flows=None) -> str:
+               debate=None, news=None, levels=None, panel=None, flows=None, scenario=None, prose=None) -> str:
     e = fs.entity
     now = now or datetime.now()
     ctx = _Ctx()
@@ -592,7 +612,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
     charts = _price_card(fs.charts, price_facts, e.ticker) + _drawdown_card(fs.charts)
     q = _quarter_card("chart-q-net_income", "Net profit by quarter", "net_income", facts, ctx) + \
         _quarter_card("chart-q-revenue", "Revenue by quarter", "revenue", facts, ctx)
-    sc_block = _score_card(scorecard) + _checklist_card(scorecard) + _health_card(fs) + _ownership_card(fs) + _flows_card(flows)
+    sc_block = _score_card(scorecard) + _checklist_card(scorecard) + _scenario_card(scenario, prose) + _health_card(fs) + _ownership_card(fs) + _flows_card(flows)
     peers = _peer_card(scorecard, "pe_ttm", e.ticker) + _peer_card(scorecard, "pb", e.ticker) if scorecard else ""
     peer_note = ""
     if scorecard and scorecard.get("peers") and scorecard["peers"].picks:

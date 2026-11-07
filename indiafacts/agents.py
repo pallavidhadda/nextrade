@@ -66,6 +66,41 @@ def manager_user(digest_text: str, notes: str) -> str:
     return f"DIGEST:\n{digest_text}\n\nANALYST NOTES (already checked against the digest):\n{notes}\n\nWrite the JSON now."
 
 
+DEBATE = [
+    ("bull", "Bull advocate", "make the strongest honest case in favour, citing ids, and name the single strongest counter-argument you cannot dismiss", False),
+    ("bear", "Bear advocate", "answer the bull advocate's points one by one using digest ids, then make the strongest honest case against", True),
+    ("referee", "Referee",
+     "weigh both advocates fairly: which points are best supported by the digest, what remains uncertain, and what to verify next. "
+     "Quote the educational rating exactly as the digest gives it and do not change it", True),
+]
+
+
+def debate_for_prompts() -> list[dict]:
+    """The bull-versus-bear debate steps for a browser: each says whether it needs the earlier answers."""
+    return [{"id": rid, "title": title, "system": role_system(title, focus), "uses_notes": uses} for rid, title, focus, uses in DEBATE]
+
+
+def run_debate(client, digest: Digest, progress: Callable[[str], None] | None = None, max_tokens: int = MAX_TOKENS) -> list[RoleResult]:
+    """Three calls: a bull advocate, a bear advocate who answers it, and a referee. Same checks as every other answer."""
+    out: list[RoleResult] = []
+    for rid, title, focus, uses_notes in DEBATE:
+        if progress:
+            progress(title)
+        if uses_notes and not any(r.explanation for r in out):
+            out.append(RoleResult(rid, title, None, error="the earlier advocate produced no valid answer to respond to"))
+            continue
+        user = manager_user(digest.text, _notes(out)) if uses_notes else f"DIGEST:\n{digest.text}\n\nWrite the JSON now."
+        try:
+            res = client.complete(role_system(title, focus), user, max_tokens)
+        except Exception as exc:
+            out.append(RoleResult(rid, title, None, error=f"{type(exc).__name__}: the model call failed"))
+            continue
+        ex, reasons = validate_llm_output(res.text, digest)
+        out.append(RoleResult(rid, title, ex, reasons=reasons, input_tokens=res.input_tokens or 0, output_tokens=res.output_tokens or 0,
+                              error="" if ex else "answer failed the checks: " + "; ".join(reasons[:2])))
+    return out
+
+
 def run_panel(client, digest: Digest, progress: Callable[[str], None] | None = None, max_tokens: int = MAX_TOKENS) -> list[RoleResult]:
     """Run the five analysts, then the manager. One failing analyst never stops the others."""
     out: list[RoleResult] = []

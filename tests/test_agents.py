@@ -61,3 +61,18 @@ def test_streamlit_ai_run_checks_answers_and_never_returns_the_key():
     assert "SECRETKEY" not in repr(out) and "SECRETKEY" not in ai_html(out)
     panel = ai_run(block, "Gemini", "", "", "SECRETKEY", panel=True, post=post)
     assert len(panel["results"]) == 6
+
+
+def test_debate_is_three_calls_and_the_bear_and_referee_see_earlier_answers():
+    from indiafacts.agents import run_debate, debate_for_prompts
+    c = Fake()
+    res = run_debate(c, D)
+    assert [r.id for r in res] == ["bull", "bear", "referee"] and len(c.calls) == 3 and all(r.explanation for r in res)
+    assert "ANALYST NOTES" not in c.calls[0][1] and "Bull advocate" in c.calls[1][1] and "Bull advocate" in c.calls[2][1]
+    assert [x["uses_notes"] for x in debate_for_prompts()] == [False, True, True]
+
+
+def test_debate_stops_cleanly_when_the_first_advocate_fails():
+    from indiafacts.agents import run_debate
+    res = run_debate(Fake(fail_on=1), D)
+    assert res[0].explanation is None and "no valid answer" in res[1].error and "no valid answer" in res[2].error

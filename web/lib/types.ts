@@ -21,6 +21,8 @@ export type Summary = {
   key_facts: KeyFact[];
   fundamentals?: Health[];
   ownership?: Ownership;
+  scenario?: null | { tone: string; headline: string; summary: string; levels: { label: string; price: number; meaning: string }[]; stages: { label: string; pct: number | null; condition: string }[]; watch: string[]; more_positive_if: string[]; more_cautious_if: string[]; notes: string[] };
+  prose?: null | { favour: string; against: string; weighing: string };
   market_flows?: Flows | null;
   score: null | {
     status: string; overall: number | null; rank: number | null; n: number | null; reason: string; pool: string | null; flags: string[];
@@ -33,7 +35,7 @@ export type Summary = {
   risk_panel: null | { profile_lens: string; notes: string[]; lenses: { name: string; fits: boolean | null; breaches: string[]; max_position_pct: number | null; reason: string }[] };
   news: { title: string; publisher: string; published: string | null; url: string; sentiment_hint: "positive" | "negative" | "neutral" }[];
   explanation: null | { source: string; summary: string; uncertainty: string; claims: Claim[]; triggers: { text: string; ids: string[] }[]; usage: Record<string, number> };
-  llm: null | { system: string; user: string; max_tokens: number; ids: string[]; digest: string; roles?: { id: string; title: string; system: string }[] };
+  llm: null | { system: string; user: string; max_tokens: number; ids: string[]; digest: string; roles?: { id: string; title: string; system: string }[]; debate?: { id: string; title: string; system: string; uses_notes: boolean }[] };
   disclaimer: string;
 };
 export type Job = { status: "queued" | "running" | "done" | "error"; progress?: string; summary?: Summary; error?: string };

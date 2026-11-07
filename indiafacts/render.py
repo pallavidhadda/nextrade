@@ -141,7 +141,15 @@ def _scorecard_block(sc: dict) -> list[str]:
 
 from indiafacts.fundamentals import LENDER_REASON  # noqa: E402
 from indiafacts.fundamentals_view import fundamentals_lines  # noqa: E402
+from indiafacts.scenario import scenario_lines  # noqa: E402
 from indiafacts.ownership_view import ownership_lines  # noqa: E402
+
+
+def _prose_lines(p) -> list[str]:
+    if not p.favour:
+        return []
+    return ["", "IN PLAIN WORDS", "  " + p.favour, "  " + p.against, "  " + p.weighing]
+
 from indiafacts.flows import lines as flows_lines_raw  # noqa: E402
 
 
@@ -310,7 +318,7 @@ def _valuation_block(facts: Sequence[Fact], refs: _Refs) -> list[str]:
 
 def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is_default: bool = False,
            view: str = "pro", scorecard: dict | None = None, explanation=None, digest=None, changes=None, changes_note=None,
-           debate=None, news=None, levels=None, panel=None, flows=None) -> str:
+           debate=None, news=None, levels=None, panel=None, flows=None, scenario=None, prose=None) -> str:
     e = factset.entity
     when = as_of or factset.retrieved_at.date()
     head = f"{e.ticker}  |  as of {when}  |  amounts in INR (₹ crore = 10^7)"
@@ -335,6 +343,8 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
              *ownership_lines(factset),
              *flows_lines(flows),
              *(_debate_block(debate) if debate is not None else []),
+             *(_prose_lines(prose) if prose is not None else []),
+             *(scenario_lines(scenario) if scenario is not None else []),
              *(_levels_block(levels, panel) if levels is not None else []),
              *(_news_block(news) if news else []),
              "", f"DATA QUALITY: {len(bad)} item(s) need attention (gaps, unavailable, conflicts, unverified)"]

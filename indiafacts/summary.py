@@ -26,7 +26,7 @@ from indiafacts.fundamentals_view import fundamentals_rows
 from indiafacts.ownership_view import ownership
 
 
-def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, changes=None, digest=None, news=None, debate=None, levels=None, panel=None, flows=None) -> dict:
+def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, changes=None, digest=None, news=None, debate=None, levels=None, panel=None, flows=None, scenario=None, prose=None) -> dict:
     e = fs.entity
     gaps = [{"metric": f.metric, "period": str(f.period_end), "status": f.status.value, "reason": f.reason}
             for f in fs.facts if f.status in (Status.gap, Status.unavailable)]
@@ -63,9 +63,9 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
         from indiafacts.llm import build_prompt
 
         system, user = build_prompt(digest)
-        from indiafacts.agents import roles_for_prompts
+        from indiafacts.agents import debate_for_prompts, roles_for_prompts
 
-        llm = {"system": system, "user": user, "max_tokens": 700, "roles": roles_for_prompts(), "ids": sorted(digest.ids, key=lambda i: int(i[1:])), "digest": digest.text}
+        llm = {"system": system, "user": user, "max_tokens": 700, "roles": roles_for_prompts(), "debate": debate_for_prompts(), "ids": sorted(digest.ids, key=lambda i: int(i[1:])), "digest": digest.text}
     deb = None
     if debate is not None:
         deb = {"bull": [{"text": p.text, "evidence": p.key} for p in debate.bull], "bear": [{"text": p.text, "evidence": p.key} for p in debate.bear],
@@ -85,6 +85,6 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
     return {"ticker": e.ticker, "name": e.name, "sector": e.sector, "industry": e.industry,
             "isin": e.isin.value, "retrieved_at": fs.retrieved_at.isoformat(),
             "profile": {"horizon": profile.horizon, "risk": profile.effective_risk, "experience": profile.experience},
-            "key_facts": key, "fundamentals": fundamentals_rows(fs), "ownership": ownership(fs), "market_flows": flows, "score": score, "checklist": checklist, "gaps": gaps,
+            "key_facts": key, "fundamentals": fundamentals_rows(fs), "ownership": ownership(fs), "market_flows": flows, "scenario": (None if scenario is None or not scenario.applies else {"tone": scenario.tone, "headline": scenario.headline, "summary": scenario.summary, "levels": [{"label": l, "price": v, "meaning": m} for l, v, m in scenario.levels], "stages": [{"label": l, "pct": p, "condition": c} for l, p, c in scenario.stages], "watch": scenario.watch, "more_positive_if": scenario.more_positive_if, "more_cautious_if": scenario.more_cautious_if, "notes": scenario.notes}), "prose": (None if prose is None or not prose.favour else {"favour": prose.favour, "against": prose.against, "weighing": prose.weighing}), "score": score, "checklist": checklist, "gaps": gaps,
             "notices": list(fs.notices), "changes": [str(c) for c in (changes or [])][:20],
             "valuation": valuation, "debate": deb, "levels": lev, "risk_panel": rp, "news": nws, "explanation": ex, "llm": llm, "disclaimer": DISCLAIMER}

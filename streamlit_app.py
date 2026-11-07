@@ -57,7 +57,8 @@ def _pick(ticker: str) -> None:
 def _ai_submit() -> None:
     """Button callback: take the typed key out of the widget at once, so it is never kept in the page state after this run."""
     ss["_ai_pending"] = {"provider": ss.get("ai_provider"), "model": ss.get("ai_model", ""), "base": ss.get("ai_base", ""),
-                         "key": ss.get("ai_key", ""), "panel": str(ss.get("ai_mode", "")).startswith("Analyst")}
+                         "key": ss.get("ai_key", ""),
+                         "mode": "panel" if str(ss.get("ai_mode", "")).startswith("Analyst") else "debate" if str(ss.get("ai_mode", "")).startswith("Bull") else "single"}
     ss["ai_key"] = ""
 
 
@@ -77,6 +78,7 @@ def ai_panel(s: dict) -> None:
     st.text_input("Address, for OpenAI-compatible only", key="ai_base", placeholder="http://localhost:11434/v1")
     st.text_input("API key (paste it here)", type="password", key="ai_key", autocomplete="off", placeholder="Paste your key")
     st.radio("What to run", ["One plain-English explanation (1 call, about 2.5k tokens)",
+                             "Bull versus bear debate: a bull advocate, a bear advocate who answers it, then a referee (3 calls, about 8k tokens)",
                              "Analyst panel: fundamentals, price, ownership, news, risk, then a manager (6 calls, about 15k tokens)"], key="ai_mode")
     st.button("Run", type="primary", key="ai_run", on_click=_ai_submit)
     job = ss.pop("_ai_pending", None)
@@ -86,7 +88,7 @@ def ai_panel(s: dict) -> None:
         else:
             try:
                 with st.spinner("Asking your model..."):
-                    ss["ai"] = {s["ticker"]: webui.ai_run(llm, job["provider"], job["model"], job["base"], job["key"], job["panel"])}
+                    ss["ai"] = {s["ticker"]: webui.ai_run(llm, job["provider"], job["model"], job["base"], job["key"], mode=job["mode"])}
             except Exception as exc:                                  # never echo the key or a path
                 st.error(str(exc) if isinstance(exc, ValueError) else f"The model call failed ({type(exc).__name__}). Check the key, model name and address.")
             finally:
@@ -116,7 +118,7 @@ def result_view(res: dict) -> None:
     with t1:
         st.markdown(webui.glance_html(s), unsafe_allow_html=True)
         a, b = st.columns(2)
-        a.markdown(webui.score_html(s) + webui.debate_html(s) + webui.health_html(s) + webui.ownership_html(s) + webui.levels_html(s) + webui.valuation_html(s) + webui.checklist_html(s), unsafe_allow_html=True)
+        a.markdown(webui.score_html(s) + webui.debate_html(s) + webui.scenario_html(s) + webui.health_html(s) + webui.ownership_html(s) + webui.levels_html(s) + webui.valuation_html(s) + webui.checklist_html(s), unsafe_allow_html=True)
         b.markdown(webui.explanation_html(s) + webui.news_html(s) + webui.flows_html(s) + webui.facts_html(s), unsafe_allow_html=True)
     with t2:
         try:

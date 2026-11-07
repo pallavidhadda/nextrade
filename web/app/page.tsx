@@ -5,7 +5,8 @@ import ContourMap from "@/components/ContourMap";
 import TickerBox from "@/components/TickerBox";
 import ProfileChooser from "@/components/Profile";
 import OwnModelPanel from "@/components/OwnModel";
-import { AnalystPanel, AtAGlance, Checklist, Debate, Health, MarketFlows, Ownership, Explanation, Gaps, KeyFacts, Levels, News, Score, Valuation } from "@/components/Result";
+import { AnalystPanel, AtAGlance, ScenarioPlan, Checklist, Debate, Health, MarketFlows, Ownership, Explanation, Gaps, KeyFacts, Levels, News, Valuation } from "@/components/Result";
+import { ScoreFactors, ScoreNumber } from "@/components/Reveal";
 import companies from "@/lib/companies.json";
 import { ApiError, poll, reportDownloadUrl, reportUrl, submit } from "@/lib/api";
 import type { Job, PanelResult, Profile, Summary } from "@/lib/types";
@@ -28,6 +29,13 @@ function progressText(raw: string): string {
   const m = raw.match(/\[(\d+)\/(\d+)\]/);
   return m ? `Comparing with other companies: ${m[1]} of ${m[2]} done. The first run is slowest.` : `Comparing, step ${raw}`;
 }
+/** "[4/30] BAJFINANCE.NS" -> how far the survey has got, so the map can draw itself to match. */
+function progressRatio(raw: string | undefined): { done: number; total: number; p: number } | null {
+  const m = raw?.match(/\[(\d+)\/(\d+)\]/);
+  if (!m) return null;
+  const done = Number(m[1]), total = Math.max(1, Number(m[2]));
+  return { done, total, p: Math.min(1, 0.08 + 0.92 * (done / total)) };
+}
 const PROFILE_KEY = "nextrade.profile";
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -37,7 +45,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         <a className="brand" href="/" aria-label="NexTrade home">NexTrade</a>
         <a className="link" href="#disclaimer">Education only, not advice</a>
       </div></header>
-      <main><div className="container">{children}</div></main>
+      <main>{children}</main>
       <footer className="foot" id="disclaimer"><div className="container"><p>{DISCLAIMER} NexTrade does not store your profile, holdings or keys on its servers.</p></div></footer>
     </>
   );
@@ -107,20 +115,28 @@ function Home() {
 
   if (summary && jobId) return <Shell><ResultView s={summary} jobId={jobId} tab={tab} onTab={(t) => setUrl({ tab: t })} onNew={() => router.replace("/")} /></Shell>;
 
-  if (running) return (
-    <Shell>
-      <div className="head"><div><h1>Reading {params.get("t") || ticker || "the company"}</h1><p className="sub">Fetching facts, checking gaps and comparing with a pool of companies.</p></div></div>
-      <div className="grid" aria-busy="true">
-        <div className="skel" style={{ height: 300 }} /><div className="stack"><div className="skel" style={{ height: 140 }} /><div className="skel" style={{ height: 160 }} /></div>
-      </div>
-      <p className="progress" role="status">{job?.progress ? progressText(job.progress) : "Starting. A first run takes about a minute; repeat runs are quicker."}</p>
-    </Shell>
-  );
+  if (running) {
+    const pr = progressRatio(job?.progress);
+    return (
+      <Shell>
+        <section className="stage" aria-busy="true">
+          <div className="stage-map"><ContourMap progress={pr ? pr.p : 0.1} ringX={0.76} /></div>
+          <div className="container stage-in">
+            <h1>Reading {params.get("t") || ticker || "the company"}</h1>
+            <p className="lead">Fetching facts, checking gaps and comparing with a pool of companies.</p>
+            {pr && <p className="count"><span className="n">{pr.done}</span><span className="of">of {pr.total} companies compared</span></p>}
+            <p className="progress" role="status">{job?.progress ? progressText(job.progress) : "Starting. A first run takes about a minute; repeat runs are quicker."}</p>
+          </div>
+        </section>
+      </Shell>
+    );
+  }
 
   return (
     <Shell>
-      <div className="start">
-        <div>
+      <section className="stage">
+        <div className="stage-map"><ContourMap ringX={0.78} /></div>
+        <div className="container stage-in">
           <h1>Read an Indian stock from its facts</h1>
           <p className="lead">NexTrade collects the numbers behind an NSE or BSE company, shows the period and source of each, says what is missing, and compares it with peers. It never says buy or sell.</p>
           <form className="form" onSubmit={onSubmit} noValidate>
@@ -132,17 +148,18 @@ function Home() {
             <div className="chips" aria-label="Example tickers">{EXAMPLES.map((x) => <button key={x} type="button" className="chip mono" onClick={() => setTicker(x)}>{x}</button>)}</div>
             <ProfileChooser value={profile} onChange={setProfile} />
           </form>
-          {failed && <div className="state" role="alert" style={{ marginTop: "var(--space-lg)" }}><h2>That did not work</h2><p>{failed}</p></div>}
-          <ul className="ruled">
-            <li>Every figure carries its period, unit and source.</li>
-            <li>Missing quarters are stated, never filled in.</li>
-            <li>A score against a comparison pool, and nine plain checks.</li>
-            <li>Facts and inferences are labelled apart.</li>
-          </ul>
-          <p className="privacy">Nothing about you is stored on our servers. Your profile choices live in this browser tab only.</p>
+          {failed && <div className="state" role="alert"><h2>That did not work</h2><p>{failed}</p></div>}
         </div>
-        <figure className="map" style={{ margin: 0 }}><ContourMap /><figcaption>Generated survey map</figcaption></figure>
-      </div>
+      </section>
+      <section className="container ledger">
+        <ul className="ruled">
+          <li>Every figure carries its period, unit and source.</li>
+          <li>Missing quarters are stated, never filled in.</li>
+          <li>A score against a comparison pool, and nine plain checks.</li>
+          <li>Facts and inferences are labelled apart.</li>
+        </ul>
+        <p className="privacy">Nothing about you is stored on our servers. Your profile choices live in this browser tab only.</p>
+      </section>
     </Shell>
   );
 }
@@ -153,37 +170,45 @@ function ResultView({ s: base, jobId, tab, onTab, onNew }: { s: Summary; jobId: 
   const s: Summary = own ? { ...base, explanation: own } : base;
   return (
     <>
-      <div className="head">
-        <div>
-          <h1>{s.name ?? COMPANIES.find((c) => `${c.s}.NS` === s.ticker)?.n ?? s.ticker}</h1>
-          <p className="sub">{[s.name ? s.ticker : null, s.industry ?? s.sector, s.isin].filter(Boolean).join(", ")}. Profile: {s.profile.horizon}, {s.profile.risk} risk, {s.profile.experience}.</p>
+      <section className="band">
+        <div className="band-map"><ContourMap ringX={0.8} /></div>
+        <div className="container band-in">
+          <div className="band-head">
+            <div>
+              <h1>{s.name ?? COMPANIES.find((c) => `${c.s}.NS` === s.ticker)?.n ?? s.ticker}</h1>
+              <p className="sub">{[s.name ? s.ticker : null, s.industry ?? s.sector, s.isin].filter(Boolean).join(", ")}. Profile: {s.profile.horizon}, {s.profile.risk} risk, {s.profile.experience}.</p>
+            </div>
+            <div className="actions">
+              <a className="key primary" href={reportDownloadUrl(jobId)} download>Download report</a>
+              <button className="key" type="button" onClick={() => window.print()}>Print or save PDF</button>
+              <button className="key" type="button" onClick={onNew}>Analyse another</button>
+            </div>
+          </div>
+          <div className="band-read"><ScoreNumber s={s} /><ScoreFactors s={s} /></div>
         </div>
-        <div className="row" style={{ flexWrap: "nowrap", gap: "var(--space-xs)" }}>
-          <a className="key primary" href={reportDownloadUrl(jobId)} download style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>Download report</a>
-          <button className="key" type="button" onClick={() => window.print()}>Print or save PDF</button>
-          <button className="key" type="button" onClick={onNew}>Analyse another</button>
+      </section>
+      <div className="container body-pad" style={{ paddingTop: "var(--space-lg)" }}>
+        <div className="tabs" role="tablist" aria-label="Result sections" style={{ marginTop: 0 }}>
+          {TABS.map((t) => (
+            <button key={t.id} className="tab" role="tab" aria-selected={tab === t.id} type="button" onClick={() => onTab(t.id)}>
+              {t.id === "gaps" ? `Gaps (${s.gaps.length})` : t.label}
+            </button>
+          ))}
         </div>
+        {tab === "summary" && <AtAGlance s={s} onTab={onTab} />}
+        {tab === "report" ? (
+          <div style={{ marginTop: "var(--space-lg)" }}>
+            <iframe className="report" title={`Full report for ${s.ticker}`} src={reportUrl(jobId)} sandbox="allow-scripts" />
+          </div>
+        ) : tab === "gaps" ? (
+          <div style={{ marginTop: "var(--space-lg)", maxWidth: 900 }}><Gaps s={s} /></div>
+        ) : (
+          <div className="grid">
+            <div className="stack"><Debate s={s} /><ScenarioPlan s={s} /><Health s={s} /><Ownership s={s} /><Levels s={s} /><Valuation s={s} /><Checklist s={s} /></div>
+            <div className="stack"><Explanation s={s} /><News s={s} /><OwnModelPanel jobId={jobId} summary={base} onExplanation={setOwn} onPanel={setPanel} /><AnalystPanel results={panel} /><MarketFlows s={s} /><KeyFacts s={s} /></div>
+          </div>
+        )}
       </div>
-      <div className="tabs" role="tablist" aria-label="Result sections">
-        {TABS.map((t) => (
-          <button key={t.id} className="tab" role="tab" aria-selected={tab === t.id} type="button" onClick={() => onTab(t.id)}>
-            {t.id === "gaps" ? `Gaps (${s.gaps.length})` : t.label}
-          </button>
-        ))}
-      </div>
-      {tab === "summary" && <AtAGlance s={s} onTab={onTab} />}
-      {tab === "report" ? (
-        <div style={{ marginTop: "var(--space-lg)" }}>
-          <iframe className="report" title={`Full report for ${s.ticker}`} src={reportUrl(jobId)} sandbox="allow-scripts" />
-        </div>
-      ) : tab === "gaps" ? (
-        <div style={{ marginTop: "var(--space-lg)", maxWidth: 900 }}><Gaps s={s} /></div>
-      ) : (
-        <div className="grid">
-          <div className="stack"><Score s={s} /><Debate s={s} /><Health s={s} /><Ownership s={s} /><Levels s={s} /><Valuation s={s} /><Checklist s={s} /></div>
-          <div className="stack"><Explanation s={s} /><News s={s} /><OwnModelPanel jobId={jobId} summary={base} onExplanation={setOwn} onPanel={setPanel} /><AnalystPanel results={panel} /><MarketFlows s={s} /><KeyFacts s={s} /></div>
-        </div>
-      )}
     </>
   );
 }

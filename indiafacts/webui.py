@@ -122,10 +122,10 @@ def _result_dict(title: str, ex, error: str = "") -> dict:
             "uncertainty": ex.uncertainty, "error": ""}
 
 
-def ai_run(llm_block: dict, provider_label: str, model: str, base_url: str, key: str, panel: bool, post=None) -> dict:
+def ai_run(llm_block: dict, provider_label: str, model: str, base_url: str, key: str, panel: bool = False, post=None, mode: str | None = None) -> dict:
     """Run the person's own model over the stored digest. The key lives only in this call: it is placed in a private dict for the
     client and never logged, cached or returned. Every answer is checked against the digest before it is shown."""
-    from indiafacts.agents import run_panel
+    from indiafacts.agents import run_debate, run_panel
     from indiafacts.digest import Digest
     from indiafacts.llm import make_client, validate_llm_output
 
@@ -135,7 +135,12 @@ def ai_run(llm_block: dict, provider_label: str, model: str, base_url: str, key:
         env["INDIAFACTS_LLM_BASE_URL"] = base_url.strip()
     client = make_client(provider, (model or default_model).strip() or None, env=env, post=post)
     digest = Digest(text=llm_block["digest"], ids={i: "" for i in llm_block["ids"]}, items={}, by_key={}, est_tokens=0)
-    if not panel:
+    mode = mode or ("panel" if panel else "single")
+    if mode == "debate":
+        results = run_debate(client, digest)
+        return {"mode": "debate", "results": [_result_dict(r.title, r.explanation, r.error) for r in results],
+                "tokens": sum(r.input_tokens + r.output_tokens for r in results)}
+    if mode == "single":
         res = client.complete(llm_block["system"], llm_block["user"], llm_block.get("max_tokens", 700))
         ex, reasons = validate_llm_output(res.text, digest)
         return {"mode": "single", "results": [_result_dict("Plain-English explanation", ex, "; ".join(reasons[:2]))],
@@ -250,11 +255,30 @@ def debate_html(s: dict) -> str:
         items = "".join(f"<li>{e(p['text'])}<span class='ids'>{e(p['evidence'])}</span></li>" for p in pts) or "<li>None found.</li>"
         return f"<div class='side'><h3>{e(title)}</h3><ul class='plain'>{items}</ul></div>"
     st = d["stance"]
-    body = (f"<div class='debate'>{col('Bull case', d['bull'])}{col('Bear case', d['bear'])}</div>"
+    pr = s.get("prose")
+    prose = (f"<p>{e(pr['favour'])}</p><p>{e(pr['against'])}</p><p><strong>{e(pr['weighing'])}</strong></p>" if pr else "")
+    body = (prose + f"<div class='debate'>{col('Bull case', d['bull'])}{col('Bear case', d['bear'])}</div>"
             f"<p class='stance'><span class='tag stance-tag'>{e(st['label'])}</span> Confidence {e(st['confidence'])}. {e(st['reason'])}.</p>"
             "<p class='helper'>Educational rating from a transparent rule applied to the evidence on this page. It ignores your own situation, "
             "is not a prediction, and is not a recommendation.</p>")
     return _card("Bull case versus bear case", "educational", body)
+
+
+def scenario_html(s: dict) -> str:
+    sc = s.get("scenario")
+    if not sc:
+        return ""
+    lv = "".join(f'<tr><td>{e(x["label"])}<span class="ids">{e(x["meaning"])}</span></td><td class="num">₹{x["price"]:,.2f}</td></tr>' for x in sc["levels"])
+    st = "".join(f'<tr><td>{e(x["label"])}<span class="ids">{e(x["condition"])}</span></td><td class="num">'
+                 + ("depends on your ceiling" if x["pct"] is None else f'up to {x["pct"]:.1f}% of a portfolio') + "</td></tr>" for x in sc["stages"])
+    lst = lambda t, items: (f"<h3>{e(t)}</h3><ul class='plain'>" + "".join(f"<li>{e(i)}</li>" for i in items) + "</ul>") if items else ""
+    body = (f"<p><strong>{e(sc['headline'])}</strong></p><p>{e(sc['summary'])}</p>"
+            f"<table><thead><tr><th>Level</th><th class='num'>Price</th></tr></thead><tbody>{lv}</tbody></table>"
+            f"<table><thead><tr><th>Staged exposure</th><th class='num'>Size</th></tr></thead><tbody>{st}</tbody></table>"
+            + lst("Would turn more positive if these improve", sc["more_positive_if"]) + lst("Would turn more cautious if these fade", sc["more_cautious_if"])
+            + lst("Dates and things to watch", sc["watch"]) + "".join(f"<p class='helper'>{e(n)}</p>" for n in sc["notes"])
+            + "<p class='helper'>Educational arithmetic on measured prices and stated risk limits. Not a forecast, not a price target, not advice.</p>")
+    return _card("Scenario plan", sc["tone"], body)
 
 
 def levels_html(s: dict) -> str:

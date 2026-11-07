@@ -140,6 +140,11 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     debate = build_debate(fs, scorecard)
     levels = reference_levels(fs, debate.stance.label)
     panel = build_risk_panel(fs, profile, levels)
+    from indiafacts.narrative import case_prose
+    from indiafacts.scenario import build_scenario
+
+    scenario = build_scenario(fs, debate, levels, panel, today=args.as_of)
+    prose = case_prose(debate, scorecard)
     if not args.no_remember and debate.stance.label != "No rating":
         try:
             from indiafacts.journal import Journal
@@ -169,7 +174,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     else:
         print(render(fs, as_of=args.as_of, profile=profile, profile_is_default=is_default,
                  view=args.view or profile.view, scorecard=scorecard, explanation=explanation, digest=digest,
-                 changes=changes, changes_note=changes_note if (args.changes or not changes) else None, debate=debate, news=news, levels=levels, panel=panel, flows=flows))
+                 changes=changes, changes_note=changes_note if (args.changes or not changes) else None, debate=debate, news=news, levels=levels, panel=panel, flows=flows, scenario=scenario, prose=prose))
     if args.announcements and not (args.digest or args.changes_only):
         from indiafacts.nsefeed import recent_for
 
@@ -183,12 +188,12 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         from indiafacts.summary import summarize_run
 
         args.json.parent.mkdir(parents=True, exist_ok=True)
-        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes, digest or _build_digest(fs, scorecard, profile, news=news, debate=debate, levels=levels, panel=panel), news=news, debate=debate, levels=levels, panel=panel, flows=flows), default=str), encoding="utf-8")
+        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes, digest or _build_digest(fs, scorecard, profile, news=news, debate=debate, levels=levels, panel=panel), news=news, debate=debate, levels=levels, panel=panel, flows=flows, scenario=scenario, prose=prose), default=str), encoding="utf-8")
     if args.html:
         from indiafacts.htmlreport import build_html
 
         page = build_html(fs, profile, is_default, args.view or profile.view, scorecard, args.as_of, explanation=explanation, digest=digest, changes=changes,
-                          debate=debate, news=news, levels=levels, panel=panel, flows=flows)
+                          debate=debate, news=news, levels=levels, panel=panel, flows=flows, scenario=scenario, prose=prose)
         args.html.parent.mkdir(parents=True, exist_ok=True)
         tmp = args.html.with_suffix(args.html.suffix + ".tmp")
         tmp.write_text(page, encoding="utf-8")
