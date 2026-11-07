@@ -40,7 +40,8 @@ def _merge_entity(entity: Entity, filing: Entity) -> Entity:
 def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=time.sleep,
                   filing_path: Path | list[Path] | None = None, symbol_changes: Path | None = None,
                   prices: bool = False, price_client=None, benchmark: str = "^NSEI",
-                  tej: bool = False, tej_store: TejStore | None = None, skip_other_filings: bool = False) -> FactSet:
+                  tej: bool = False, tej_store: TejStore | None = None, skip_other_filings: bool = False,
+                  shareholding_paths: list[Path] | None = None, shareholding_feed: bool = False) -> FactSet:
     """Resolve identity, fetch, flag gaps, optionally merge an official NSE filing, then append computed facts."""
     notices: list[str] = []
     store = (tej_store or TejStore()) if tej else None
@@ -138,6 +139,7 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
                        "ratios that need the overview (P/E, P/B, ROE, market value) may be unavailable")
     base_facts = facts + extra + price_facts
     base_facts += _fundamental_facts(fs, base_facts, client, notices)
+    base_facts += _ownership_facts(fs, shareholding_paths or [], shareholding_feed, notices)
     val_facts = valuation_facts(fs.model_copy(update={"facts": base_facts}), today=as_of or fs.retrieved_at.date(), now=fs.retrieved_at)
     return fs.model_copy(update={"facts": base_facts + val_facts, "not_yet_public": pending,
                                  "notices": notices, "price_notes": price_notes,
@@ -245,3 +247,30 @@ def _fundamental_facts(fs, facts, client, notices: list[str]):
             if y is not None and y.unit == f.unit:
                 checks.append(cross_check(f, y))
     return new + ratio_facts(probe, now=fs.retrieved_at) + checks
+
+
+def _ownership_facts(fs, paths: list[Path], feed: bool, notices: list[str]):
+    """Official shareholding pattern: saved files, the exchange's latest feed, and the snapshots stored on earlier runs."""
+    from indiafacts.shareholding import fetch_latest, history, parse_shp, save_snapshot, shareholding_facts
+
+    sym = fs.entity.ticker.split(".")[0]
+    for p in paths:
+        try:
+            sh = parse_shp(Path(p), source=Path(p).name)
+        except (ValueError, OSError) as exc:
+            notices.append(f"shareholding file {Path(p).name} was not used: {exc}")
+            continue
+        if sh.symbol and sh.symbol != sym:
+            notices.append(f"shareholding file {Path(p).name} is for {sh.symbol}, not {sym}; skipped")
+            continue
+        sh.symbol = sh.symbol or sym
+        save_snapshot(sh)
+    if feed:
+        sh, note = fetch_latest(sym, fs.entity.name)
+        if sh is not None:
+            sh.symbol = sh.symbol or sym
+            save_snapshot(sh)
+    snaps = history(sym)
+    if not snaps:
+        return []
+    return shareholding_facts(fs.entity.ticker, snaps, now=fs.retrieved_at)

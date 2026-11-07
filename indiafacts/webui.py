@@ -82,6 +82,27 @@ def health_html(s: dict) -> str:
                  '<p class="helper">Words like low or healthy describe the number against fixed bands. They are not advice.</p>')
 
 
+def ownership_html(s: dict) -> str:
+    o = s.get("ownership") or {}
+    if not o.get("rows"):
+        return _card("Who owns it", "no data", f"<p>No ownership data this run. {e(o.get('how_to', ''))}</p>")
+    body = "".join(f'<tr><td>{e(r["label"])}<span class="ids">{e(r["change"] or r["meaning"])}</span></td><td class="num">{e(r["display"])}'
+                   + (f' <span class="tag">{e(r["reading"])}</span>' if r["reading"] else "") + "</td></tr>" for r in o["rows"])
+    note = f"NSE filing, as on {o['as_on']}" if o["source"] == "official" else "vendor estimate"
+    hint = "" if o["source"] == "official" else f'<p class="helper">{e(o["how_to"])}</p>'
+    return _card("Who owns it", note, f'<table><thead><tr><th>Holder</th><th class="num">Share</th></tr></thead><tbody>{body}</tbody></table>{hint}')
+
+
+def flows_html(s: dict) -> str:
+    f = s.get("market_flows")
+    if not f:
+        return ""
+    body = "".join(f'<tr><td>{e(r["participant"])}<span class="ids">{r["long_share"]:.0%} long'
+                   + (f'; {r["change"]:+,} since {e(f["since"])}' if r["change"] is not None else "") + f'</span></td>'
+                   f'<td class="num">{abs(r["net"]):,} <span class="tag">{e(r["stance"])}</span></td></tr>' for r in f["rows"])
+    return _card("Market flows", f"as of {f['as_of']}", f'<table><thead><tr><th>Who</th><th class="num">Index futures</th></tr></thead><tbody>{body}</tbody></table><p class="helper">{e(f["note"])}</p>')
+
+
 def glance_html(s: dict) -> str:
     st = (s.get("debate") or {}).get("stance")
     sc = s.get("score") or {}

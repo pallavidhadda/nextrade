@@ -34,3 +34,10 @@ def _offline_tej(monkeypatch, request):
         raise ConnectionError("offline in tests")
 
     monkeypatch.setattr(tej, "_http_fetch", offline)
+
+
+@pytest.fixture(autouse=True)
+def _isolated_shareholding_store(monkeypatch, tmp_path):
+    """Tests never read or write the real shareholding store."""
+    monkeypatch.setenv("INDIAFACTS_SHP_STORE", str(tmp_path / "shp_home.csv"))
+    monkeypatch.setenv("INDIAFACTS_SHP_REPO", str(tmp_path / "shp_repo.csv"))

@@ -111,7 +111,18 @@ HEALTH_DEFAULTS = {"roce_good": 0.15, "roce_weak": 0.08, "net_debt_ebitda_high":
                    "fcf_yield_good": 0.04, "growth_good": 0.12, "growth_weak": 0.0}
 
 
+def _ownership_points(fs: FactSet, d: Debate, p: dict) -> None:
+    """Official shareholding evidence only; vendor proxies never create a point."""
+    h = {"pledge_high": 0.25, "promoter_fall_pp": 0.02, **p.get("ownership", {})}
+    pl, ch = _fact(fs, "sh_promoter_pledged"), _fact(fs, "sh_promoter_change")
+    if pl is not None and pl >= h["pledge_high"]:
+        d.bear.append(Point(f"{pl:.0%} of the promoters' shares are pledged as loan security, a risk flag", "own:sh_promoter_pledged"))
+    if ch is not None and ch <= -h["promoter_fall_pp"]:
+        d.bear.append(Point(f"The promoter group's holding fell {abs(ch) * 100:.1f} percentage points since the previous filing", "own:sh_promoter"))
+
+
 def _health_points(fs: FactSet, d: Debate, p: dict) -> None:
+    _ownership_points(fs, d, p)
     """Business-health evidence from annual statements. Absent data adds nothing: no point is ever made up."""
     h = {**HEALTH_DEFAULTS, **p.get("health", {})}
     fcf, fcfy, roce = _fact(fs, "fy_free_cash_flow"), _fact(fs, "fy_fcf_yield"), _fact(fs, "fy_roce")

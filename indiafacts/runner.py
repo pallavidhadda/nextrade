@@ -23,7 +23,7 @@ def subprocess_runner(opts: dict, progress: Callable[[str], None]) -> dict:
     """Run the CLI in its own process (own stdout, own timeout); read its JSON and HTML outputs."""
     with tempfile.TemporaryDirectory() as d:
         out_json, out_html = Path(d) / "s.json", Path(d) / "r.html"
-        argv = [sys.executable, "-m", "indiafacts", opts["ticker"], "--score", "--explain", "--news", "--no-remember", "--json", str(out_json), "--html", str(out_html)]
+        argv = [sys.executable, "-m", "indiafacts", opts["ticker"], "--score", "--explain", "--news", "--no-remember", "--flows", "--json", str(out_json), "--html", str(out_html)]
         labels = os.environ.get("INDIAFACTS_LABELS")
         if labels and Path(labels).exists():
             argv += ["--universe", labels, "--sector-pool"]

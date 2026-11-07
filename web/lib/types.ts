@@ -8,6 +8,9 @@ export type Profile = {
 export type KeyFact = { metric: string; value: number | null; unit: string; period: string; source: string; basis: string; fact_id: string };
 export type Check = { label: string; result: "pass" | "fail" | "unavailable"; display: string; threshold: string; reason: string };
 export type Health = { metric: string; label: string; display: string; reading: string; status: string; meaning: string; reason: string; period: string };
+export type OwnRow = { metric: string; label: string; display: string; reading: string; change: string | null; meaning: string };
+export type Ownership = { source: "official" | "proxy" | "none"; as_on: string; rows: OwnRow[]; how_to: string };
+export type Flows = { as_of: string; since: string; sessions: number; note: string; rows: { participant: string; net: number; long_share: number; change: number | null; stance: string }[] };
 export type Gap = { metric: string; period: string; status: string; reason: string };
 export type Claim = { type: "fact" | "inference" | "hypothesis"; text: string; ids: string[] };
 export type Summary = {
@@ -15,6 +18,8 @@ export type Summary = {
   profile: { horizon: string; risk: string; experience: string };
   key_facts: KeyFact[];
   fundamentals?: Health[];
+  ownership?: Ownership;
+  market_flows?: Flows | null;
   score: null | {
     status: string; overall: number | null; rank: number | null; n: number | null; reason: string; pool: string | null; flags: string[];
     factors: Record<string, { score: number | null; coverage: number; reason: string }>;

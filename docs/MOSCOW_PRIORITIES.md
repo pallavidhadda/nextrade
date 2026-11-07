@@ -30,3 +30,6 @@ W1 Order placement, broker links, accounts and logins (regulatory and security s
 
 ## Added 2026-11-07
 Business-health block and lender metric set; NSE RSS announcements; journal `log` / `export` / `import` and a weekday GitHub Action; company-name search, At a glance strip and plainer progress in the web app; rating no longer inflated by trivial checks. Open: bank NIM and NPA, shareholding pattern and FII/DII, Marketaux sentiment, real-user tests, a quality comparison with TradingAgents.
+
+## Added 2026-11-07 (later)
+Official shareholding pattern (files, NSE feed, accumulating store, 4-hourly workflow) and market-wide FII/DII/Pro/Client index-futures positioning: DONE. Not possible for free: cash-market FII/DII net flows (cookie-protected NSE API) and per-stock FII flow. Open: bank NIM and NPA.

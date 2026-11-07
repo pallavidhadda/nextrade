@@ -47,8 +47,8 @@ def result_view(res: dict) -> None:
     with t1:
         st.markdown(webui.glance_html(s), unsafe_allow_html=True)
         a, b = st.columns(2)
-        a.markdown(webui.score_html(s) + webui.debate_html(s) + webui.health_html(s) + webui.levels_html(s) + webui.valuation_html(s) + webui.checklist_html(s), unsafe_allow_html=True)
-        b.markdown(webui.explanation_html(s) + webui.news_html(s) + webui.facts_html(s), unsafe_allow_html=True)
+        a.markdown(webui.score_html(s) + webui.debate_html(s) + webui.health_html(s) + webui.ownership_html(s) + webui.levels_html(s) + webui.valuation_html(s) + webui.checklist_html(s), unsafe_allow_html=True)
+        b.markdown(webui.explanation_html(s) + webui.news_html(s) + webui.flows_html(s) + webui.facts_html(s), unsafe_allow_html=True)
     with t2:
         components.html(res["html"], height=800, scrolling=True)
     with t3:

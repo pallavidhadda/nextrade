@@ -143,6 +143,15 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
         elif r["metric"] in ("nim", "gross_npa_ratio"):
             G("health", f"health:{r['metric']}", r["fact_ids"][0] if r["fact_ids"] else "entity", f"HEALTH {clean(r['label'], 30)} unavailable (not in free data)")
 
+    from indiafacts.ownership_view import ownership
+
+    own = ownership(fs)
+    for r in own["rows"]:
+        if r["metric"] in ("sh_promoter", "sh_promoter_pledged", "sh_foreign_inst", "sh_domestic_inst", "insider_holding"):
+            G("health", f"own:{r['metric']}", r["fact_ids"][0],
+              f"OWNERSHIP {clean(r['label'], 40)} {r['display']}" + (f" ({r['reading']})" if r["reading"] else "") +
+              (f" {clean(r['change'], 50)}" if r["change"] else "") + ("" if own["source"] == "official" else " [vendor proxy, unverified]"))
+
     for m in KEY_QUARTER:
         f = _latest(facts, m, quarterly=True)
         if f is not None:

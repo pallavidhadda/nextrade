@@ -51,6 +51,10 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--sector-pool", action="store_true", help="with an NSE index CSV: compare only against the target's NSE industry group (faster, sector-relative scores)")
     p.add_argument("--news", action="store_true", help="also fetch recent headlines (extra network call; shown as unverified text with a keyword sentiment hint)")
     p.add_argument("--pool-size", type=int, default=None, help="use only the first N companies of the pool (plus the target): faster, a smaller comparison")
+    p.add_argument("--shareholding", type=Path, action="append", default=None,
+                   help="shareholding-pattern XBRL file saved from NSE (Corporate Filings > Shareholding Pattern); repeat for earlier quarters")
+    p.add_argument("--no-feed", action="store_true", help="do not look in the exchange's latest shareholding feed")
+    p.add_argument("--flows", action="store_true", help="also show market-wide FII/DII/Pro/Client index-futures positioning from the exchange's daily file")
     p.add_argument("--announcements", action="store_true", help="also list this company's latest filings from the exchange's public RSS feed (links to the filings)")
     p.add_argument("--json", type=Path, default=None, help="also write a compact JSON summary (used by the web app)")
     p.add_argument("--html", type=Path, default=None, help="also write a self-contained HTML report with charts")
@@ -69,7 +73,8 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         fs = build_factset(args.ticker, as_of=args.as_of, client=client, sleep=sleep,
                            filing_path=_filing_paths(args), skip_other_filings=bool(args.filings_dir), symbol_changes=args.symbol_changes,
                            prices=not args.no_prices, price_client=price_client,
-                           tej=not args.no_tej, tej_store=tej_store)
+                           tej=not args.no_tej, tej_store=tej_store,
+                           shareholding_paths=_shp_paths(args), shareholding_feed=(client is None and not args.no_feed))
     except AmbiguousSymbol as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 3
@@ -123,6 +128,13 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     from indiafacts.riskpanel import build_risk_panel
     from indiafacts.tradeplan import reference_levels
 
+    flows = None
+    if args.flows:
+        from indiafacts import flows as _flows
+
+        flows = _flows.summary(_flows.history()) or {"unavailable": True}
+        if flows.get("unavailable"):
+            flows = None
     debate = build_debate(fs, scorecard)
     levels = reference_levels(fs, debate.stance.label)
     panel = build_risk_panel(fs, profile, levels)
@@ -155,7 +167,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     else:
         print(render(fs, as_of=args.as_of, profile=profile, profile_is_default=is_default,
                  view=args.view or profile.view, scorecard=scorecard, explanation=explanation, digest=digest,
-                 changes=changes, changes_note=changes_note if (args.changes or not changes) else None, debate=debate, news=news, levels=levels, panel=panel))
+                 changes=changes, changes_note=changes_note if (args.changes or not changes) else None, debate=debate, news=news, levels=levels, panel=panel, flows=flows))
     if args.announcements and not (args.digest or args.changes_only):
         from indiafacts.nsefeed import recent_for
 
@@ -169,12 +181,12 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         from indiafacts.summary import summarize_run
 
         args.json.parent.mkdir(parents=True, exist_ok=True)
-        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes, digest or _build_digest(fs, scorecard, profile, news=news, debate=debate, levels=levels, panel=panel), news=news, debate=debate, levels=levels, panel=panel), default=str), encoding="utf-8")
+        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes, digest or _build_digest(fs, scorecard, profile, news=news, debate=debate, levels=levels, panel=panel), news=news, debate=debate, levels=levels, panel=panel, flows=flows), default=str), encoding="utf-8")
     if args.html:
         from indiafacts.htmlreport import build_html
 
         page = build_html(fs, profile, is_default, args.view or profile.view, scorecard, args.as_of, explanation=explanation, digest=digest, changes=changes,
-                          debate=debate, news=news, levels=levels, panel=panel)
+                          debate=debate, news=news, levels=levels, panel=panel, flows=flows)
         args.html.parent.mkdir(parents=True, exist_ok=True)
         tmp = args.html.with_suffix(args.html.suffix + ".tmp")
         tmp.write_text(page, encoding="utf-8")
@@ -282,5 +294,14 @@ def _filing_paths(args) -> list[Path] | None:
     if args.filings_dir:
         if not args.filings_dir.is_dir():
             raise ValueError(f"filings folder not found: {args.filings_dir}")
-        paths += sorted(p for p in args.filings_dir.iterdir() if p.suffix.lower() in (".html", ".htm", ".mhtml", ".mht", ".xml"))
+        paths += sorted(p for p in args.filings_dir.iterdir() if p.suffix.lower() in (".html", ".htm", ".mhtml", ".mht", ".xml")
+                        and not p.name.upper().startswith("SHP_"))
+    return paths or None
+
+
+def _shp_paths(args) -> list[Path] | None:
+    """Shareholding files: the ones named with --shareholding plus any SHP_*.xml found in --filings-dir."""
+    paths = list(args.shareholding or [])
+    if args.filings_dir and args.filings_dir.is_dir():
+        paths += sorted(p for p in args.filings_dir.iterdir() if p.name.upper().startswith("SHP_") and p.suffix.lower() == ".xml")
     return paths or None

@@ -36,3 +36,12 @@ Walked through: land, enter company, wait, read the summary.
 | U4 | Header showed only the ticker | Company name shown |
 | U5 | Business quality was missing from the summary | Health card placed right after the score and rating |
 Still open: a mobile pass with real devices, a glossary tooltip on terms such as ROCE, saving a favourite list in the browser, and a first-run walkthrough. Not tested with real users yet: do five sessions before trusting any of this.
+
+## 4. Shareholding pattern and FII/DII (added later the same day)
+| What | Source | How it works | Honest limit |
+|---|---|---|---|
+| Official shareholding pattern: promoter, pledged share of promoter holding, foreign institutions, domestic institutions, mutual funds, public, small retail, change since the previous filing | NSE shareholding-pattern XBRL | `--shareholding FILE`, or `SHP_*.xml` in your filings folder, or found automatically in NSE's public RSS feed `Shareholding_Pattern.xml` | The feed lists only the newest filings, so a company is found only shortly after it files. Every snapshot seen is stored (`~/.indiafacts/shareholding.csv`, and the repo's `data/shareholding.csv` via the `shareholding` workflow, every 4 hours), so quarter-on-quarter history builds up from now. Yahoo's holder lists are empty for India |
+| FII, DII, Pro and Client index-futures positioning, 6-session trend | NSE daily participant-wise open interest file | `--flows` (always on in the web app); cached per day | Whole-market derivatives positioning, **not** one stock's flows and **not** the cash-market FII/DII net buy/sell figure. That number sits behind NSE's cookie-protected API, which this project does not use. Shown as context only and never fed into a rating |
+
+Rating: official data only can add bear points (promoter pledge of 25% or more of their shares; promoter holding down 2 points or more). Yahoo's proxy never creates a point and is labelled as a vendor estimate, with instructions for getting the official file.
+Checked live: the poll stored 5 real filings; ONEPOINT shows promoter 52.3%, 39.4% of promoter shares pledged (flagged high), FPI 5.1%.

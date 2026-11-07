@@ -401,6 +401,31 @@ def _health_card(fs) -> str:
                  f'<ul class="checks">{items}</ul>', twin)
 
 
+def _ownership_card(fs) -> str:
+    from indiafacts.ownership_view import ownership
+
+    o = ownership(fs)
+    if not o["rows"]:
+        return _card("ownership", "Who owns it", "Shareholding pattern.", f'<p class="empty">No ownership data this run. {esc(o["how_to"])}</p>')
+    items = "".join(
+        f'<li class="check na"><span class="icon" aria-hidden="true">·</span><span>{esc(r["label"])}'
+        f'{("<span class=state>" + esc(r["reading"]) + "</span>") if r["reading"] else ""}<br><small>{esc(r["change"] or r["meaning"])}</small></span>'
+        f'<span class="val">{esc(r["display"])}</span></li>' for r in o["rows"])
+    sub = (f"Official NSE shareholding pattern as on {o['as_on']}." if o["source"] == "official"
+           else "Vendor estimates only, not the official pattern. " + o["how_to"])
+    twin = _table(["Holder", "Share"], [[r["label"], r["display"]] for r in o["rows"]])
+    return _card("ownership", "Who owns it", sub, f'<ul class="checks">{items}</ul>', twin)
+
+
+def _flows_card(flows) -> str:
+    if not flows:
+        return ""
+    rows = [[r["participant"], r["stance"], f'{abs(r["net"]):,}', f'{r["long_share"]:.0%}',
+             "" if r["change"] is None else f'{r["change"]:+,}'] for r in flows["rows"]]
+    return _card("flows", f"Market flows (as of {flows['as_of']})", flows["note"],
+                 _table(["Participant", "Index futures", "Contracts", "Long share", f"Change since {flows['since']}"], rows, num=(2, 3, 4)))
+
+
 def _peer_card(sc: dict | None, metric: str, target: str) -> str:
     ident = f"chart-peers-{metric}"
     title = {"pe_ttm": "P/E against peers", "pb": "Price-to-book against peers"}[metric]
@@ -536,7 +561,7 @@ def _extra_cards(debate, news, levels, panel) -> str:
 
 def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view: str = "pro", scorecard: dict | None = None,
                as_of: date | None = None, now: datetime | None = None, explanation=None, digest=None, changes=None,
-               debate=None, news=None, levels=None, panel=None) -> str:
+               debate=None, news=None, levels=None, panel=None, flows=None) -> str:
     e = fs.entity
     now = now or datetime.now()
     ctx = _Ctx()
@@ -562,7 +587,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
     charts = _price_card(fs.charts, price_facts, e.ticker) + _drawdown_card(fs.charts)
     q = _quarter_card("chart-q-net_income", "Net profit by quarter", "net_income", facts, ctx) + \
         _quarter_card("chart-q-revenue", "Revenue by quarter", "revenue", facts, ctx)
-    sc_block = _score_card(scorecard) + _checklist_card(scorecard) + _health_card(fs)
+    sc_block = _score_card(scorecard) + _checklist_card(scorecard) + _health_card(fs) + _ownership_card(fs) + _flows_card(flows)
     peers = _peer_card(scorecard, "pe_ttm", e.ticker) + _peer_card(scorecard, "pb", e.ticker) if scorecard else ""
     peer_note = ""
     if scorecard and scorecard.get("peers") and scorecard["peers"].picks:

@@ -32,9 +32,6 @@ NONLENDER = [
      "What the whole business costs against a year of operating earnings. Compare with peers, not alone."),
     ("fy_fcf_yield", "Free cash flow yield", "pct", [(0.0, "negative"), (0.02, "low"), (0.05, "moderate"), (9, "high")],
      "Free cash flow as a share of today's market value."),
-    ("insider_holding", "Promoter or insider holding (vendor proxy)", "pct", None,
-     "Share held by insiders. Confirm in the exchange shareholding pattern."),
-    ("institutional_holding", "Institutional holding (vendor proxy)", "pct", None, "Share held by funds and institutions."),
 ]
 LENDER = [
     ("roe", "Return on equity", "pct", [(0.0, "negative"), (0.10, "low"), (0.15, "decent"), (9, "high")], "Profit earned on shareholders' money."),
@@ -46,7 +43,6 @@ LENDER = [
     ("gross_npa_ratio", "Gross bad loans", "pct", None, "Share of loans that stopped paying."),
     ("fy_net_income_cagr_3y", "Profit growth, 3-year yearly average", "pct", [(0.0, "shrinking"), (0.08, "slow"), (0.18, "healthy"), (9, "fast")],
      "How fast profit grew each year over three years."),
-    ("insider_holding", "Promoter or insider holding (vendor proxy)", "pct", None, "Confirm in the exchange shareholding pattern."),
 ]
 
 

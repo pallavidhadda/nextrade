@@ -294,3 +294,53 @@ export function AtAGlance({ s, onTab }: { s: Summary; onTab: (t: string) => void
     </section>
   );
 }
+
+export function Ownership({ s }: { s: Summary }) {
+  const o = s.ownership;
+  if (!o) return null;
+  return (
+    <section className="entry" aria-labelledby="own-h">
+      <header><h2 id="own-h">Who owns it</h2><span className="note">{o.source === "official" ? `NSE filing, as on ${o.as_on}` : "vendor estimate"}</span></header>
+      <div className="body">
+        {o.rows.length === 0 ? <p>No ownership data this run.</p> : (
+          <table>
+            <thead><tr><th>Holder</th><th>Share</th></tr></thead>
+            <tbody>
+              {o.rows.map((r) => (
+                <tr key={r.metric}>
+                  <td>{r.label}<span className="ids">{r.change ?? r.meaning}</span></td>
+                  <td><span className="num">{r.display}</span>{r.reading ? <span className="tag">{r.reading}</span> : null}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        {o.source !== "official" && <p className="helper" style={{ marginTop: "var(--space-sm)" }}>{o.how_to}</p>}
+      </div>
+    </section>
+  );
+}
+
+export function MarketFlows({ s }: { s: Summary }) {
+  const f = s.market_flows;
+  if (!f) return null;
+  return (
+    <section className="entry" aria-labelledby="flow-h">
+      <header><h2 id="flow-h">Market flows</h2><span className="note">as of {f.as_of}</span></header>
+      <div className="body">
+        <table>
+          <thead><tr><th>Who</th><th>Index futures</th></tr></thead>
+          <tbody>
+            {f.rows.map((r) => (
+              <tr key={r.participant}>
+                <td>{r.participant}<span className="ids">{Math.round(r.long_share * 100)}% of positions long{r.change !== null ? `; ${r.change >= 0 ? "+" : ""}${r.change.toLocaleString("en-IN")} since ${f.since}` : ""}</span></td>
+                <td><span className="num">{Math.abs(r.net).toLocaleString("en-IN")}</span><span className="tag">{r.stance}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="helper" style={{ marginTop: "var(--space-sm)" }}>{f.note}</p>
+      </div>
+    </section>
+  );
+}
