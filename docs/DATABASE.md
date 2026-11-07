@@ -16,7 +16,7 @@ A rating is a claim about the future. It can only be scored once its holding win
 ## What we did about it
 - `python -m indiafacts.journal log --limit 6` rates a rotating slice of the pool and records each rating, so nobody has to type tickers.
 - `export` / `import` move the journal to and from `data/journal.csv`.
-- `.github/workflows/journal.yml` runs import, log, settle, export every weekday after the NSE close and commits the CSV. **The CSV in the repo is the database for the public scoreboard.** It is free, versioned, diffable and needs no server.
+- `.github/workflows/journal.yml` runs import, log, settle, export every weekday after the NSE close and commits `journal.csv` to the **`data` branch** (so `main` has no data commits); `shareholding.yml` does the same for `shareholding.csv` every 4 hours. **The CSV on the data branch is the database for the public scoreboard.** To use it locally: `git fetch origin data`, then `git show origin/data:shareholding.csv > ~/.indiafacts/shareholding.csv`. It is free, versioned, diffable and needs no server.
 
 ## Do we need a real database?
 - **For the portfolio project: no.** One CSV, a few thousand rows a year, one writer (the scheduled job).

@@ -1,25 +1,30 @@
 name: shareholding
 # The exchange's shareholding feed lists only the newest filings, so poll it often during results season and keep every
-# snapshot in data/shareholding.csv. Over time this builds quarter-on-quarter history for free. Education only.
+# snapshot in shareholding.csv on the `data` branch (main stays free of data commits). Education only.
 on:
   schedule:
     - cron: "15 */4 * * *"
   workflow_dispatch:
 permissions:
   contents: write
+concurrency: data-branch
 jobs:
   poll:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: data
+          path: databranch
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --python 3.12
-      - run: uv run python -m indiafacts.shareholding poll
-      - name: commit new snapshots
+      - run: uv run python -m indiafacts.shareholding poll --store databranch/shareholding.csv
+      - name: commit new snapshots to the data branch
+        working-directory: databranch
         run: |
           git config user.name "nextrade-shareholding"
           git config user.email "actions@users.noreply.github.com"
-          git add data/shareholding.csv
+          git add shareholding.csv
           git diff --cached --quiet || git commit -m "data: shareholding snapshots $(date -u +%FT%H)"
-          git pull --rebase -q || true
-          git push
+          git push origin data

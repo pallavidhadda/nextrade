@@ -303,10 +303,10 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="indiafacts.shareholding", description="Collect shareholding patterns from the exchange's public feed.")
     p.add_argument("action", choices=["poll", "show"])
     p.add_argument("symbol", nargs="?", help="show: NSE symbol")
-    p.add_argument("--store", type=Path, default=None, help="CSV to append to (default: the repo's data/shareholding.csv)")
+    p.add_argument("--store", type=Path, default=None, help="CSV to append to (default: the home store ~/.indiafacts/shareholding.csv)")
     a = p.parse_args(argv)
     if a.action == "poll":
-        added, failed = poll(a.store or repo_store())
+        added, failed = poll(a.store or default_store())
         print(f"added {added} new filings, {failed} could not be read")
         return 0
     if not a.symbol:
