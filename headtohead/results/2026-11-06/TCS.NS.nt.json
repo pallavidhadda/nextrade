@@ -1,0 +1,37 @@
+{
+ "ticker": "TCS.NS",
+ "status": "ok",
+ "seconds": 27.1,
+ "rating": "Hold",
+ "confidence": "High",
+ "score": 50.6659,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 1859,
+  "out": 402,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 7,
+ "health_rows": 11,
+ "bull": [
+  "Quality scores 69 of 100 against the comparison pool",
+  "Check passed: Profit is higher than a year earlier (+1.4% (last financial year))",
+  "Check passed: Revenue is higher than a year earlier (+4.6% (last financial year))",
+  "Check passed: Profit covers interest costs at least 3 times (54.37 (last financial year))",
+  "Check passed: Debt is below equity (debt-to-equity under 1) (0.10)",
+  "Check passed: Price is within 25% of its 52-week high (-24.9%)",
+  "At a 12% discount rate the price implies 7.1% yearly earnings growth for 10 years, a modest ask",
+  "Free cash flow is 5.3% of the market value, a solid cash return",
+  "Return on capital employed is 54.9%, a strong return on the money in the business"
+ ],
+ "bear": [
+  "Momentum scores only 24 of 100 against the comparison pool",
+  "Risk scores only 27 of 100 against the comparison pool",
+  "Growth scores only 29 of 100 against the comparison pool",
+  "Check failed: Price is higher than a year ago (-17.0%, needs > 0%)",
+  "Check failed: Price did better than the Nifty 50 over a year (-15.1%, needs > 0%)",
+  "The 3-year maximum drawdown was -56.5%, a deep fall"
+ ],
+ "summary": "TCS.NS shows strong quality and profitability metrics, though it faces challenges with recent stock price performance and slow growth rates."
+}

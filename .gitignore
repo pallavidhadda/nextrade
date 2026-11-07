@@ -8,3 +8,7 @@ TradingAgents/
 samples/
 baseline_*.json
 reports/
+
+# head-to-head: raw model output and per-run journals are not committed
+headtohead/results/*/*.raw.json
+headtohead/results/*/*_journal.db

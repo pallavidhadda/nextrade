@@ -1,0 +1,2 @@
+ticker,nt_status,nt_rating,nt_conf,nt_score,nt_tokens,nt_seconds,nt_health_rows,nt_gaps,nt_llm,ta_status,ta_rating,ta_calls,ta_tokens,ta_seconds,ta_blind_fundamentals,ta_ungrounded_numbers,ta_numbers_in_decision,agree
+RELIANCE.NS,ok,Hold,High,38.7665,2216,14.4,11,20,gemini:gemini-3.1-flash-lite,ok,Hold,16,59903,71.5,True,4,9,True
