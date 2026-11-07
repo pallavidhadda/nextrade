@@ -1,0 +1,39 @@
+{
+ "ticker": "M&M.NS",
+ "status": "error",
+ "error": "valueerror: ticker contains characters not allowed in a filesystem path: 'm&m.ns'",
+ "calls": [
+  {
+   "input": 1746,
+   "output": 46
+  },
+  {
+   "input": 1040,
+   "output": 144
+  },
+  {
+   "input": 1525,
+   "output": 156
+  },
+  {
+   "input": 3132,
+   "output": 38
+  },
+  {
+   "input": 1749,
+   "output": 384
+  },
+  {
+   "input": 2609,
+   "output": 24
+  },
+  {
+   "input": 3281,
+   "output": 40
+  },
+  {
+   "input": 2706,
+   "output": 600
+  }
+ ]
+}

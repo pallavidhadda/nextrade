@@ -1,0 +1,32 @@
+{
+ "ticker": "AXISBANK.NS",
+ "status": "ok",
+ "seconds": 20.7,
+ "rating": "Buy",
+ "confidence": "High",
+ "score": 65.5568,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 1820,
+  "out": 420,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 53,
+ "health_rows": 5,
+ "bull": [
+  "Value scores 92 of 100 against the comparison pool",
+  "Momentum scores 79 of 100 against the comparison pool",
+  "Growth scores 75 of 100 against the comparison pool",
+  "Check passed: Revenue is higher than a year earlier (+4.0% (last financial year))",
+  "Check passed: Price is higher than a year ago (+7.7%)",
+  "Check passed: Price did better than the Nifty 50 over a year (+9.6%)",
+  "Check passed: Price is within 25% of its 52-week high (-5.7%)",
+  "Profit grew 34.6% a year on average over three years"
+ ],
+ "bear": [
+  "Risk scores only 28 of 100 against the comparison pool",
+  "Check failed: Profit is higher than a year earlier (-6.0% (last financial year), needs > 0%)"
+ ],
+ "summary": "Axis Bank shows strong value and momentum scores, though it faces challenges with recent profit growth and limited data on debt and loan quality."
+}

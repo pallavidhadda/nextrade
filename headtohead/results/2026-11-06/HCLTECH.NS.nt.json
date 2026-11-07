@@ -1,0 +1,36 @@
+{
+ "ticker": "HCLTECH.NS",
+ "status": "ok",
+ "seconds": 21.2,
+ "rating": "Hold",
+ "confidence": "High",
+ "score": 50.3867,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 1910,
+  "out": 469,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 23,
+ "health_rows": 11,
+ "bull": [
+  "Quality scores 76 of 100 against the comparison pool",
+  "Check passed: Revenue is higher than a year earlier (+11.2% (last financial year))",
+  "Check passed: Profit covers interest costs at least 3 times (26.43 (last financial year))",
+  "Check passed: Debt is below equity (debt-to-equity under 1) (0.08)",
+  "Check passed: Price is within 25% of its 52-week high (-16.7%)",
+  "At a 12% discount rate the price implies 9.8% yearly earnings growth for 10 years, a modest ask",
+  "Free cash flow is 4.8% of the market value, a solid cash return",
+  "Return on capital employed is 27.2%, a strong return on the money in the business"
+ ],
+ "bear": [
+  "Growth scores only 29 of 100 against the comparison pool",
+  "Risk scores only 34 of 100 against the comparison pool",
+  "Check failed: Profit is higher than a year earlier (-4.3% (last financial year), needs > 0%)",
+  "Check failed: Price is higher than a year ago (-5.7%, needs > 0%)",
+  "Check failed: Price did better than the Nifty 50 over a year (-3.8%, needs > 0%)",
+  "The 3-year maximum drawdown was -48.2%, a deep fall"
+ ],
+ "summary": "HCLTECH.NS shows strong quality and debt management metrics, though it faces challenges with recent profit growth and negative one-year stock returns."
+}

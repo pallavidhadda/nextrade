@@ -1,0 +1,33 @@
+{
+ "ticker": "BAJFINANCE.NS",
+ "status": "ok",
+ "seconds": 57.7,
+ "rating": "Overweight",
+ "confidence": "High",
+ "score": 61.4205,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 1849,
+  "out": 404,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 33,
+ "health_rows": 5,
+ "bull": [
+  "Growth scores 92 of 100 against the comparison pool",
+  "Quality scores 79 of 100 against the comparison pool",
+  "Check passed: Profit is higher than a year earlier (+28.5%)",
+  "Check passed: Revenue is higher than a year earlier (+23.2%)",
+  "Check passed: Price is higher than a year ago (+4.4%)",
+  "Check passed: Price did better than the Nifty 50 over a year (+6.3%)",
+  "Check passed: Price is within 25% of its 52-week high (-6.1%)",
+  "Profit grew 18.2% a year on average over three years"
+ ],
+ "bear": [
+  "Risk scores only 17 of 100 against the comparison pool",
+  "Value scores only 25 of 100 against the comparison pool",
+  "Check failed: Debt is below equity (debt-to-equity under 1) (3.42, needs < 1)"
+ ],
+ "summary": "Bajaj Finance shows strong growth and quality metrics, though it faces challenges regarding its debt levels and valuation compared to peers."
+}

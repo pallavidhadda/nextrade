@@ -1,0 +1,39 @@
+{
+ "ticker": "ADANIENT.NS",
+ "status": "ok",
+ "seconds": 13.6,
+ "rating": "Underweight",
+ "confidence": "High",
+ "score": 22.981,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 2060,
+  "out": 462,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 11,
+ "health_rows": 11,
+ "bull": [
+  "Momentum scores 79 of 100 against the comparison pool",
+  "Check passed: Revenue is higher than a year earlier (+2.6% (last financial year))",
+  "Check passed: Profit covers interest costs at least 3 times (3.12 (last financial year))",
+  "Check passed: Price is higher than a year ago (+18.6%)",
+  "Check passed: Price did better than the Nifty 50 over a year (+20.5%)",
+  "Check passed: Price is within 25% of its 52-week high (-14.5%)",
+  "Profit grew 55.3% a year on average over three years"
+ ],
+ "bear": [
+  "Quality scores only 3 of 100 against the comparison pool",
+  "Risk scores only 3 of 100 against the comparison pool",
+  "Value scores only 21 of 100 against the comparison pool",
+  "Check failed: Profit is higher than a year earlier (-54.8%, needs > 0%)",
+  "Check failed: Debt is below equity (debt-to-equity under 1) (1.14, needs < 1)",
+  "At a 12% discount rate the price implies 23.7% yearly earnings growth for 10 years, a demanding ask",
+  "Free cash flow for the last financial year was negative: the business spent more than it generated",
+  "Net debt is 3.7 times a year of operating earnings, heavy",
+  "The 3-year maximum drawdown was -51.8%, a deep fall",
+  "One-year volatility is 37.5%, high"
+ ],
+ "summary": "Adani Enterprises shows strong momentum and recent revenue growth, but faces significant challenges regarding debt levels, quality scores, and declining year-over-year profits."
+}

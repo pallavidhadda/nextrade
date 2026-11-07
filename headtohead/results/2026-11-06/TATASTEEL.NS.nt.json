@@ -1,0 +1,35 @@
+{
+ "ticker": "TATASTEEL.NS",
+ "status": "ok",
+ "seconds": 14.1,
+ "rating": "Hold",
+ "confidence": "High",
+ "score": 32.791,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 2007,
+  "out": 466,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 15,
+ "health_rows": 11,
+ "bull": [
+  "Value scores 77 of 100 against the comparison pool",
+  "Check passed: Profit is higher than a year earlier (+11.6%)",
+  "Check passed: Revenue is higher than a year earlier (+14.5%)",
+  "Check passed: Profit covers interest costs at least 3 times (3.23 (last financial year))",
+  "Check passed: Debt is below equity (debt-to-equity under 1) (0.89)",
+  "Check passed: Price is higher than a year ago (+5.1%)",
+  "Check passed: Price did better than the Nifty 50 over a year (+7.0%)",
+  "Check passed: Price is within 25% of its 52-week high (-15.8%)",
+  "At a 12% discount rate the price implies 9.7% yearly earnings growth for 10 years, a modest ask",
+  "Free cash flow is 8.8% of the market value, a solid cash return"
+ ],
+ "bear": [
+  "Quality scores only 11 of 100 against the comparison pool",
+  "Growth scores only 19 of 100 against the comparison pool",
+  "Risk scores only 22 of 100 against the comparison pool"
+ ],
+ "summary": "Tata Steel shows strong recent financial performance and value metrics, though it faces challenges in long-term growth and quality scores compared to its peers."
+}

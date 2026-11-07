@@ -1,0 +1,87 @@
+{
+ "ticker": "WIPRO.NS",
+ "date": "2026-11-06",
+ "status": "ok",
+ "decision": "Overweight",
+ "final_trade_decision": "**Rating**: Overweight\n\n**Executive Summary**: Initiate a scaled entry into WIPRO.NS at 198.00 with an initial 0.75% allocation, holding the remaining 0.75% to average down near 190.21 or add on a breakout above 209.08. Maintain a wider stop-loss at 182.00 to account for ATR volatility, and target profit-taking near the 209.08 resistance level.\n\n**Investment Thesis**: The decision to move to Overweight rather than a full Buy reflects a balance between strong technical momentum and necessary risk mitigation regarding the IT sector's macroeconomic sensitivity. While the aggressive analyst correctly identifies the 200-day SMA breakout as a structural shift, the conservative analyst's concerns regarding ATR-related 'stop-runs' at 185.17 and RSI-related overbought conditions are valid constraints in a volatile environment. The neutral analyst's recommendation for a scaled-in approach provides the most robust path forward, allowing participation in the upside toward the 209.08 hurdle while creating a buffer against short-term mean reversion. This thesis will be invalidated if the price drops below 182.00, suggesting a failed breakout, or if a clear rejection occurs at 209.08 with high RSI divergence.\n\n**Price Target**: 209.08\n\n**Time Horizon**: Short to medium term",
+ "calls": [
+  {
+   "input": 1039,
+   "output": 147
+  },
+  {
+   "input": 1745,
+   "output": 46
+  },
+  {
+   "input": 1524,
+   "output": 180
+  },
+  {
+   "input": 1746,
+   "output": 682
+  },
+  {
+   "input": 4351,
+   "output": 38
+  },
+  {
+   "input": 2743,
+   "output": 597
+  },
+  {
+   "input": 5373,
+   "output": 39
+  },
+  {
+   "input": 6403,
+   "output": 39
+  },
+  {
+   "input": 6381,
+   "output": 708
+  },
+  {
+   "input": 2389,
+   "output": 849
+  },
+  {
+   "input": 4090,
+   "output": 883
+  },
+  {
+   "input": 2169,
+   "output": 312
+  },
+  {
+   "input": 1461,
+   "output": 160
+  },
+  {
+   "input": 2677,
+   "output": 459
+  },
+  {
+   "input": 3566,
+   "output": 584
+  },
+  {
+   "input": 4698,
+   "output": 736
+  },
+  {
+   "input": 2846,
+   "output": 333
+  }
+ ],
+ "llm_calls": 17,
+ "input_tokens": 55201,
+ "output_tokens": 6792,
+ "seconds": 76.0,
+ "reports": {
+  "market_report": "### Market Analysis Report: WIPRO.NS (As of 2026-11-06)\n\nThis report provides a technical assessment of Wipro Limited (`WIPRO.NS`) based on data verified through 2026-11-06.\n\n#### Trend Analysis\n*   **Moving Averages:** The price action for `WIPRO.NS` exhibits a strong bullish recovery. The current close of **198.00** is trading significantly above both the 50-day Simple Moving Average (**175.11**) and the 200-day Simple Moving Average (**190.21**). Notably, the stock reclaimed its 200-day SMA, which is a key technical milestone for long-term sentiment.\n*   **Momentum:** The 10-day EMA (**193.40**) is trailing the current price, confirming short-term upward momentum. With an RSI of **68.17**, the stock is approaching overbought territory (typically defined at >70) but retains room for potential further gains before hitting an extreme condition.\n\n#### Momentum and Volatility\n*   **MACD:** The MACD indicator confirms the bullish trend with a value of **7.44** against the signal line (**6.37**). A positive MACD histogram of **1.08** indicates that momentum remains expansive.\n*   **Bollinger Bands:** The price is trading within the upper half of the Bollinger Band range (**185.44** to **209.08**). The stock is currently oscillating well above the middle band, suggesting strong buying interest, though it remains below the upper band resistance of **209.08**.\n*   **Volatility:** The ATR of **5.04** indicates current market volatility; traders should factor this into account when setting stop-loss levels to avoid being stopped out by routine price noise.\n\n#### Summary for Traders\n`WIPRO.NS` has demonstrated a robust trend reversal. The alignment of the price above both the 50-day and 200-day SMAs, coupled with positive MACD signals, suggests a healthy uptrend. Traders should monitor the **209.08** level (Bollinger Upper Band) as a potential area of resistance, and the RSI for signs of exhaustion as it nears the 70 threshold.\n\n#### Data Availability\nAll requested technical indicators were successfully retrieved via the `get_verified_market_snapshot` tool, confirming consistent values across the requested time frame. No data points were missing or required further reconciliation.\n\n| Indicator | Current Value | Insight |\n|---|---|---|\n| Price | 198.00 | Bullish; above 50/200 SMA |\n| 50-SMA | 175.11 | Medium-term support level |\n| 200-SMA | 190.21 | Long-term support level |\n| RSI | 68.17 | Strong momentum, nearing overbought |\n| MACD | 7.44 | Bullish crossover confirmed |\n| ATR | 5.04 | Current volatility benchmark |\n| Boll-UB | 209.08 | Potential immediate resistance |",
+  "news_report": "### Market Analysis Report: WIPRO.NS (as of 2026-11-06)\n\n#### Executive Summary\nDue to temporary service limitations regarding specific corporate news feeds and macroeconomic data retrieval, this analysis focuses on the broader market sentiment and available indicators relevant to the IT services sector and the macroeconomic environment as of November 6, 2026.\n\n#### Company Specifics: WIPRO.NS\n*   **News Availability:** Access to targeted news for `WIPRO.NS` is currently unavailable through our automated systems.\n*   **Sector Context:** As a global IT services major, Wipro is typically sensitive to corporate IT spending patterns, US macroeconomic health, and currency fluctuations (specifically USD/INR). Investors should monitor upcoming quarterly disclosures for guidance on digital transformation demand and client budget allocations.\n\n#### Macroeconomic Environment\nThe current market environment is characterized by heavy focus on technology and innovation, as evidenced by recent global news:\n*   **Technology & Data:** There is significant ongoing investment in data utilization and AI-adjacent infrastructure (e.g., Walmart\u2019s efforts to monetize customer data).\n*   **Industry Trends:** Large-scale logistical and technological infrastructure investments (Alphabet/drone units, Zipline/Walmart partnerships) highlight a continuing corporate emphasis on operational efficiency and automation, which serves as a long-term demand driver for IT services firms like Wipro.\n*   **Market Sentiment:** Investors remain cautious but selective, focusing on firms with resilient margins and those capitalizing on structural shifts in digital business models.\n\n#### Trading Implications\n1.  **Monitor US Macro Data:** Given the IT sector's reliance on Western market demand, traders should closely watch US interest rate decisions and inflation trends once data feeds are restored. These impact the cost of capital for corporate clients and influence IT spending.\n2.  **Strategic Focus:** Maintain a watch on Wipro\u2019s positioning in AI and cloud transformation, as these are likely the primary levers for revenue growth in the current corporate investment cycle.\n3.  **Currency Watch:** For Indian IT exporters, the USD/INR exchange rate remains a critical variable for margin management.\n\n#### Key Insights Summary\n\n| Factor | Current Status/Observation | Impact on WIPRO.NS |\n| :--- | :--- | :--- |\n| **IT Spending** | Corporate focus on data monetization/efficiency. | Positive (Long-term driver) |\n| **Global Tech Trend** | Major investments in automation/logistics tech. | Positive (Growth opportunity) |\n| **Macro Indicators** | Data temporarily unavailable. | Neutral (Data-dependent) |\n| **Market Outlook** | Selective investor appetite for tech efficiency. | Neutral/Positive |\n\n***Disclaimer:** This report is for informational purposes only and does not constitute financial advice. Data availability was limited at the time of writing. Always perform independent due diligence before making investment decisions.*",
+  "fundamentals_report": "To provide a comprehensive analysis of **WIPRO.NS** as of **November 6, 2026**, I have consulted available fundamental data tools. \n\nPlease note that for the requested date of 2026-11-06, the integrated data services have restricted the output of specific financial statements (Income Statement, Balance Sheet, Cash Flow) and insider transaction data to prevent the inclusion of \"look-ahead bias\"\u2014ensuring that the analysis strictly reflects only the information that would have been available to an investor on that specific day. \n\n### Fundamental Analysis Overview for WIPRO.NS\n\nWipro Limited is a prominent global information technology, consulting, and business process services company. As of late 2026, Wipro remains a key player in the Indian IT services sector, characterized by its focus on digital transformation, cloud computing, artificial intelligence, and cybersecurity.\n\n#### Current Observations (as of 2026-11-06):\n*   **Operational Context:** Wipro\u2019s performance is traditionally tied to enterprise digital spending across North America and Europe. Traders should monitor macro-economic indicators in these regions, as they typically act as leading indicators for the company\u2019s deal pipeline.\n*   **Sector Dynamics:** As an IT services giant, Wipro is subject to competitive pressures from both large-cap peers (like TCS and Infosys) and agile boutique digital firms. Monitoring the company's \"Book-to-Bill\" ratio (where available in public disclosures) is essential to gauging medium-term revenue visibility.\n*   **Market Sentiment:** Investors should focus on management's commentary regarding large-deal wins, margin expansion strategies, and the impact of AI-driven automation on cost structures.\n\n### Actionable Insights for Traders\n1.  **Monitor Margin Pressure:** Keep a close eye on the company\u2019s operating margins. In the current IT landscape, wage inflation and talent retention remain significant variables impacting bottom-line performance.\n2.  **Strategic Shift:** Evaluate the success of Wipro\u2019s recent investments in generative AI and platform-led services. A shift in revenue mix toward high-margin digital services is a key indicator of long-term value creation.\n3.  **Governance and Insider Activity:** While specific insider transactions for 2026-11-06 are restricted, regular observation of management's ownership changes (disclosed via official stock exchange filings) provides insight into internal confidence in the firm\u2019s trajectory.\n\n---\n\n### Key Data Summary Table\n\n| Metric Category | Relevance to WIPRO.NS |\n| :--- | :--- |\n| **Market Segment** | IT Services, Consulting, Digital Transformation |\n| **Revenue Drivers** | Cloud adoption, AI implementation, Managed services |\n| **Primary Risks** | Currency volatility, global IT spending slowdown, attrition rates |\n| **Key Indicators** | Operating Margin, Book-to-Bill Ratio, Large Deal wins |\n| **Strategic Focus** | Scaling AI capabilities and simplifying operations |\n\n*Disclaimer: This report is for informational purposes only. Fundamental data reflects the state of the system as of November 6, 2026. Please verify with official stock exchange filings (NSE/BSE) for the most current and audited financial statements.*",
+  "sentiment_report": ""
+ }
+}

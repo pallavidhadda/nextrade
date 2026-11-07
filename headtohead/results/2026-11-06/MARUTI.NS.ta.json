@@ -1,0 +1,79 @@
+{
+ "ticker": "MARUTI.NS",
+ "date": "2026-11-06",
+ "status": "ok",
+ "decision": "Overweight",
+ "final_trade_decision": "**Rating**: Overweight\n\n**Executive Summary**: Initiate a long position in MARUTI.NS using a split-entry strategy to manage overextension risks while capturing upward momentum. Enter 25% of the position immediately and place a limit order for the remaining 25% at 12,050, with a stop-loss set at 11,600 to account for the high ATR of 288.49.\n\n**Investment Thesis**: The bull case for MARUTI.NS is supported by a decisive breakout above the 50-day SMA and institutional accumulation reflected in the MACD histogram expansion (201.01). While the conservative analyst correctly flags the RSI at 71.19 and the Bollinger Band extension as signs of a potential mean reversion, the neutral analyst\u2019s proposal provides a superior risk-adjusted framework. By staggering entries and widening the stop-loss to 11,600\u2014aligning with the 20-day SMA\u2014we mitigate the risk of being stopped out by market volatility while retaining exposure to the target 200-day SMA resistance of 13,278. This strategy effectively balances momentum participation with the necessity of capital preservation until the stock confirms support at current levels.\n\n**Price Target**: 13278.0\n\n**Time Horizon**: 3-6 months",
+ "calls": [
+  {
+   "input": 1040,
+   "output": 144
+  },
+  {
+   "input": 1746,
+   "output": 46
+  },
+  {
+   "input": 1749,
+   "output": 442
+  },
+  {
+   "input": 1525,
+   "output": 157
+  },
+  {
+   "input": 4536,
+   "output": 40
+  },
+  {
+   "input": 2610,
+   "output": 590
+  },
+  {
+   "input": 5738,
+   "output": 839
+  },
+  {
+   "input": 2274,
+   "output": 833
+  },
+  {
+   "input": 3943,
+   "output": 869
+  },
+  {
+   "input": 2140,
+   "output": 269
+  },
+  {
+   "input": 1551,
+   "output": 151
+  },
+  {
+   "input": 2559,
+   "output": 564
+  },
+  {
+   "input": 3658,
+   "output": 594
+  },
+  {
+   "input": 4810,
+   "output": 690
+  },
+  {
+   "input": 2870,
+   "output": 310
+  }
+ ],
+ "llm_calls": 15,
+ "input_tokens": 42749,
+ "output_tokens": 6538,
+ "seconds": 93.4,
+ "reports": {
+  "market_report": "As of November 6, 2026, **MARUTI.NS** exhibits a strong short-term bullish reversal, recovering significantly from its mid-October lows. Below is a detailed analysis based on the verified market data snapshot.\n\n### Market Trend and Momentum Analysis\n\n*   **Bullish Momentum:** The stock has experienced a sharp rally recently, with the close of 12,750 on November 6 representing a substantial gain from the lows observed in mid-October (e.g., 11,170 on October 22). \n*   **Moving Average Crossovers:** The price is currently trading above both the 10-day EMA (11,971) and the 50-day SMA (12,039), signaling a strong shift in short-term trend direction. Notably, the price is nearing its 200-day SMA (13,278), which likely acts as the next major long-term resistance level.\n*   **Overbought Conditions:** The RSI stands at 71.19. While this indicates strong buying momentum, it also suggests the stock is currently in overbought territory, which may precede a period of consolidation or a minor pullback.\n*   **MACD Signals:** The MACD line (90.40) has crossed above the MACD Signal line (-110.61), with a positive and expanding MACD Histogram (201.01). This confluence of signals strongly confirms the recent bullish momentum.\n*   **Volatility and Bollinger Bands:** The stock price is currently trading significantly above the Bollinger Upper Band (12,455.54). In technical analysis, while this demonstrates aggressive momentum, it often signals that the asset is \"riding the band\" and may be prone to a mean reversion toward the Bollinger Middle (20 SMA, currently at 11,559).\n\n### Summary Table: Key Indicators (as of 2026-11-06)\n\n| Indicator | Value | Interpretation |\n| :--- | :--- | :--- |\n| **Close** | 12,750 | Current trading price |\n| **RSI** | 71.19 | Overbought (>70); monitor for potential exhaustion |\n| **10-day EMA** | 11,971 | Short-term trend support |\n| **50-day SMA** | 12,039 | Medium-term trend support |\n| **200-day SMA** | 13,278 | Long-term resistance benchmark |\n| **MACD** | 90.40 | Bullish divergence; strong momentum |\n| **Bollinger Upper** | 12,455 | Current trading price exceeds upper limit |\n| **ATR** | 288.49 | Volatility metric; consider for stop-loss spacing |\n\n### Actionable Insights\n1.  **Trend Strength:** The current trend is distinctly bullish, supported by strong volume and a clean breakout above the 50-day SMA and the Bollinger Upper Band.\n2.  **Risk Management:** Investors should exercise caution due to the RSI reading (>70) and the price being extended beyond the Bollinger Upper Band. If considering new long positions, it may be prudent to wait for a retest of support levels (the 50-day SMA or 12,000 psychological level) rather than chasing the current peak.\n3.  **Resistance Awareness:** The 200-day SMA at 13,278 is a critical level to watch. A failure to clear this point in the coming days could lead to profit-taking.\n\n***Disclaimer:** This analysis is based on historical data up to November 6, 2026. Market conditions can change rapidly; please perform your own due diligence before making trading decisions.*",
+  "news_report": "### Market Analysis Report: MARUTI.NS (As of 2026-11-06)\n\nThis report provides an assessment of the current environment relevant to **MARUTI.NS** (Maruti Suzuki India Limited). \n\n#### 1. Company-Specific News\nCurrent news data for **MARUTI.NS** is unavailable at this time due to technical limitations in the news retrieval service. Traders are advised to consult their primary brokerage platforms for the latest regulatory filings, earnings reports, or corporate announcements regarding Maruti Suzuki's domestic and export performance.\n\n#### 2. Global Macroeconomic Context\nThe past week of global market activity has been dominated by a strong focus on the technology sector, particularly breakthroughs in quantum computing and developments in enterprise software. Key themes include:\n*   **Tech Sector Dominance:** Significant news coverage centered on advancements by major players like **IBM**, **AMD**, and **Oracle**. Quantum computing appears to be a key long-term narrative shaping market sentiment in high-growth tech portfolios.\n*   **Macro Trends:** While specific macroeconomic indicators (CPI, 10Y Treasury yields) were not available through the automated reporting tool, the broader market narrative suggests a continued emphasis on innovation-led growth. Investors are currently weighing the impact of corporate milestones in artificial intelligence and quantum technology against traditional market valuation metrics.\n*   **Commodities:** There is ongoing activity in the precious metals sector, with events related to gold and silver markets suggesting sustained investor interest in hedging or safe-haven assets.\n\n#### 3. Investment Implications for MARUTI.NS\nWhile the direct correlation between the current global tech-heavy news cycle and the Indian automotive sector may be limited, **MARUTI.NS** investors should keep a close eye on:\n*   **Input Costs:** Any broader global trends in metal and material pricing (e.g., steel, aluminum) will directly impact Maruti's manufacturing margins.\n*   **Macro Sensitivity:** As an automotive leader in India, the stock is highly sensitive to domestic interest rate cycles. If global treasury trends spill over into domestic yields, borrowing costs for Indian consumers will be a critical leading indicator for auto demand.\n\n| Category | Observation | Potential Impact on MARUTI.NS |\n| :--- | :--- | :--- |\n| **Corporate News** | Unavailable | N/A - Check local disclosures |\n| **Global Sentiment** | Tech/Quantum innovation-led | Neutral to Indirect |\n| **Macro Environment** | Interest rate cycles | High (Watch for domestic rate shifts) |\n| **Market Focus** | Tech & Precious Metals | Low immediate correlation |\n\n***Disclaimer:** This report is for informational purposes and does not constitute financial advice. Given the lack of current company-specific news and macro data, please rely on secondary sources for real-time decision-making.*",
+  "fundamentals_report": "The fundamental data analysis for **MARUTI.NS** as of 2026-11-06 is currently restricted due to limitations in providing point-in-time financial data for this specific market and date. The available tools are designed to prevent the inclusion of \"look-ahead\" bias (information that would not have been available to a trader on that specific date), which is standard practice for professional-grade financial analysis.\n\nBecause the data providers do not currently offer verified filing-date-stamped reports for the Indian market to ensure historical accuracy, I am unable to present the specific balance sheet, income statement, or cash flow figures that were publicly available on November 6, 2026.\n\n### Summary of Analysis Limitations\n*   **Fundamental Reports:** Cannot provide historical financial statements (Income Statement, Balance Sheet, Cash Flow) with guaranteed public availability as of the specific date requested.\n*   **Insider Transactions:** Cannot verify which insider filings had been disclosed to the market by 2026-11-06.\n*   **Recommendations:** Without access to dated financial disclosures, providing specific, evidence-backed actionable insights on valuation or performance metrics is not possible at this time.\n\n### Recommendation for Traders\nTo conduct a comprehensive fundamental analysis for MARUTI.NS, it is recommended that you access the company's official regulatory filings from the **National Stock Exchange of India (NSE)** archives or the **company's official investor relations portal** for the period preceding November 6, 2026. These sources will provide the exact Quarterly/Annual results and disclosure dates required to assess the company\u2019s fundamental health as of that date.\n\n| Key Metric | Status as of 2026-11-06 |\n| :--- | :--- |\n| **Financial Statements** | Access restricted to prevent look-ahead bias |\n| **Insider Data** | Access restricted to prevent look-ahead bias |\n| **Market Valuation** | Pending official archival retrieval |\n| **Actionable Insight** | Review NSE/BSE regulatory filings for Nov 2026 |",
+  "sentiment_report": ""
+ }
+}

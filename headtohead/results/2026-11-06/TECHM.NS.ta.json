@@ -1,0 +1,39 @@
+{
+ "ticker": "TECHM.NS",
+ "status": "quota",
+ "error": "googleratelimiterror: error calling model 'gemini-3.1-flash-lite' (resource_exhausted): 429 resource_exhausted. {'error': {'code': 429, 'message': 'you exceeded your current quota, please check your plan and billing details. for more information on this error, head to: https://aistudio.google.com/docs/rate-limits. to monitor your current usage, head to: https://ai.dev/rate-limit. \\n* quota exceede",
+ "calls": [
+  {
+   "input": 1743,
+   "output": 46
+  },
+  {
+   "input": 1037,
+   "output": 147
+  },
+  {
+   "input": 1522,
+   "output": 177
+  },
+  {
+   "input": 4282,
+   "output": 40
+  },
+  {
+   "input": 1744,
+   "output": 627
+  },
+  {
+   "input": 2698,
+   "output": 682
+  },
+  {
+   "input": 4980,
+   "output": 704
+  },
+  {
+   "input": 2414,
+   "output": 871
+  }
+ ]
+}

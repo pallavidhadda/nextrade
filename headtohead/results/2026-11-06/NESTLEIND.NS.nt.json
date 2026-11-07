@@ -1,0 +1,31 @@
+{
+ "ticker": "NESTLEIND.NS",
+ "status": "ok",
+ "seconds": 16.5,
+ "rating": "Overweight",
+ "confidence": "High",
+ "score": 44.8889,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 1858,
+  "out": 388,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 37,
+ "health_rows": 4,
+ "bull": [
+  "Risk scores 78 of 100 against the comparison pool",
+  "Quality scores 66 of 100 against the comparison pool",
+  "Check passed: Profit covers interest costs at least 3 times (37.86 (last financial year))",
+  "Check passed: Debt is below equity (debt-to-equity under 1) (0.08)",
+  "Check passed: Price is higher than a year ago (+1.3%)",
+  "Check passed: Price did better than the Nifty 50 over a year (+3.1%)",
+  "Check passed: Price is within 25% of its 52-week high (-16.7%)"
+ ],
+ "bear": [
+  "Value scores only 0 of 100 against the comparison pool",
+  "At a 12% discount rate the price implies 24.2% yearly earnings growth for 10 years, a demanding ask"
+ ],
+ "summary": "Nestle India shows strong quality and risk management metrics, though its current valuation score is low compared to its peers."
+}

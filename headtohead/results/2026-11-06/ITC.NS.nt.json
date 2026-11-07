@@ -1,0 +1,36 @@
+{
+ "ticker": "ITC.NS",
+ "status": "ok",
+ "seconds": 14.4,
+ "rating": "Hold",
+ "confidence": "High",
+ "score": 57.1045,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 1750,
+  "out": 471,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 25,
+ "health_rows": 11,
+ "bull": [
+  "Quality scores 84 of 100 against the comparison pool",
+  "Risk scores 77 of 100 against the comparison pool",
+  "Check passed: Revenue is higher than a year earlier (+4.8% (last financial year))",
+  "Check passed: Profit covers interest costs at least 3 times (330.15 (last financial year))",
+  "Check passed: Debt is below equity (debt-to-equity under 1) (0.01)",
+  "At a 12% discount rate the price implies 8.1% yearly earnings growth for 10 years, a modest ask",
+  "Free cash flow is 4.6% of the market value, a solid cash return",
+  "Return on capital employed is 36.5%, a strong return on the money in the business"
+ ],
+ "bear": [
+  "Momentum scores only 0 of 100 against the comparison pool",
+  "Growth scores only 17 of 100 against the comparison pool",
+  "Check failed: Profit is higher than a year earlier (-40.5% (last financial year), needs > 0%)",
+  "Check failed: Price is higher than a year ago (-30.5%, needs > 0%)",
+  "Check failed: Price did better than the Nifty 50 over a year (-28.6%, needs > 0%)",
+  "Check failed: Price is within 25% of its 52-week high (-30.6%, needs >= -25%)"
+ ],
+ "summary": "ITC.NS is a consumer defensive company with strong quality and low debt metrics, though it faces challenges in recent earnings growth and market momentum."
+}

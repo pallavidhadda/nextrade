@@ -1,0 +1,29 @@
+{
+ "ticker": "KOTAKBANK.NS",
+ "status": "ok",
+ "seconds": 17.2,
+ "rating": "Overweight",
+ "confidence": "High",
+ "score": 55.0657,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 1901,
+  "out": 456,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 56,
+ "health_rows": 5,
+ "bull": [
+  "Momentum scores 92 of 100 against the comparison pool",
+  "Risk scores 75 of 100 against the comparison pool",
+  "Check passed: Revenue is higher than a year earlier (+15.9%)",
+  "Check passed: Price is higher than a year ago (+15.2%)",
+  "Check passed: Price did better than the Nifty 50 over a year (+17.1%)",
+  "Check passed: Price is within 25% of its 52-week high (+0.0%)"
+ ],
+ "bear": [
+  "Check failed: Profit is higher than a year earlier (-12.8% (last financial year), needs > 0%)"
+ ],
+ "summary": "Kotak Mahindra Bank shows strong momentum and revenue growth, though it faces challenges with declining annual profit and missing data on debt and asset quality."
+}

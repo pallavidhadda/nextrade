@@ -1,0 +1,35 @@
+{
+ "ticker": "M&M.NS",
+ "status": "ok",
+ "seconds": 14.0,
+ "rating": "Hold",
+ "confidence": "High",
+ "score": 45.1959,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 1801,
+  "out": 375,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 20,
+ "health_rows": 11,
+ "bull": [
+  "Growth scores 83 of 100 against the comparison pool",
+  "Check passed: Profit is higher than a year earlier (+32.3% (last financial year))",
+  "Check passed: Revenue is higher than a year earlier (+24.1% (last financial year))",
+  "Check passed: Profit covers interest costs at least 3 times (3.69 (last financial year))",
+  "Check passed: Price is within 25% of its 52-week high (-13.5%)",
+  "At a 12% discount rate the price implies 8.3% yearly earnings growth for 10 years, a modest ask",
+  "Return on capital employed is 17.1%, a strong return on the money in the business",
+  "Profit grew 18.5% a year on average over three years"
+ ],
+ "bear": [
+  "Risk scores only 23 of 100 against the comparison pool",
+  "Quality scores only 24 of 100 against the comparison pool",
+  "Check failed: Debt is below equity (debt-to-equity under 1) (1.33, needs < 1)",
+  "Check failed: Price is higher than a year ago (-9.2%, needs > 0%)",
+  "Check failed: Price did better than the Nifty 50 over a year (-7.3%, needs > 0%)"
+ ],
+ "summary": "M&M.NS shows strong recent growth in revenue and profit, though it faces challenges with debt levels and lower quality and risk scores compared to its peers."
+}

@@ -1,0 +1,34 @@
+{
+ "ticker": "TECHM.NS",
+ "status": "ok",
+ "seconds": 13.4,
+ "rating": "Hold",
+ "confidence": "High",
+ "score": 36.8377,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 1916,
+  "out": 405,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 25,
+ "health_rows": 11,
+ "bull": [
+  "Momentum scores 94 of 100 against the comparison pool",
+  "Check passed: Profit is higher than a year earlier (+13.2% (last financial year))",
+  "Check passed: Revenue is higher than a year earlier (+7.2% (last financial year))",
+  "Check passed: Profit covers interest costs at least 3 times (20.48 (last financial year))",
+  "Check passed: Debt is below equity (debt-to-equity under 1) (0.07)",
+  "Check passed: Price is higher than a year ago (+29.5%)",
+  "Check passed: Price did better than the Nifty 50 over a year (+31.4%)",
+  "Check passed: Price is within 25% of its 52-week high (-0.2%)",
+  "Return on capital employed is 19.8%, a strong return on the money in the business"
+ ],
+ "bear": [
+  "Growth scores only 0 of 100 against the comparison pool",
+  "Value scores only 27 of 100 against the comparison pool",
+  "Profit shrank 0.1% a year on average over three years"
+ ],
+ "summary": "Tech Mahindra shows strong recent momentum and financial health, though it faces challenges with long-term growth and valuation scores."
+}

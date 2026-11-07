@@ -1,0 +1,36 @@
+{
+ "ticker": "WIPRO.NS",
+ "status": "ok",
+ "seconds": 13.8,
+ "rating": "Hold",
+ "confidence": "High",
+ "score": 47.1976,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 1851,
+  "out": 416,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 19,
+ "health_rows": 11,
+ "bull": [
+  "Value scores 85 of 100 against the comparison pool",
+  "Check passed: Profit is higher than a year earlier (+0.6%)",
+  "Check passed: Revenue is higher than a year earlier (+10.6%)",
+  "Check passed: Profit covers interest costs at least 3 times (22.93 (last financial year))",
+  "Check passed: Debt is below equity (debt-to-equity under 1) (0.28)",
+  "At a 12% discount rate the price implies 5.5% yearly earnings growth for 10 years, a modest ask",
+  "Free cash flow is 6.8% of the market value, a solid cash return",
+  "Return on capital employed is 17.8%, a strong return on the money in the business"
+ ],
+ "bear": [
+  "Growth scores only 14 of 100 against the comparison pool",
+  "Momentum scores only 24 of 100 against the comparison pool",
+  "Check failed: Price is higher than a year ago (-17.5%, needs > 0%)",
+  "Check failed: Price did better than the Nifty 50 over a year (-15.6%, needs > 0%)",
+  "Check failed: Price is within 25% of its 52-week high (-27.4%, needs >= -25%)",
+  "The 3-year maximum drawdown was -51.0%, a deep fall"
+ ],
+ "summary": "Wipro shows strong value and profitability metrics but faces challenges in growth, momentum, and recent stock price performance."
+}

@@ -1,0 +1,28 @@
+{
+ "ticker": "SBIN.NS",
+ "status": "ok",
+ "seconds": 13.7,
+ "rating": "Buy",
+ "confidence": "High",
+ "score": 64.101,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 1723,
+  "out": 416,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 43,
+ "health_rows": 5,
+ "bull": [
+  "Value scores 100 of 100 against the comparison pool",
+  "Check passed: Profit is higher than a year earlier (+7.4% (last financial year))",
+  "Check passed: Revenue is higher than a year earlier (+4.6%)",
+  "Check passed: Price is higher than a year ago (+6.0%)",
+  "Check passed: Price did better than the Nifty 50 over a year (+7.9%)",
+  "Check passed: Price is within 25% of its 52-week high (-17.0%)",
+  "Profit grew 14.4% a year on average over three years"
+ ],
+ "bear": [],
+ "summary": "State Bank of India (SBIN.NS) shows strong value metrics and consistent growth in revenue and profit, though several key financial health indicators are missing from the data."
+}

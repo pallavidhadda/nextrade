@@ -1,0 +1,35 @@
+{
+ "ticker": "COALINDIA.NS",
+ "status": "ok",
+ "seconds": 13.9,
+ "rating": "Buy",
+ "confidence": "High",
+ "score": 64.5309,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 2010,
+  "out": 427,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 5,
+ "health_rows": 11,
+ "bull": [
+  "Value scores 94 of 100 against the comparison pool",
+  "Momentum scores 67 of 100 against the comparison pool",
+  "Check passed: Profit is higher than a year earlier (+53.0%)",
+  "Check passed: Revenue is higher than a year earlier (+20.9%)",
+  "Check passed: Profit covers interest costs at least 3 times (49.88 (last financial year))",
+  "Check passed: Debt is below equity (debt-to-equity under 1) (0.12)",
+  "Check passed: Price is higher than a year ago (+7.2%)",
+  "Check passed: Price did better than the Nifty 50 over a year (+9.1%)",
+  "Check passed: Price is within 25% of its 52-week high (-17.0%)",
+  "At a 12% discount rate the price implies -5.0% yearly earnings growth for 10 years, a modest ask",
+  "Free cash flow is 12.5% of the market value, a solid cash return",
+  "Return on capital employed is 19.6%, a strong return on the money in the business"
+ ],
+ "bear": [
+  "Profit shrank 0.7% a year on average over three years"
+ ],
+ "summary": "Coal India shows strong recent financial performance with high value scores and positive growth in revenue and profit, though it faces long-term profit stagnation."
+}

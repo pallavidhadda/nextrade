@@ -1,0 +1,35 @@
+{
+ "ticker": "LT.NS",
+ "status": "ok",
+ "seconds": 14.7,
+ "rating": "Hold",
+ "confidence": "High",
+ "score": 37.8974,
+ "explanation_source": "gemini:gemini-3.1-flash-lite",
+ "usage": {
+  "in": 1912,
+  "out": 480,
+  "cached": false,
+  "estimated": false
+ },
+ "n_gaps": 25,
+ "health_rows": 11,
+ "bull": [
+  "Growth scores 79 of 100 against the comparison pool",
+  "Momentum scores 70 of 100 against the comparison pool",
+  "Check passed: Profit is higher than a year earlier (+7.0% (last financial year))",
+  "Check passed: Revenue is higher than a year earlier (+11.8% (last financial year))",
+  "Check passed: Profit covers interest costs at least 3 times (10.12 (last financial year))",
+  "Check passed: Price is higher than a year ago (+6.1%)",
+  "Check passed: Price did better than the Nifty 50 over a year (+8.0%)",
+  "Check passed: Price is within 25% of its 52-week high (-6.8%)",
+  "Profit grew 15.4% a year on average over three years"
+ ],
+ "bear": [
+  "Quality scores only 13 of 100 against the comparison pool",
+  "Risk scores only 26 of 100 against the comparison pool",
+  "Value scores only 30 of 100 against the comparison pool",
+  "Check failed: Debt is below equity (debt-to-equity under 1) (1.05, needs < 1)"
+ ],
+ "summary": "Larsen & Toubro (LT.NS) shows strong growth and momentum scores but faces challenges regarding its debt levels and quality metrics."
+}
