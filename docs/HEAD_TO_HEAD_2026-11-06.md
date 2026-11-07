@@ -31,3 +31,27 @@ Outcome quality is not judged here: record both ratings with `--record`, then ru
 
 ## Follow-up: confidence label fixed (2026-11-07)
 The rating's confidence now comes from six visible ingredients instead of only counting factors: factors with data, size of the comparison pool (25 or more is strong, 12 or more is passable), checks that could be measured, distance from a rating boundary, whether the score and the evidence points agree, and whether annual business-health data is present. Fewer than four factors is always Low. The reason line states which ingredients decided it (for example "close to a rating boundary, the score and the evidence points disagree"). Re-running the deterministic part on a sample of 12 of the 27 tickers gave 6 High and 6 Medium, against 26 of 27 High before. This is a label of how well-supported the reading is; it is not a probability of being right, and it will only be validated once the journal settles.
+
+## Head to head on the 27 complete pairs: verdict (2026-11-07)
+No outcome data yet, so "better" below means better on what can be measured today, not better at picking stocks.
+
+| Question | TradingAgents | NexTrade | Edge |
+|---|---|---|---|
+| Cost per ticker | 16.3 calls, about 59k tokens, 90 s | 1 call, about 2.3k tokens, 18 s | NexTrade |
+| Real company fundamentals used | keyword check: "unable to get statements" on 26 of 27; about 12 numbers in its fundamentals report | statements, ratios, ownership present on all 27 | NexTrade |
+| Handles every Indian ticker | no: refuses M&M.NS (the "&" is rejected) | yes | NexTrade |
+| Can show where a number came from | no | yes, period, unit, source | NexTrade |
+| Repeatable | no (model sampling) | yes, apart from optional prose | NexTrade |
+| Balanced calls | 16 Overweight, 11 Hold, 0 negative | 4 Buy, 8 Overweight, 13 Hold, 2 Underweight | NexTrade (but 4 Buys unverified) |
+| Concrete action plan (entry, stop, size) | yes, every ticker | reference levels only for bullish ratings, no sizing advice | TradingAgents, by design |
+| Debating both sides in prose | yes | rule-based lists | TradingAgents (more readable; unproven value) |
+| Predicts returns | unknown | unknown | tie until 21-session settlement |
+
+What drives each rating (checked against prices up to 6 Nov 2026):
+- TradingAgents follows short-term trend: 75% of its bullish names were above their 200-day average against 36% of the rest. Its rating correlates 0.39 with "above the 200-day average" and 0.21 with one-year return relative to the Nifty.
+- NexTrade follows one-year relative performance plus fundamentals: its bullish names beat the Nifty by 12.7% over a year on average and the rest lagged by 5.0%; correlation 0.52. That is partly built in (momentum and the "beats the Nifty" check are inputs), so it is not evidence of skill.
+- The two ratings are almost uncorrelated (0.06). They are answering different questions: TradingAgents asks "is the chart healthy", NexTrade asks "are the business and the price record healthy".
+
+Cases that show the difference: ADANIENT.NS. TradingAgents said Overweight on chart levels alone (RSI 54.7, 50-day average), with no fundamentals. NexTrade said Underweight because quality and risk scored 3 of 100 in the pool and profit fell 54.8% in the last financial year, evidence TradingAgents could not see. The reverse worry applies to NexTrade's Buys (AXISBANK, SBIN, ICICIBANK, COALINDIA): all four are up 11% to 21% against the Nifty over a year, so their ratings may be mostly momentum from a 12-company pool.
+
+Bottom line: NexTrade is clearly better on cost, coverage of Indian fundamentals, honesty about data, reliability and repeatability. TradingAgents is better at producing a readable action plan and a two-sided argument. Whether either rating is useful is settled only by the outcome run around 8 December; until then neither can be called more accurate.
