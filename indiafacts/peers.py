@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from indiafacts.models import FactSet, Status
 
 PARAMS_PATH = Path(__file__).parent / "data" / "peer_params.json"
-METRICS = ("pe_ttm", "pb", "roe", "net_margin_q", "net_income_yoy")
+METRICS = ("pe_ttm", "pb", "ev_ebitda", "roe", "fy_roce", "net_margin_q", "net_income_yoy")
 
 
 class PeerPick(BaseModel):
@@ -143,7 +143,7 @@ def compare_peers(target: FactSet, group: PeerGroup, pool: dict[str, FactSet], p
         vals, ids, named = [], [], []
         for pick in group.picks:
             v, fid = _val(pool[pick.ticker], m)
-            if v is not None and lo < v <= hi if m in ("pe_ttm", "pb") else v is not None and lo <= v <= hi:
+            if v is not None and lo < v <= hi if m in p["lower_is_cheaper"] else v is not None and lo <= v <= hi:
                 vals.append(v)
                 ids.append(fid)
                 named.append((pick.ticker, v))

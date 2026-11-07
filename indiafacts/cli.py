@@ -51,6 +51,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--sector-pool", action="store_true", help="with an NSE index CSV: compare only against the target's NSE industry group (faster, sector-relative scores)")
     p.add_argument("--news", action="store_true", help="also fetch recent headlines (extra network call; shown as unverified text with a keyword sentiment hint)")
     p.add_argument("--pool-size", type=int, default=None, help="use only the first N companies of the pool (plus the target): faster, a smaller comparison")
+    p.add_argument("--announcements", action="store_true", help="also list this company's latest filings from the exchange's public RSS feed (links to the filings)")
     p.add_argument("--json", type=Path, default=None, help="also write a compact JSON summary (used by the web app)")
     p.add_argument("--html", type=Path, default=None, help="also write a self-contained HTML report with charts")
     p.add_argument("--no-tej", action="store_true", help="do not use TejHQ open data (identity, corporate actions, universe)")
@@ -155,6 +156,12 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         print(render(fs, as_of=args.as_of, profile=profile, profile_is_default=is_default,
                  view=args.view or profile.view, scorecard=scorecard, explanation=explanation, digest=digest,
                  changes=changes, changes_note=changes_note if (args.changes or not changes) else None, debate=debate, news=news, levels=levels, panel=panel))
+    if args.announcements and not (args.digest or args.changes_only):
+        from indiafacts.nsefeed import recent_for
+
+        items, why = recent_for(fs.entity.ticker)
+        print("\nRECENT EXCHANGE FILINGS (NSE public feed; the last day or two only)")
+        print("\n".join(f"  {a.published:%d %b %Y %H:%M} | {a.subject} | {a.url}" for a in items) if items else f"  none: {why}")
     if args.json:
         import json as _json
 

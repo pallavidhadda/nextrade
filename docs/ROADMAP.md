@@ -1,4 +1,5 @@
-# Roadmap report (2026-10-26)
+# Roadmap report (2026-10-26; superseded for status by docs/MOSCOW_PRIORITIES.md, updated 2026-11-07)
+> Status note 2026-11-07: this file is a historical snapshot. Test count and "nothing pushed" below are out of date; see MOSCOW_PRIORITIES.md and docs/QUALITY_AND_UX_REVIEW_2026-11-07.md.
 Research/education only; not financial, investment or trading advice.
 
 ## Goal

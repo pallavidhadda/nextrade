@@ -153,6 +153,9 @@ def _table(headers: list[str], rows: list[list[str]], caption: str = "", num: tu
     return f'<div class="tablewrap"><table>{cap}<thead><tr>{h}</tr></thead><tbody>{body}</tbody></table></div>'
 
 
+from indiafacts.fundamentals import LENDER_REASON  # noqa: E402
+
+
 def _card(ident: str, title: str, sub: str, inner: str, twin: str = "", cls: str = "") -> str:
     twin_html = f"<details><summary>Table view</summary>{twin}</details>" if twin else ""
     return (f'<section class="card {cls}" id="{ident}"><h2>{esc(title)}</h2><p class="sub">{esc(sub)}</p>'
@@ -377,6 +380,27 @@ def _checklist_card(sc: dict | None) -> str:
                  f'<ul class="checks">{items}</ul>', twin)
 
 
+def _health_card(fs) -> str:
+    from indiafacts.fundamentals_view import fundamentals_rows
+
+    rows = fundamentals_rows(fs)
+    if not any(r["status"] in ("ok", "unverified") for r in rows):
+        return _card("health", "Business health", "From the annual statements.",
+                     '<p class="empty">Annual statements were not available for this run, so year figures, cash flow and EV/EBITDA are missing.</p>')
+    items = ""
+    for r in rows:
+        tag = f'<span class="state">{esc(r["reading"])}</span>' if r["reading"] else ""
+        val = r["display"] + (f" ({r['period']})" if r["period"] not in ("", "latest") else "")
+        note = r["meaning"] if r["status"] == "ok" else (r["reason"] or r["meaning"])
+        items += (f'<li class="check {"na" if r["status"] not in ("ok", "unverified") else "pass" if r["reading"] in ("healthy", "strong", "comfortable", "high", "decent", "low", "net cash", "fast") and r["metric"] not in ("fy_net_debt_to_ebitda",) else "na"}">'
+                  f'<span class="icon" aria-hidden="true">·</span><span>{esc(r["label"])}{tag}<br><small>{esc(note)}</small></span>'
+                  f'<span class="val">{esc(val)}</span></li>')
+    twin = _table(["Measure", "Value", "Reading"], [[r["label"], r["display"], r["reading"] or r["reason"]] for r in rows])
+    return _card("health", "Business health",
+                 "From the last full financial years of annual statements. Descriptions of the numbers, not advice.",
+                 f'<ul class="checks">{items}</ul>', twin)
+
+
 def _peer_card(sc: dict | None, metric: str, target: str) -> str:
     ident = f"chart-peers-{metric}"
     title = {"pe_ttm": "P/E against peers", "pb": "Price-to-book against peers"}[metric]
@@ -538,7 +562,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
     charts = _price_card(fs.charts, price_facts, e.ticker) + _drawdown_card(fs.charts)
     q = _quarter_card("chart-q-net_income", "Net profit by quarter", "net_income", facts, ctx) + \
         _quarter_card("chart-q-revenue", "Revenue by quarter", "revenue", facts, ctx)
-    sc_block = _score_card(scorecard) + _checklist_card(scorecard)
+    sc_block = _score_card(scorecard) + _checklist_card(scorecard) + _health_card(fs)
     peers = _peer_card(scorecard, "pe_ttm", e.ticker) + _peer_card(scorecard, "pb", e.ticker) if scorecard else ""
     peer_note = ""
     if scorecard and scorecard.get("peers") and scorecard["peers"].picks:
@@ -549,7 +573,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
     seg = _segment_cards(facts, ctx)
     extra = _extra_cards(debate, news, levels, panel)
 
-    bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified)]
+    bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified) and f.reason != LENDER_REASON]
     dq_rows = [[f.metric, f.fiscal_label or f.period_end.isoformat(), f.status.value, f.reason] for f in bad[:60]]
     dq = _card("data-quality", f"Data quality: {len(bad)} item(s) need attention",
                "Gaps, unavailable values, conflicts and unverified figures are listed instead of hidden.",

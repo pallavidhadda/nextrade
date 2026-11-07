@@ -4,13 +4,29 @@ import { useRouter, useSearchParams } from "next/navigation";
 import ContourMap from "@/components/ContourMap";
 import ProfileChooser from "@/components/Profile";
 import OwnModelPanel from "@/components/OwnModel";
-import { Checklist, Debate, Explanation, Gaps, KeyFacts, Levels, News, Score, Valuation } from "@/components/Result";
+import { AtAGlance, Checklist, Debate, Health, Explanation, Gaps, KeyFacts, Levels, News, Score, Valuation } from "@/components/Result";
+import companies from "@/lib/companies.json";
 import { ApiError, poll, reportUrl, submit } from "@/lib/api";
 import type { Job, Profile, Summary } from "@/lib/types";
 
 const EXAMPLES = ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ITC.NS"];
 const DISCLAIMER = "Research and education only. Not financial, investment or trading advice. Data may be late, incomplete or wrong; check primary sources.";
 const TABS = [{ id: "summary", label: "Summary" }, { id: "report", label: "Full report" }, { id: "gaps", label: "Gaps" }] as const;
+const COMPANIES = companies as { s: string; n: string; i: string }[];
+/** Turn what a person typed (a symbol or part of a company name) into a ticker, or return it unchanged. */
+function resolveTicker(raw: string): string {
+  const t = raw.trim();
+  const up = t.toUpperCase();
+  if (!t || /\.(NS|BO)$/.test(up) || COMPANIES.some((c) => c.s === up)) return up;
+  const q = t.toLowerCase();
+  const hit = COMPANIES.find((c) => c.n.toLowerCase() === q) ?? COMPANIES.find((c) => c.n.toLowerCase().startsWith(q));
+  return hit ? `${hit.s}.NS` : up;
+}
+/** "[4/30] BAJFINANCE.NS" -> "Comparing with other companies: 4 of 30 done". */
+function progressText(raw: string): string {
+  const m = raw.match(/\[(\d+)\/(\d+)\]/);
+  return m ? `Comparing with other companies: ${m[1]} of ${m[2]} done. The first run is slowest.` : `Comparing, step ${raw}`;
+}
 const PROFILE_KEY = "nextrade.profile";
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -72,7 +88,7 @@ function Home() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const t = ticker.trim().toUpperCase();
+    const t = resolveTicker(ticker);
     if (!t) { setFieldError("Enter a ticker such as RELIANCE or TCS.NS."); return; }
     setFieldError(""); setError(null); setBusy(true);
     try {
@@ -92,11 +108,11 @@ function Home() {
 
   if (running) return (
     <Shell>
-      <div className="head"><div><h1>Reading {ticker || params.get("t") || "the company"}</h1><p className="sub">Fetching facts, checking gaps and comparing with a pool of companies.</p></div></div>
+      <div className="head"><div><h1>Reading {params.get("t") || ticker || "the company"}</h1><p className="sub">Fetching facts, checking gaps and comparing with a pool of companies.</p></div></div>
       <div className="grid" aria-busy="true">
         <div className="skel" style={{ height: 300 }} /><div className="stack"><div className="skel" style={{ height: 140 }} /><div className="skel" style={{ height: 160 }} /></div>
       </div>
-      <p className="progress" role="status">{job?.progress ? `Comparing, step ${job.progress}` : "Starting. A first run takes about a minute; repeat runs are quicker."}</p>
+      <p className="progress" role="status">{job?.progress ? progressText(job.progress) : "Starting. A first run takes about a minute; repeat runs are quicker."}</p>
     </Shell>
   );
 
@@ -109,12 +125,13 @@ function Home() {
           <form className="form" onSubmit={onSubmit} noValidate>
             <div className="row">
               <div className="field">
-                <label htmlFor="ticker">Ticker</label>
-                <input id="ticker" name="ticker" value={ticker} onChange={(e) => setTicker(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} placeholder="RELIANCE.NS" aria-describedby="ticker-help" aria-invalid={!!fieldError} />
+                <label htmlFor="ticker">Company or ticker</label>
+                <input id="ticker" name="ticker" value={ticker} onChange={(e) => setTicker(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} placeholder="Company name or ticker" list="company-list" aria-describedby="ticker-help" aria-invalid={!!fieldError} />
               </div>
               <button className="key primary" type="submit" disabled={busy}>{busy ? "Starting" : "Analyse"}</button>
             </div>
-            <p id="ticker-help" className={`helper${fieldError ? " err" : ""}`} role={fieldError ? "alert" : undefined}>{fieldError || "Add .NS for NSE or .BO for BSE. Without a suffix, NSE is assumed."}</p>
+            <datalist id="company-list">{COMPANIES.map((c) => <option key={c.s} value={`${c.s}.NS`}>{c.n}</option>)}</datalist>
+            <p id="ticker-help" className={`helper${fieldError ? " err" : ""}`} role={fieldError ? "alert" : undefined}>{fieldError || "Type a company name (for example Infosys) or a ticker. Add .BO for BSE; NSE is the default."}</p>
             <div className="chips" aria-label="Example tickers">{EXAMPLES.map((x) => <button key={x} type="button" className="chip mono" onClick={() => setTicker(x)}>{x}</button>)}</div>
             <ProfileChooser value={profile} onChange={setProfile} />
           </form>
@@ -140,7 +157,7 @@ function ResultView({ s: base, jobId, tab, onTab, onNew }: { s: Summary; jobId: 
     <>
       <div className="head">
         <div>
-          <h1>{s.name ?? s.ticker}</h1>
+          <h1>{s.name ?? COMPANIES.find((c) => `${c.s}.NS` === s.ticker)?.n ?? s.ticker}</h1>
           <p className="sub">{[s.name ? s.ticker : null, s.industry ?? s.sector, s.isin].filter(Boolean).join(", ")}. Profile: {s.profile.horizon}, {s.profile.risk} risk, {s.profile.experience}.</p>
         </div>
         <button className="key" type="button" onClick={onNew}>Analyse another</button>
@@ -152,6 +169,7 @@ function ResultView({ s: base, jobId, tab, onTab, onNew }: { s: Summary; jobId: 
           </button>
         ))}
       </div>
+      {tab === "summary" && <AtAGlance s={s} onTab={onTab} />}
       {tab === "report" ? (
         <div style={{ marginTop: "var(--space-lg)" }}>
           <iframe className="report" title={`Full report for ${s.ticker}`} src={reportUrl(jobId)} sandbox="allow-scripts" />
@@ -160,7 +178,7 @@ function ResultView({ s: base, jobId, tab, onTab, onNew }: { s: Summary; jobId: 
         <div style={{ marginTop: "var(--space-lg)", maxWidth: 900 }}><Gaps s={s} /></div>
       ) : (
         <div className="grid">
-          <div className="stack"><Score s={s} /><Debate s={s} /><Levels s={s} /><Valuation s={s} /><Checklist s={s} /></div>
+          <div className="stack"><Score s={s} /><Debate s={s} /><Health s={s} /><Levels s={s} /><Valuation s={s} /><Checklist s={s} /></div>
           <div className="stack"><Explanation s={s} /><News s={s} /><OwnModelPanel jobId={jobId} summary={base} onExplanation={setOwn} /><KeyFacts s={s} /></div>
         </div>
       )}

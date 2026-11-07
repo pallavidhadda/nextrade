@@ -70,6 +70,37 @@ def score_html(s: dict) -> str:
     return _card("Score inside the comparison pool", "0 to 100", body, True)
 
 
+def health_html(s: dict) -> str:
+    rows = [r for r in (s.get("fundamentals") or []) if r["status"] in ("ok", "unverified")]
+    if not rows:
+        return _card("Business health", "annual statements", "<p>Annual statements were not available for this run, so year figures, cash flow and EV/EBITDA are missing.</p>")
+    body = "".join(f'<tr><td>{e(r["label"])}<span class="ids">{e(r["meaning"])}</span></td><td class="num">{e(r["display"])}'
+                   + (f' <span class="tag">{e(r["reading"])}</span>' if r["reading"] else "")
+                   + ('<span class="ids">vendor proxy, unverified</span>' if r["status"] == "unverified" else "") + "</td></tr>" for r in rows)
+    return _card("Business health", "annual statements",
+                 f'<table><thead><tr><th>Measure</th><th class="num">Value</th></tr></thead><tbody>{body}</tbody></table>'
+                 '<p class="helper">Words like low or healthy describe the number against fixed bands. They are not advice.</p>')
+
+
+def glance_html(s: dict) -> str:
+    st = (s.get("debate") or {}).get("stance")
+    sc = s.get("score") or {}
+    chk = s.get("checklist") or []
+    known = [c for c in chk if c["result"] != "unavailable"]
+    passed = sum(1 for c in known if c["result"] == "pass")
+    cell = lambda k, v, sub: f'<div><span class="glance-k">{e(k)}</span><strong class="glance-v">{e(v)}</strong><span class="glance-s">{e(sub)}</span></div>'
+    row = (cell("Educational rating", st["label"] if st else "No rating", f'{st["confidence"]} confidence. Rule-based, not advice.' if st else "Not enough data.")
+           + cell("Score in pool", f'{sc["overall"]:.0f}/100' if sc.get("overall") is not None else "n/a", f'rank {sc["rank"]} of {sc["n"]}' if sc.get("rank") else "not scored")
+           + cell("Checks passed", f"{passed}/{len(known)}" if known else "n/a", f"{len(chk) - len(known)} unavailable" if len(chk) > len(known) else "all measurable")
+           + cell("Gaps to know about", str(len(s.get("gaps") or [])), "see the Gaps tab"))
+    why = ""
+    if s.get("debate"):
+        li = lambda ps: "".join(f"<li>{e(p['text'])}</li>" for p in ps[:3]) or "<li>Nothing stands out.</li>"
+        why = (f'<div class="glance-why"><div><h3>Working in its favour</h3><ul>{li(s["debate"]["bull"])}</ul></div>'
+               f'<div><h3>Worth being careful about</h3><ul>{li(s["debate"]["bear"])}</ul></div></div>')
+    return f'<section class="glance"><div class="glance-row">{row}</div>{why}</section>'
+
+
 def checklist_html(s: dict) -> str:
     items = s.get("checklist") or []
     if not items:
@@ -222,7 +253,14 @@ def run_analysis(opts: dict, progress) -> dict:
     return res
 
 
-CSS = """
+CSS = """.glance{margin:1rem 0;border:1px solid var(--color-ink,#1d1b16);border-radius:12px;background:var(--color-sheet,#fff);padding:1rem}
+.glance-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem}
+.glance-k{display:block;font-size:.72rem;font-weight:500;color:#6b675e;text-transform:uppercase;letter-spacing:.04em}
+.glance-v{display:block;font-size:1.25rem;margin-top:.15rem}.glance-s{display:block;font-size:.85rem;color:#6b675e;margin-top:.15rem}
+.glance-why{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1rem;padding-top:1rem;border-top:1px solid #d9d4c7}
+.glance-why h3{font-size:.85rem;margin:0 0 .3rem}.glance-why ul{margin:0;padding-left:1.1em;font-size:.88rem}
+@media(max-width:720px){.glance-row{grid-template-columns:1fr 1fr}.glance-why{grid-template-columns:1fr}}
+
 @import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@600&family=Red+Hat+Text:wght@400;500&family=Red+Hat+Mono:wght@400;500&display=swap');
 :root { --paper: #f6f1e7; --paper2: #fffdf8; --paper3: #ece5d4; --ink: #1b1815; --ink2: #3a342d; --muted: #6b6258; --rule: #e0d8c6;
   --accent: #f4793c; --accent-soft: #fbd9c4; --green: #2f6b45; --green-soft: #dcebdc; --grid: #e6dfcd; }

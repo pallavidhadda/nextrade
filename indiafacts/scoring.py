@@ -28,6 +28,7 @@ class MetricSpec:
     valid_min: float
     valid_max: float
     exclusive_min: bool = False
+    optional: bool = False       # adds to a factor when data exists; its absence never lowers coverage
 
     def valid(self, v: float) -> bool:
         lo_ok = v > self.valid_min if self.exclusive_min else v >= self.valid_min
@@ -91,7 +92,7 @@ def load_score_config(path: Path | str | None = None, today: date | None = None,
         if not m["valid_min"] < m["valid_max"]:
             raise ValueError(f"score config: metric {m['id']} valid_min must be below valid_max")
         specs.append(MetricSpec(m["id"], m["factor"], m["direction"], float(m["valid_min"]), float(m["valid_max"]),
-                                bool(m.get("exclusive_min", False))))
+                                bool(m.get("exclusive_min", False)), bool(m.get("optional", False))))
     base = hashlib.sha256(json.dumps({"m": data["metrics"], "p": data["params"]}, sort_keys=True).encode()).hexdigest()[:12]
     return ScoreConfig(specs, data["params"], review_by, base, overdue)
 
@@ -166,8 +167,12 @@ def score_universe(factsets: dict[str, FactSet], factor_weights: dict[str, float
         for fac in factors:
             specs = [m for m in cfg.metrics if m.factor == fac]
             got = [m for m in specs if m.id in metric_scores[t]]
-            cov = len(got) / len(specs)
+            core = [m for m in specs if not m.optional] or specs
+            cov = len([m for m in got if m in core]) / len(core)
             ids = sorted(vals[m.id][1] for m in got)
+            opt_got = [m for m in got if m.optional]
+            if cov < p["min_factor_coverage"] and len(opt_got) >= 2:
+                cov = max(cov, p["min_factor_coverage"])          # quarterly data has gaps; annual figures carry the factor
             if cov < p["min_factor_coverage"]:
                 fscores[fac] = FactorScore(score=None, coverage=round(cov, 4),
                                            reason=f"coverage {cov:.0%} < {p['min_factor_coverage']:.0%}")

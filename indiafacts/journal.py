@@ -71,6 +71,40 @@ class Journal:
         with closing(self._db()) as db:
             return [dict(r) for r in db.execute("SELECT * FROM decisions WHERE settled_on IS NOT NULL ORDER BY decided_on")]
 
+    def export_csv(self, path: Path) -> int:
+        """Write every decision to a CSV (the portable copy of the journal). Returns the row count."""
+        import csv
+
+        with closing(self._db()) as db:
+            rows = [dict(r) for r in db.execute("SELECT * FROM decisions ORDER BY decided_on, ticker")]
+        cols = [c for c in (rows[0].keys() if rows else self._columns())]
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", newline="", encoding="utf-8") as fh:
+            w = csv.DictWriter(fh, fieldnames=cols)
+            w.writeheader()
+            w.writerows(rows)
+        return len(rows)
+
+    def _columns(self) -> list[str]:
+        with closing(self._db()) as db:
+            return [r[1] for r in db.execute("PRAGMA table_info(decisions)")]
+
+    def import_csv(self, path: Path) -> int:
+        """Load decisions from a CSV written by export_csv. Existing rows are kept (primary key wins); returns rows added."""
+        import csv
+
+        if not Path(path).exists():
+            return 0
+        cols = self._columns()
+        added = 0
+        with open(path, newline="", encoding="utf-8") as fh, closing(self._db()) as db:
+            for row in csv.DictReader(fh):
+                vals = [(row.get(c) if row.get(c) not in ("", None) else None) for c in cols]
+                cur = db.execute(f"INSERT OR IGNORE INTO decisions ({','.join(cols)}) VALUES ({','.join('?' * len(cols))})", vals)
+                added += cur.rowcount
+            db.commit()
+        return added
+
     def settle(self, client: PriceClient | None, today: date, holding_days: int | None = None, benchmark: str = "^NSEI",
                hold_band: float = HOLD_BAND) -> Settlement:
         client = client or YfinancePriceClient()
@@ -147,12 +181,53 @@ def render_scoreboard(sb: dict) -> str:
     return "\n".join(lines)
 
 
+def log_batch(j: Journal, a, runner=None) -> int:
+    """Rate a rotating slice of the pool and record each rating, so the journal fills without anyone typing tickers.
+    The slice rotates by day of year, so a daily or weekly schedule covers the whole list over time."""
+    import contextlib
+    import io
+
+    from indiafacts.cli import main as cli_main
+
+    path = a.tickers or Path(__file__).parent / "data" / "pool30.txt"
+    names = [ln.strip() for ln in Path(path).read_text(encoding="utf-8").splitlines() if ln.strip() and not ln.startswith("#")]
+    if not names:
+        print("no tickers to rate")
+        return 2
+    start = (date.today().timetuple().tm_yday * a.limit) % len(names)
+    chosen = [names[(start + i) % len(names)] for i in range(min(a.limit, len(names)))]
+    ok = bad = 0
+    for t in chosen:
+        buf = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(buf):
+                code = runner(t) if runner else cli_main([t, "--score", "--pool-size", str(a.pool_size), "--no-tej"], journal=j)
+        except Exception as exc:
+            code = 1
+            print(f"  {t}: failed ({type(exc).__name__})")
+        ok, bad = (ok + 1, bad) if code == 0 else (ok, bad + 1)
+    print(f"rated {ok}, failed {bad}: {', '.join(chosen)}")
+    return 0 if ok else 1
+
+
 def main(argv: list[str] | None = None, client=None, journal: Journal | None = None) -> int:
     p = argparse.ArgumentParser(prog="indiafacts.journal", description="Settle and review recorded educational ratings.")
-    p.add_argument("action", choices=["settle", "board", "pending"])
+    p.add_argument("action", choices=["settle", "board", "pending", "log", "export", "import"])
     p.add_argument("--db", type=Path, default=None)
+    p.add_argument("--csv", type=Path, default=Path("data/journal.csv"), help="export/import file (default data/journal.csv)")
+    p.add_argument("--tickers", type=Path, default=None, help="log: file with one ticker per line (default: the built-in pool of 30)")
+    p.add_argument("--limit", type=int, default=10, help="log: how many tickers to rate this run")
+    p.add_argument("--pool-size", type=int, default=12, help="log: comparison pool size per run (smaller is faster)")
     a = p.parse_args(argv)
     j = journal or Journal(a.db)
+    if a.action == "export":
+        print(f"exported {j.export_csv(a.csv)} decisions to {a.csv}")
+        return 0
+    if a.action == "import":
+        print(f"imported {j.import_csv(a.csv)} new decisions from {a.csv}")
+        return 0
+    if a.action == "log":
+        return log_batch(j, a)
     if a.action == "settle":
         res = j.settle(client, date.today())
         print(f"settled {len(res.settled)}; could not settle {len(res.failed)}")

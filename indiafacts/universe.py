@@ -14,7 +14,7 @@ from indiafacts.models import Entity, FactSet, Identifier, Status
 
 DEFAULT_POOL = Path(__file__).parent / "data" / "pool30.txt"
 CACHE_MAX_AGE = timedelta(days=1)
-CACHE_SCHEMA = 2        # bump when FactSet gains fields the report needs (2: chart data)
+CACHE_SCHEMA = 3        # bump when FactSet gains fields the report needs (2: chart data)
 
 
 def default_cache_dir() -> Path:

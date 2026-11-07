@@ -83,7 +83,7 @@ def _resolve_items(items: dict, by_key: dict) -> None:
 def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int = DEFAULT_BUDGET, news=None, debate=None,
                  levels=None, panel=None) -> Digest:
     e = fs.entity
-    groups: dict[str, list[Item]] = {"header": [], "gaps": [], "scores": [], "checklist": [], "facts": [], "price": [],
+    groups: dict[str, list[Item]] = {"header": [], "gaps": [], "scores": [], "checklist": [], "health": [], "facts": [], "price": [],
                                      "peers": [], "valuation": [], "debate": [], "levels": [], "news": [], "notices": []}
     G = lambda g, key, ref, text: groups[g].append(Item(key, ref, text, g))
     G("header", "entity", "entity",
@@ -104,7 +104,8 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
     vun = [f for f in facts if f.source == "computed:valuation" and f.status == Status.unavailable]
     if vun:
         G("gaps", "unavailable:valuation", vun[0].fact_id, f"UNAVAILABLE price-implied valuation: {clean(vun[0].reason, 90)}")
-    for f in sorted([f for f in facts if f.status == Status.unavailable and f.period_type != PeriodType.Q and f.source != "computed:valuation"],
+    for f in sorted([f for f in facts if f.status == Status.unavailable and f.period_type != PeriodType.Q and f.source != "computed:valuation"
+                     and not f.metric.startswith("fy_") and f.metric not in ("ev", "ev_ebitda", "nim", "gross_npa_ratio")],
                     key=lambda f: f.metric)[:10]:
         G("gaps", f"unavailable:{f.metric}", f.fact_id, f"UNAVAILABLE {f.metric}: {clean(f.reason, 80)}")
     unver = sorted({(f.metric, f.reason) for f in facts if f.status == Status.unverified and not (f.source_field or "").startswith("series:")})
@@ -131,6 +132,16 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
         for c in sc["checklist"]:
             G("checklist", f"check:{c.id}", f"check:{c.id}",
               f"CHECK {c.id} {c.result}" + (f" {c.display} needs {c.threshold}" if c.value is not None else f" ({clean(c.reason, 40)})"))
+
+    from indiafacts.fundamentals_view import fundamentals_rows
+
+    for r in fundamentals_rows(fs):
+        if r["status"] in ("ok", "unverified") and r["metric"] not in ("fy_revenue", "fy_net_income", "institutional_holding"):
+            G("health", f"health:{r['metric']}", r["fact_ids"][0],
+              f"HEALTH {clean(r['label'], 46)} {r['display']}" + (f" ({r['reading']})" if r["reading"] else "") +
+              (" [vendor proxy, unverified]" if r["status"] == "unverified" else ""))
+        elif r["metric"] in ("nim", "gross_npa_ratio"):
+            G("health", f"health:{r['metric']}", r["fact_ids"][0] if r["fact_ids"] else "entity", f"HEALTH {clean(r['label'], 30)} unavailable (not in free data)")
 
     for m in KEY_QUARTER:
         f = _latest(facts, m, quarterly=True)
@@ -208,13 +219,13 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
         G("notices", f"notice:{len(groups['notices'])}", "notice", f"NOTICE {clean(n, 100)}")
 
     # shrink: drop whole groups from the lowest priority first; gaps and header are never dropped
-    order = ["news", "levels", "notices", "peers", "price", "valuation", "facts", "checklist", "scores"]
+    order = ["news", "levels", "notices", "peers", "price", "valuation", "health", "facts", "checklist", "scores"]
     dropped: list[str] = []
 
     def render() -> tuple[str, dict, dict, dict]:
         ids, items, by_key, lines = {}, {}, {}, []
         n = 0
-        for g in ("header", "scores", "checklist", "facts", "price", "peers", "valuation", "debate", "levels", "news", "gaps", "notices"):
+        for g in ("header", "scores", "checklist", "health", "facts", "price", "peers", "valuation", "debate", "levels", "news", "gaps", "notices"):
             for it in groups[g]:
                 if it.ref in ("entity", "profile", "notice"):
                     lines.append(it.text)

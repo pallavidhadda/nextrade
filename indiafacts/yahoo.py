@@ -34,6 +34,8 @@ INFO_FIELDS = {
     "returnOnEquity": ("roe", "ratio", PeriodType.point, Status.ok),
     "priceToBook": ("pb", "ratio", PeriodType.point, Status.ok),
     "debtToEquity": ("debt_to_equity", "ratio", PeriodType.point, Status.ok),
+    "returnOnAssets": ("roa", "ratio", PeriodType.point, Status.ok),
+    "payoutRatio": ("payout_ratio", "ratio", PeriodType.point, Status.ok),
     "totalRevenue": ("revenue_ttm_vendor", "INR", PeriodType.TTM, Status.unverified),
     "netIncomeToCommon": ("net_income_ttm_vendor", "INR", PeriodType.TTM, Status.unverified),
 }
@@ -57,6 +59,16 @@ class YfinanceClient:
 
     def info(self):
         return self._t.info
+
+    def annual(self):
+        """Annual income, balance sheet and cash flow (about 4-5 years). Any statement may be None."""
+        out = {}
+        for name, attr in (("income", "income_stmt"), ("balance", "balance_sheet"), ("cashflow", "cashflow")):
+            try:
+                out[name] = getattr(self._t, attr)
+            except Exception:
+                out[name] = None
+        return out
 
 
 def _empty(stmt, info) -> bool:

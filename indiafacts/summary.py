@@ -22,6 +22,9 @@ def _pool_name(sc: dict) -> str | None:
     return str(label)
 
 
+from indiafacts.fundamentals_view import fundamentals_rows
+
+
 def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, changes=None, digest=None, news=None, debate=None, levels=None, panel=None) -> dict:
     e = fs.entity
     gaps = [{"metric": f.metric, "period": str(f.period_end), "status": f.status.value, "reason": f.reason}
@@ -79,6 +82,6 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
     return {"ticker": e.ticker, "name": e.name, "sector": e.sector, "industry": e.industry,
             "isin": e.isin.value, "retrieved_at": fs.retrieved_at.isoformat(),
             "profile": {"horizon": profile.horizon, "risk": profile.effective_risk, "experience": profile.experience},
-            "key_facts": key, "score": score, "checklist": checklist, "gaps": gaps,
+            "key_facts": key, "fundamentals": fundamentals_rows(fs), "score": score, "checklist": checklist, "gaps": gaps,
             "notices": list(fs.notices), "changes": [str(c) for c in (changes or [])][:20],
             "valuation": valuation, "debate": deb, "levels": lev, "risk_panel": rp, "news": nws, "explanation": ex, "llm": llm, "disclaimer": DISCLAIMER}

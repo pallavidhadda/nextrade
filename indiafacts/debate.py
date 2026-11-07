@@ -65,6 +65,8 @@ def build_debate(fs: FactSet, sc: dict | None, params: dict | None = None) -> De
         if v <= p["bear_factor_max"]:
             d.bear.append(Point(f"{FACTOR_NAMES.get(k, k)} scores only {v:.0f} of 100 against the comparison pool", f"score:{k}"))
     for c in (sc.get("checklist") or []):
+        if c.id in TRIVIAL_CHECKS:
+            continue                      # nearly always true for listed companies; shown in the checklist, not counted as a point
         if c.result == "pass":
             d.bull.append(Point(f"Check passed: {c.label} ({c.display})", f"check:{c.id}"))
         elif c.result == "fail":
@@ -76,6 +78,7 @@ def build_debate(fs: FactSet, sc: dict | None, params: dict | None = None) -> De
             d.bull.append(Point(f"At a 12% discount rate the price implies {g:.1f}% yearly earnings growth for 10 years, a modest ask", "valuation:n10"))
         elif g >= p["implied_growth_demanding_min"]:
             d.bear.append(Point(f"At a 12% discount rate the price implies {g:.1f}% yearly earnings growth for 10 years, a demanding ask", "valuation:n10"))
+    _health_points(fs, d, p)
     dd = _fact(fs, "max_drawdown_3y")
     if dd is not None and dd <= p["drawdown_deep"]:
         d.bear.append(Point(f"The 3-year maximum drawdown was {dd:.1%}, a deep fall", "fact:max_drawdown_3y"))
@@ -84,7 +87,7 @@ def build_debate(fs: FactSet, sc: dict | None, params: dict | None = None) -> De
         d.bear.append(Point(f"One-year volatility is {vol:.1%}, high", "fact:volatility_1y"))
 
     nb, nr = len(d.bull), len(d.bear)
-    ratio = (nb - nr) / max(1, nb + nr)
+    ratio = (nb - nr) / max(p.get("min_points", 6), nb + nr)      # few points cannot swing the rating to an extreme
     s = p["weight_score"] * (r.overall - 50) / 50 + p["weight_points"] * ratio
     b = p["label_bounds"]
     L = p["labels"]
@@ -101,3 +104,36 @@ def build_debate(fs: FactSet, sc: dict | None, params: dict | None = None) -> De
     d.stance = Stance(label, conf, f"overall score {r.overall:.1f} of 100 and {nb} supporting against {nr} cautionary points; "
                                    f"{len(scored)} of 5 factors had enough data; a rule-based reading, not a prediction", round(s, 3))
     return d
+
+
+TRIVIAL_CHECKS = {"profitable_latest_quarter", "positive_eps_ttm"}
+HEALTH_DEFAULTS = {"roce_good": 0.15, "roce_weak": 0.08, "net_debt_ebitda_high": 3.0, "interest_cover_thin": 2.0,
+                   "fcf_yield_good": 0.04, "growth_good": 0.12, "growth_weak": 0.0}
+
+
+def _health_points(fs: FactSet, d: Debate, p: dict) -> None:
+    """Business-health evidence from annual statements. Absent data adds nothing: no point is ever made up."""
+    h = {**HEALTH_DEFAULTS, **p.get("health", {})}
+    fcf, fcfy, roce = _fact(fs, "fy_free_cash_flow"), _fact(fs, "fy_fcf_yield"), _fact(fs, "fy_roce")
+    lev, cover = _fact(fs, "fy_net_debt_to_ebitda"), _fact(fs, "fy_interest_cover")
+    pg, rg = _fact(fs, "fy_net_income_cagr_3y"), _fact(fs, "fy_revenue_cagr_3y")
+    if fcf is not None and fcf < 0:
+        d.bear.append(Point("Free cash flow for the last financial year was negative: the business spent more than it generated", "health:fy_free_cash_flow"))
+    elif fcfy is not None and fcfy >= h["fcf_yield_good"]:
+        d.bull.append(Point(f"Free cash flow is {fcfy:.1%} of the market value, a solid cash return", "health:fy_fcf_yield"))
+    if roce is not None:
+        if roce >= h["roce_good"]:
+            d.bull.append(Point(f"Return on capital employed is {roce:.1%}, a strong return on the money in the business", "health:fy_roce"))
+        elif roce < h["roce_weak"]:
+            d.bear.append(Point(f"Return on capital employed is only {roce:.1%}, a weak return on the money in the business", "health:fy_roce"))
+    if lev is not None and lev >= h["net_debt_ebitda_high"]:
+        d.bear.append(Point(f"Net debt is {lev:.1f} times a year of operating earnings, heavy", "health:fy_net_debt_to_ebitda"))
+    if cover is not None and cover < h["interest_cover_thin"]:
+        d.bear.append(Point(f"Operating profit covers interest only {cover:.1f} times, thin", "health:fy_interest_cover"))
+    if pg is not None:
+        if pg >= h["growth_good"]:
+            d.bull.append(Point(f"Profit grew {pg:.1%} a year on average over three years", "health:fy_net_income_cagr_3y"))
+        elif pg < h["growth_weak"]:
+            d.bear.append(Point(f"Profit shrank {abs(pg):.1%} a year on average over three years", "health:fy_net_income_cagr_3y"))
+    elif rg is not None and rg < h["growth_weak"]:
+        d.bear.append(Point(f"Sales shrank {abs(rg):.1%} a year on average over three years", "health:fy_revenue_cagr_3y"))

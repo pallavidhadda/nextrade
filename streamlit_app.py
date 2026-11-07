@@ -45,8 +45,9 @@ def result_view(res: dict) -> None:
         st.rerun()
     t1, t2, t3 = st.tabs(["Summary", "Full report", f"Gaps ({len(s['gaps'])})"])
     with t1:
+        st.markdown(webui.glance_html(s), unsafe_allow_html=True)
         a, b = st.columns(2)
-        a.markdown(webui.score_html(s) + webui.debate_html(s) + webui.levels_html(s) + webui.valuation_html(s) + webui.checklist_html(s), unsafe_allow_html=True)
+        a.markdown(webui.score_html(s) + webui.debate_html(s) + webui.health_html(s) + webui.levels_html(s) + webui.valuation_html(s) + webui.checklist_html(s), unsafe_allow_html=True)
         b.markdown(webui.explanation_html(s) + webui.news_html(s) + webui.facts_html(s), unsafe_allow_html=True)
     with t2:
         components.html(res["html"], height=800, scrolling=True)
@@ -67,7 +68,7 @@ else:
             for key, (label, options) in GROUPS.items():
                 st.pills(label, options, key=f"p_{key}")
         with st.form("analyse"):
-            ticker = st.text_input("Ticker", value=ss.get("ticker", ""), placeholder="RELIANCE.NS", max_chars=24,
+            ticker = st.text_input("Company name or ticker", value=ss.get("ticker", ""), placeholder="Infosys or INFY.NS", max_chars=24,
                                    help="Add .NS for NSE or .BO for BSE. Without a suffix, NSE is assumed.")
             go = st.form_submit_button("Analyse", type="primary")
         cols = st.columns(len(EXAMPLES))

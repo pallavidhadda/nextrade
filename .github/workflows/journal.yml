@@ -1,0 +1,27 @@
+name: journal
+# Rates a slice of the pool each weekday, settles ratings whose window has closed, and commits data/journal.csv.
+# The CSV in the repo is the shared record; no database server is needed. Research and education only.
+on:
+  schedule:
+    - cron: "30 11 * * 1-5"      # 17:00 IST, after the NSE close
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  journal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --python 3.12
+      - run: uv run python -m indiafacts.journal import
+      - run: uv run python -m indiafacts.journal log --limit 6
+      - run: uv run python -m indiafacts.journal settle
+      - run: uv run python -m indiafacts.journal export
+      - name: commit the journal
+        run: |
+          git config user.name "nextrade-journal"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/journal.csv
+          git diff --cached --quiet || git commit -m "data: journal update $(date -u +%F)"
+          git push

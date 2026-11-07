@@ -241,3 +241,56 @@ export function Levels({ s }: { s: Summary }) {
     </section>
   );
 }
+
+export function Health({ s }: { s: Summary }) {
+  const rows = (s.fundamentals ?? []).filter((r) => r.status === "ok" || r.status === "unverified");
+  const missing = (s.fundamentals ?? []).filter((r) => r.status !== "ok" && r.status !== "unverified");
+  return (
+    <section className="entry" aria-labelledby="health-h">
+      <header><h2 id="health-h">Business health</h2><span className="note">annual statements</span></header>
+      <div className="body">
+        {rows.length === 0 ? <p>Annual statements were not available for this run, so year figures, cash flow and EV/EBITDA are missing.</p> : (
+          <table>
+            <thead><tr><th>Measure</th><th>Value</th></tr></thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.metric}>
+                  <td>{r.label}<span className="ids">{r.meaning}</span></td>
+                  <td><span className="num">{r.display}</span>{r.reading ? <span className="tag">{r.reading}</span> : null}{r.status === "unverified" ? <span className="ids">vendor proxy, unverified</span> : null}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        {missing.length > 0 && <p className="helper" style={{ marginTop: "var(--space-sm)" }}>Not available: {missing.map((m) => m.label).join("; ")}.</p>}
+        <p className="helper" style={{ marginTop: "var(--space-sm)" }}>Words like low or healthy describe the number against fixed bands. They are not advice.</p>
+      </div>
+    </section>
+  );
+}
+
+const REASONS = 3;
+export function AtAGlance({ s, onTab }: { s: Summary; onTab: (t: string) => void }) {
+  const st = s.debate?.stance;
+  const pass = s.checklist.filter((c) => c.result === "pass").length;
+  const known = s.checklist.filter((c) => c.result !== "unavailable").length;
+  const bull = s.debate?.bull.slice(0, REASONS) ?? [];
+  const bear = s.debate?.bear.slice(0, REASONS) ?? [];
+  return (
+    <section className="glance" aria-labelledby="glance-h">
+      <h2 id="glance-h" className="sr">At a glance</h2>
+      <div className="glance-row">
+        <div><span className="glance-k">Educational rating</span><strong className="glance-v">{st ? st.label : "No rating"}</strong><span className="glance-s">{st ? `${st.confidence} confidence. A rule-based reading, not advice.` : "Not enough data."}</span></div>
+        <div><span className="glance-k">Score in pool</span><strong className="glance-v">{s.score?.overall != null ? `${s.score.overall.toFixed(0)}/100` : "n/a"}</strong><span className="glance-s">{s.score?.rank ? `rank ${s.score.rank} of ${s.score.n}` : "not scored"}</span></div>
+        <div><span className="glance-k">Checks passed</span><strong className="glance-v">{known ? `${pass}/${known}` : "n/a"}</strong><span className="glance-s">{s.checklist.length - known > 0 ? `${s.checklist.length - known} unavailable` : "all measurable"}</span></div>
+        <div><span className="glance-k">Gaps to know about</span><strong className="glance-v">{s.gaps.length}</strong><span className="glance-s"><button type="button" className="linkish" onClick={() => onTab("gaps")}>see what is missing</button></span></div>
+      </div>
+      {(bull.length > 0 || bear.length > 0) && (
+        <div className="glance-why">
+          <div><h3>Working in its favour</h3><ul>{bull.map((p) => <li key={p.text}>{p.text}</li>)}{bull.length === 0 && <li>Nothing stands out.</li>}</ul></div>
+          <div><h3>Worth being careful about</h3><ul>{bear.map((p) => <li key={p.text}>{p.text}</li>)}{bear.length === 0 && <li>Nothing stands out.</li>}</ul></div>
+        </div>
+      )}
+    </section>
+  );
+}

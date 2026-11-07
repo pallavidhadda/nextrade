@@ -7,6 +7,39 @@
   "size_floor_tier1": 200,
   "size_floor_tier2": 20,
   "min_valid_peers": 3,
-  "valid_ranges": {"pe_ttm": [0, 75], "pb": [0, 50], "roe": [-1, 1.5], "net_margin_q": [-1, 1], "net_income_yoy": [-5, 10]},
-  "lower_is_cheaper": ["pe_ttm", "pb"]
+  "valid_ranges": {
+    "pe_ttm": [
+      0,
+      75
+    ],
+    "pb": [
+      0,
+      50
+    ],
+    "roe": [
+      -1,
+      1.5
+    ],
+    "net_margin_q": [
+      -1,
+      1
+    ],
+    "net_income_yoy": [
+      -5,
+      10
+    ],
+    "ev_ebitda": [
+      0,
+      60
+    ],
+    "fy_roce": [
+      -1,
+      3
+    ]
+  },
+  "lower_is_cheaper": [
+    "pe_ttm",
+    "pb",
+    "ev_ebitda"
+  ]
 }

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from indiafacts.analysis import add_gaps, check_ebitda, cross_check, growth_yoy, margin_latest, prefer_sources, reconcile_price, ttm
 from indiafacts.availability import filter_as_of
-from indiafacts.models import AvailabilityKind, Entity, Fact, FactSet, Identifier, PeriodType, Status
+from indiafacts.models import AvailabilityKind, Basis, Entity, Fact, FactSet, Identifier, PeriodType, Status
 from indiafacts.nsefiling import facts_from_nse_filing, merge_filings
 from indiafacts.xbrl import facts_from_nse_xbrl
 from indiafacts.pricemetrics import price_metrics
@@ -137,6 +137,7 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
         notices.append("Yahoo's company overview returned no price, so the price is the last close from the price history; "
                        "ratios that need the overview (P/E, P/B, ROE, market value) may be unavailable")
     base_facts = facts + extra + price_facts
+    base_facts += _fundamental_facts(fs, base_facts, client, notices)
     val_facts = valuation_facts(fs.model_copy(update={"facts": base_facts}), today=as_of or fs.retrieved_at.date(), now=fs.retrieved_at)
     return fs.model_copy(update={"facts": base_facts + val_facts, "not_yet_public": pending,
                                  "notices": notices, "price_notes": price_notes,
@@ -217,3 +218,30 @@ def _price_facts(ticker: str, as_of: date | None, enabled: bool, client, benchma
 
     return (price_metrics(series, bench, as_of or date.today(), corporate_actions=actions) + indicator_facts(series), notes,
             chart_data(series, bench))
+
+
+def _fundamental_facts(fs, facts, client, notices: list[str]):
+    """Annual statements, ownership proxies and the ratios built from them. Never raises: a failure becomes a notice."""
+    from indiafacts.fundamentals import annual_facts, holding_facts, ratio_facts
+    from indiafacts.yahoo import YfinanceClient
+
+    ann = client if client is not None and hasattr(client, "annual") else (YfinanceClient(fs.entity.ticker) if client is None else None)
+    if ann is None:
+        return []
+    try:
+        statements = ann.annual()
+        info = client.info() if client is not None and hasattr(client, "info") else ann.info()
+    except Exception as exc:                                    # network or vendor failure must not sink the report
+        notices.append(f"annual statements could not be fetched ({type(exc).__name__}); year figures, free cash flow and EV/EBITDA are unavailable")
+        return []
+    new = annual_facts(fs.entity.ticker, statements, fs.entity.sector, fs.entity.industry, now=fs.retrieved_at)
+    new += holding_facts(fs.entity.ticker, info or {}, now=fs.retrieved_at)
+    probe = fs.model_copy(update={"facts": list(facts) + new})
+    checks = []
+    yfy = {(f.metric, f.period_end): f for f in new if f.status == Status.ok and f.period_type == PeriodType.FY}
+    for f in facts:                                              # official year figure against Yahoo's, consolidated only
+        if f.source in ("nse_filing", "nse_xbrl") and f.period_type == PeriodType.FY and f.value is not None and f.basis == Basis.consolidated:
+            y = yfy.get((f"fy_{f.metric}", f.period_end))
+            if y is not None and y.unit == f.unit:
+                checks.append(cross_check(f, y))
+    return new + ratio_facts(probe, now=fs.retrieved_at) + checks

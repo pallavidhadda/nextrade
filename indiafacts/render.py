@@ -139,6 +139,10 @@ def _scorecard_block(sc: dict) -> list[str]:
     return lines
 
 
+from indiafacts.fundamentals import LENDER_REASON  # noqa: E402
+from indiafacts.fundamentals_view import fundamentals_lines  # noqa: E402
+
+
 def _peers_block(sc: dict, ticker: str) -> list[str]:
     g = sc.get("peers")
     if g is None:
@@ -162,8 +166,8 @@ def _peers_block(sc: dict, ticker: str) -> list[str]:
                 else f"{c.diff * 100:+.1f} pp" if c.diff is not None else "-")
         pos = "-" if c.higher_than is None else f"above {c.higher_than} of {c.of}"
         lines.append(f"| {c.metric} | {tv} | {c.peer_median:.3g} | {prem} | {pos} | {c.n} |")
-    lines.append("for pe_ttm and pb a positive 'vs median' means pricier than the peer median (relative); "
-                 "for roe, net_margin_q and net_income_yoy it is the gap in percentage points; "
+    lines.append("for pe_ttm, pb and ev_ebitda a positive 'vs median' means pricier than the peer median (relative); "
+                 "for roe, fy_roce, net_margin_q and net_income_yoy it is the gap in percentage points; "
                  "this is a comparison of ratios, not a statement about value or a recommendation")
     return lines
 
@@ -313,7 +317,7 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
     if e.isin.value:
         head += f"  |  ISIN {e.isin.value}"
 
-    bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified)]
+    bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified) and f.reason != LENDER_REASON]
     refs = _Refs()
     parts = [head, *notes, *(_profile_block(profile, profile_is_default, view) if profile else []),
              *_filings_block(factset.filings),
@@ -321,6 +325,7 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
              *(_explanation_block(explanation, digest) if explanation is not None else []),
              *(_scorecard_block(scorecard) if scorecard else []),
              *(_peers_block(scorecard, e.ticker) if scorecard else []),
+             *fundamentals_lines(factset),
              *(_debate_block(debate) if debate is not None else []),
              *(_levels_block(levels, panel) if levels is not None else []),
              *(_news_block(news) if news else []),
