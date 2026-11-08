@@ -66,7 +66,7 @@ main { display: block; }
 .helper { min-height: 1lh; font-size: var(--text-sm); color: var(--color-muted); }
 .helper.err { color: var(--color-error); }
 .combo { position: relative; flex: 1 1 14rem; }
-.combo-list { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 10px); margin: 0; padding: 6px; list-style: none; background: var(--color-paper-2); color: var(--color-ink); border-radius: var(--radius-card); box-shadow: var(--shadow-lift); max-height: 18rem; overflow: auto; animation: rise 300ms var(--ease-out) both; }
+.combo-list { position: absolute; z-index: 60; left: 0; right: 0; top: calc(100% + 10px); margin: 0; padding: 6px; list-style: none; background: var(--color-paper-2); color: var(--color-ink); border-radius: var(--radius-card); box-shadow: var(--shadow-lift); max-height: 18rem; overflow: auto; animation: rise 300ms var(--ease-out) both; }
 .combo-list li { display: flex; justify-content: space-between; gap: var(--space-sm); padding: 10px var(--space-md); border-radius: 12px; cursor: pointer; font-size: var(--text-sm); transition: background-color var(--dur-micro); } .combo-list li > span:first-child { transition: translate 300ms var(--ease-out); } .combo-list li.on > span:first-child { translate: 6px 0; }
 .combo-list li.on, .combo-list li:hover { background: var(--color-ink); color: var(--color-paper); }
 .combo-list .sym { opacity: 0.65; }
@@ -89,7 +89,7 @@ details.profile[open] .group { animation: rise 500ms var(--ease-out) both; }
 .stage h1 { max-width: 11ch; font-size: clamp(3.1rem, 8.2vw, 6rem); line-height: 0.98; letter-spacing: -0.035em; font-weight: 300; }
 .stage .lead { margin-top: var(--space-lg); color: var(--on-deep-2); max-width: 38ch; font-size: clamp(1.05rem, 1.5vw, 1.25rem); }
 .stage .form { margin-top: var(--space-xl); display: grid; gap: var(--space-md); max-width: 40rem; }
-.console { display: flex; align-items: center; gap: var(--space-sm); padding: 8px 8px 8px 8px; border: 1px solid var(--deep-rule); border-radius: var(--radius-pill); background: color-mix(in oklab, var(--deep-2) 72%, transparent); backdrop-filter: blur(12px); transition: border-color var(--dur-short), box-shadow 500ms var(--ease-out); }
+.console { position: relative; z-index: 50; display: flex; align-items: center; gap: var(--space-sm); padding: 8px 8px 8px 8px; border: 1px solid var(--deep-rule); border-radius: var(--radius-pill); background: color-mix(in oklab, var(--deep-2) 72%, transparent); backdrop-filter: blur(12px); transition: border-color var(--dur-short), box-shadow 500ms var(--ease-out); }
 .console:focus-within { border-color: var(--color-accent); box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-accent) 16%, transparent), 0 20px 60px -20px color-mix(in oklab, var(--color-accent) 40%, transparent); }
 .stage .field input { background: transparent; border: 0; color: var(--on-deep); height: 60px; font-size: 1.1rem; padding-left: 22px; border-radius: var(--radius-pill); box-shadow: none; }
 .stage .field input::placeholder { color: var(--on-deep-muted); opacity: 0.8; }
@@ -101,7 +101,7 @@ details.profile[open] .group { animation: rise 500ms var(--ease-out) both; }
 .stage .key::before { background: var(--on-deep); } .stage .key:hover { color: var(--deep); }
 .stage .key.primary { height: 60px; padding-inline: 28px; background: var(--color-accent); color: var(--deep); border-color: var(--color-accent); font-weight: 600; }
 .stage .key.primary::before { background: var(--on-deep); }
-.stage .chip { background: transparent; border-color: var(--deep-rule); color: var(--on-deep-2); animation: rise 800ms var(--ease-out) both; animation-delay: calc(900ms + var(--i, 0) * 70ms); }
+.stage .chip { position: relative; z-index: 1; background: transparent; border-color: var(--deep-rule); color: var(--on-deep-2); animation: rise 800ms var(--ease-out) both; animation-delay: calc(900ms + var(--i, 0) * 70ms); }
 .stage .chip:hover { border-color: var(--color-accent); color: var(--color-accent); }
 .stage .chip[aria-pressed="true"] { background: var(--color-accent); color: var(--deep); border-color: var(--color-accent); }
 .stage details.profile { border-top-color: var(--deep-rule); max-width: 40rem; }
