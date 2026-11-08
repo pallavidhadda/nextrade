@@ -120,7 +120,7 @@ function Home() {
     return (
       <Shell>
         <section className="stage" aria-busy="true">
-          <div className="stage-map"><ContourMap progress={pr ? pr.p : 0.1} ringX={0.76} /></div>
+          <div className="stage-map"><ContourMap progress={pr ? pr.p : 0.3} ringX={0.76} /></div>
           <div className="container stage-in">
             <h1>Reading {params.get("t") || ticker || "the company"}</h1>
             <p className="lead">Fetching facts, checking gaps and comparing with a pool of companies.</p>

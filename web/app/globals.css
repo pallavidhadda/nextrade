@@ -121,7 +121,7 @@ iframe.report { width: 100%; height: 78vh; min-height: 560px; border: var(--rule
 .stage-in { position: relative; z-index: var(--z-base); padding-block: var(--space-2xl); }
 .stage h1 { max-width: 13ch; font-size: clamp(2.6rem, 6.4vw, 5rem); line-height: 0.98; letter-spacing: -0.03em; }
 .stage .lead { margin-top: var(--space-md); color: var(--color-ink-2); max-width: 40ch; font-size: var(--text-lg); }
-.stage .form { max-width: 32rem; }
+.stage .form { max-width: 38rem; }
 .stage .state { margin-top: var(--space-lg); }
 .count { margin-top: var(--space-lg); display: flex; align-items: baseline; gap: var(--space-sm); font-family: var(--font-display); }
 .count .n { font-size: clamp(3rem, 8vw, 6rem); letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
