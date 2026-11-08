@@ -14,7 +14,7 @@ import type { Job, PanelResult, Profile, Summary } from "@/lib/types";
 const EXAMPLES = ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ITC.NS"];
 const TAPE: [string, string][] = [["Reliance Industries", "RELIANCE"], ["Tata Consultancy Services", "TCS"], ["HDFC Bank", "HDFCBANK"], ["Infosys", "INFY"], ["ITC", "ITC"], ["ICICI Bank", "ICICIBANK"], ["Larsen & Toubro", "LT"], ["Bharti Airtel", "BHARTIARTL"], ["Asian Paints", "ASIANPAINT"], ["Maruti Suzuki", "MARUTI"]];
 const DISCLAIMER = "Research and education only. Not financial, investment or trading advice. Data may be late, incomplete or wrong; check primary sources.";
-const TABS = [{ id: "summary", label: "Summary" }, { id: "report", label: "Full report" }, { id: "gaps", label: "Gaps" }] as const;
+const TABS = [{ id: "summary", label: "Summary" }, { id: "report", label: "Full report" }, { id: "gaps", label: "Gaps" }, { id: "ai", label: "AI analysis" }] as const;
 const COMPANIES = companies as { s: string; n: string; i: string }[];
 const HOW = [
   { k: "collect", title: "Collect", text: "Every figure carries its period, unit and source." },
@@ -60,7 +60,7 @@ function Arrow() {
   );
 }
 
-function Shell({ children, home }: { children: React.ReactNode; home?: boolean }) {
+function Shell({ children, home, search }: { children: React.ReactNode; home?: boolean; search?: React.ReactNode }) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const on = () => setScrolled(scrollY > 40);
@@ -74,6 +74,7 @@ function Shell({ children, home }: { children: React.ReactNode; home?: boolean }
       <header className="bar" data-scrolled={scrolled || undefined}>
         <div className="container">
           <a className="brand" href="/" aria-label="NexTrade home"><Mark /><span>NexTrade</span></a>
+          {search}
           <nav aria-label="Primary">
             {home && <a className="navlink" href="#how">How it reads</a>}
             <a className="pill-note" href="#disclaimer">Education only, not advice</a>
@@ -177,7 +178,15 @@ function Home() {
   const running = !!jobId && (!job || job.status === "queued" || job.status === "running") && !error;
   const failed = error ?? (job?.status === "error" ? job.error ?? "The analysis failed." : null);
 
-  if (summary && jobId) return <Shell><ResultView s={summary} jobId={jobId} tab={tab} onTab={(t) => setUrl({ tab: t })} onNew={() => router.replace("/")} /></Shell>;
+  const barSearch = (
+    <form className="bar-search" onSubmit={onSubmit} noValidate role="search">
+      <TickerBox value={ticker} onChange={setTicker} error={fieldError} helpId="bar-help" compact />
+      <button className="key primary small" type="submit" disabled={busy}><span>{busy ? "Starting" : "Analyse"}</span><Arrow /></button>
+      <p id="bar-help" className={`bar-help${fieldError || error ? " err" : ""}`} role={fieldError || error ? "alert" : undefined}>{fieldError || error || ""}</p>
+    </form>
+  );
+
+  if (summary && jobId) return <Shell search={barSearch}><ResultView s={summary} jobId={jobId} tab={tab} onTab={(t) => setUrl({ tab: t })} /></Shell>;
 
   if (running) {
     const pr = progressRatio(job?.progress);
@@ -188,7 +197,7 @@ function Home() {
       { label: pr ? `Comparing with ${pr.total} companies` : "Comparing with a pool of companies", state: pr ? "active" : "wait" },
     ];
     return (
-      <Shell>
+      <Shell search={barSearch}>
         <section className="stage stage-run" aria-busy="true">
           <div className="stage-map"><ContourMap progress={pr ? pr.p : 0.3} ringX={0.72} /></div>
           <div className="container stage-in">
@@ -270,7 +279,23 @@ function Home() {
   );
 }
 
-function ResultView({ s: base, jobId, tab, onTab, onNew }: { s: Summary; jobId: string; tab: string; onTab: (t: string) => void; onNew: () => void }) {
+/** The full report, shown as part of the page: it reports its own height, so the page scrolls and the frame never does. */
+function ReportFrame({ src, ticker }: { src: string; ticker: string }) {
+  const ref = useRef<HTMLIFrameElement>(null);
+  const [h, setH] = useState(900);
+  useEffect(() => {
+    const on = (e: MessageEvent) => {
+      if (e.source !== ref.current?.contentWindow) return;
+      const d = e.data as { nt?: string; h?: number } | null;
+      if (d?.nt === "report-height" && typeof d.h === "number") setH(Math.max(400, Math.ceil(d.h)));
+    };
+    addEventListener("message", on);
+    return () => removeEventListener("message", on);
+  }, []);
+  return <iframe ref={ref} className="report" title={`Full report for ${ticker}`} src={src} sandbox="allow-scripts" scrolling="no" style={{ height: h }} />;
+}
+
+function ResultView({ s: base, jobId, tab, onTab }: { s: Summary; jobId: string; tab: string; onTab: (t: string) => void }) {
   const [own, setOwn] = useState<Summary["explanation"]>(null);
   const [panel, setPanel] = useState<PanelResult[]>([]);
   const s: Summary = own ? { ...base, explanation: own } : base;
@@ -278,17 +303,15 @@ function ResultView({ s: base, jobId, tab, onTab, onNew }: { s: Summary; jobId: 
   return (
     <>
       <section className="stage band">
-        <div className="stage-map"><ContourMap ringX={0.8} interactive /></div>
+        <div className="stage-map"><ContourMap ringX={0.8} calm /></div>
         <div className="container band-in">
           <div className="band-head">
             <div>
-              <SplitWords as="h1" text={name} />
-              <p className="sub rise" style={{ ["--d" as string]: "300ms" }}>{[s.name ? s.ticker : null, s.industry ?? s.sector, s.isin].filter(Boolean).join(", ")}. Profile: {s.profile.horizon}, {s.profile.risk} risk, {s.profile.experience}.</p>
+              <h1>{name}</h1>
+              <p className="sub">{[s.name ? s.ticker : null, s.industry ?? s.sector, s.isin].filter(Boolean).join(", ")}. Profile: {s.profile.horizon}, {s.profile.risk} risk, {s.profile.experience}.</p>
             </div>
-            <div className="actions rise" style={{ ["--d" as string]: "420ms" }}>
-              <a className="key primary" data-magnetic href={reportDownloadUrl(jobId)} download><span>Download report</span></a>
-              <button className="key" type="button" onClick={() => window.print()}>Print or save PDF</button>
-              <button className="key" type="button" onClick={onNew}>Analyse another</button>
+            <div className="actions">
+              <a className="key primary" href={reportDownloadUrl(jobId)} download><span>Download report</span></a>
             </div>
           </div>
           <div className="band-read"><ScoreNumber s={s} /><ScoreFactors s={s} /></div>
@@ -299,25 +322,32 @@ function ResultView({ s: base, jobId, tab, onTab, onNew }: { s: Summary; jobId: 
           <div className="tabs" role="tablist" aria-label="Result sections">
             {TABS.map((t) => (
               <button key={t.id} className="tab" role="tab" aria-selected={tab === t.id} type="button" onClick={() => onTab(t.id)}>
-                {t.id === "gaps" ? `Gaps (${s.gaps.length})` : t.label}
+                {t.id === "gaps" ? `Gaps (${s.gaps.length})` : t.label}{t.id === "ai" && <i className="ai-dot" aria-hidden="true" />}
               </button>
             ))}
           </div>
           <span className="subnav-name">{name}</span>
         </div>
       </div>
-      <div className="container body-pad" key={tab}>
+      <div className="container body-pad" key={tab} hidden={tab === "ai"}>
         {tab === "summary" && <AtAGlance s={s} onTab={onTab} />}
         {tab === "report" ? (
-          <iframe className="report" title={`Full report for ${s.ticker}`} src={reportUrl(jobId)} sandbox="allow-scripts" />
+          <ReportFrame ticker={s.ticker} src={`${reportUrl(jobId)}?embed=1`} />
         ) : tab === "gaps" ? (
           <div className="stack"><Gaps s={s} /></div>
         ) : (
           <div className="stack">
             <Explanation s={s} /><Debate s={s} /><Checklist s={s} /><Health s={s} /><Valuation s={s} /><Ownership s={s} /><ScenarioPlan s={s} /><Levels s={s} /><MarketFlows s={s} /><News s={s} /><KeyFacts s={s} />
-            <OwnModelPanel jobId={jobId} summary={base} onExplanation={setOwn} onPanel={setPanel} /><AnalystPanel results={panel} />
+            {base.llm && <aside className="ai-nudge" data-r><p>Want a second opinion? Run a bull vs bear debate or an analyst panel with your own AI model.</p><button type="button" className="key" onClick={() => onTab("ai")}><span>Open AI analysis</span><Arrow /></button></aside>}
           </div>
         )}
+      </div>
+      <div className="container body-pad" hidden={tab !== "ai"}>
+        <div className="stack">
+          <OwnModelPanel jobId={jobId} summary={base} onExplanation={setOwn} onPanel={setPanel} />
+          {own && <Explanation s={s} />}
+          <AnalystPanel results={panel} />
+        </div>
       </div>
     </>
   );

@@ -95,7 +95,12 @@ def validate_llm_output(raw: str, d: Digest) -> tuple[Explanation | None, list[s
     txt = raw.strip()
     txt = re.sub(r"^```(?:json)?\s*|\s*```$", "", txt, flags=re.S)
     try:
-        obj = json.loads(txt)
+        try:
+            obj = json.loads(txt)
+        except ValueError:                                  # tolerate a sentence before or after the object
+            a, b = txt.find("{"), txt.rfind("}")
+            obj = json.loads(txt[a:b + 1]) if 0 <= a < b else None
+            assert obj is not None
         assert isinstance(obj, dict) and isinstance(obj.get("claims"), list)
     except (ValueError, AssertionError):
         return None, ["output is not the requested JSON"]

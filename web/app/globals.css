@@ -66,7 +66,7 @@ main { display: block; }
 .helper { min-height: 1lh; font-size: var(--text-sm); color: var(--color-muted); }
 .helper.err { color: var(--color-error); }
 .combo { position: relative; flex: 1 1 14rem; }
-.combo-list { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 10px); margin: 0; padding: 6px; list-style: none; background: var(--color-paper-2); color: var(--color-ink); border-radius: var(--radius-card); box-shadow: var(--shadow-lift); max-height: 18rem; overflow: auto; animation: rise 300ms var(--ease-out) both; }
+.combo-list { position: absolute; z-index: 60; left: 0; right: 0; top: calc(100% + 10px); margin: 0; padding: 6px; list-style: none; background: var(--color-paper-2); color: var(--color-ink); border-radius: var(--radius-card); box-shadow: var(--shadow-lift); max-height: 18rem; overflow: auto; animation: rise 300ms var(--ease-out) both; }
 .combo-list li { display: flex; justify-content: space-between; gap: var(--space-sm); padding: 10px var(--space-md); border-radius: 12px; cursor: pointer; font-size: var(--text-sm); transition: background-color var(--dur-micro); } .combo-list li > span:first-child { transition: translate 300ms var(--ease-out); } .combo-list li.on > span:first-child { translate: 6px 0; }
 .combo-list li.on, .combo-list li:hover { background: var(--color-ink); color: var(--color-paper); }
 .combo-list .sym { opacity: 0.65; }
@@ -89,7 +89,7 @@ details.profile[open] .group { animation: rise 500ms var(--ease-out) both; }
 .stage h1 { max-width: 11ch; font-size: clamp(3.1rem, 8.2vw, 6rem); line-height: 0.98; letter-spacing: -0.035em; font-weight: 300; }
 .stage .lead { margin-top: var(--space-lg); color: var(--on-deep-2); max-width: 38ch; font-size: clamp(1.05rem, 1.5vw, 1.25rem); }
 .stage .form { margin-top: var(--space-xl); display: grid; gap: var(--space-md); max-width: 40rem; }
-.console { display: flex; align-items: center; gap: var(--space-sm); padding: 8px 8px 8px 8px; border: 1px solid var(--deep-rule); border-radius: var(--radius-pill); background: color-mix(in oklab, var(--deep-2) 72%, transparent); backdrop-filter: blur(12px); transition: border-color var(--dur-short), box-shadow 500ms var(--ease-out); }
+.console { position: relative; z-index: 50; display: flex; align-items: center; gap: var(--space-sm); padding: 8px 8px 8px 8px; border: 1px solid var(--deep-rule); border-radius: var(--radius-pill); background: color-mix(in oklab, var(--deep-2) 72%, transparent); backdrop-filter: blur(12px); transition: border-color var(--dur-short), box-shadow 500ms var(--ease-out); }
 .console:focus-within { border-color: var(--color-accent); box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-accent) 16%, transparent), 0 20px 60px -20px color-mix(in oklab, var(--color-accent) 40%, transparent); }
 .stage .field input { background: transparent; border: 0; color: var(--on-deep); height: 60px; font-size: 1.1rem; padding-left: 22px; border-radius: var(--radius-pill); box-shadow: none; }
 .stage .field input::placeholder { color: var(--on-deep-muted); opacity: 0.8; }
@@ -101,7 +101,7 @@ details.profile[open] .group { animation: rise 500ms var(--ease-out) both; }
 .stage .key::before { background: var(--on-deep); } .stage .key:hover { color: var(--deep); }
 .stage .key.primary { height: 60px; padding-inline: 28px; background: var(--color-accent); color: var(--deep); border-color: var(--color-accent); font-weight: 600; }
 .stage .key.primary::before { background: var(--on-deep); }
-.stage .chip { background: transparent; border-color: var(--deep-rule); color: var(--on-deep-2); animation: rise 800ms var(--ease-out) both; animation-delay: calc(900ms + var(--i, 0) * 70ms); }
+.stage .chip { position: relative; z-index: 1; background: transparent; border-color: var(--deep-rule); color: var(--on-deep-2); animation: rise 800ms var(--ease-out) both; animation-delay: calc(900ms + var(--i, 0) * 70ms); }
 .stage .chip:hover { border-color: var(--color-accent); color: var(--color-accent); }
 .stage .chip[aria-pressed="true"] { background: var(--color-accent); color: var(--deep); border-color: var(--color-accent); }
 .stage details.profile { border-top-color: var(--deep-rule); max-width: 40rem; }
@@ -207,7 +207,7 @@ html.motion .how-row:not(.in) .glyph circle { opacity: 0; transform: scale(0.2);
 
 .body-pad { padding-block: var(--space-xl) var(--space-3xl); animation: rise 700ms var(--ease-out) both; }
 .stack { display: block; }
-iframe.report { width: 100%; height: 82vh; min-height: 560px; border: 1px solid var(--color-rule); border-radius: var(--radius-card); background: var(--color-paper-2); margin-top: var(--space-lg); }
+iframe.report { display: block; width: 100%; border: 0; background: transparent; margin-top: var(--space-xl); color-scheme: light; }
 
 /* at a glance: four open readings, no boxes */
 .glance { padding-block: var(--space-xl) var(--space-2xl); }
@@ -288,3 +288,60 @@ td > .tag:first-child, .claims .tag { margin-left: 0; }
   .tape button { padding: 14px 22px; font-size: 1.1rem; }
 }
 @media print { .bar, .halo, .stage-map, .tape, .subnav { display: none !important; } .stage { background: none; color: inherit; min-height: 0; } html.motion [data-r]:not(.in) { opacity: 1; transform: none; } }
+
+/* ---------- search in the bar (result and loading pages) ---------- */
+.bar-search { position: relative; display: flex; align-items: center; gap: var(--space-xs); flex: 1 1 auto; max-width: 30rem; margin-inline: auto var(--space-lg); }
+.bar-search .combo { flex: 1 1 auto; }
+.bar .field input { height: 42px; padding: 0 var(--space-md); border-radius: var(--radius-pill); background: color-mix(in oklab, currentColor 9%, transparent); border: 1px solid color-mix(in oklab, currentColor 24%, transparent); color: inherit; box-shadow: none; transition: border-color var(--dur-short), background-color var(--dur-short); }
+.bar .field input::placeholder { color: inherit; opacity: 0.6; }
+.bar .field input:hover { border-color: color-mix(in oklab, currentColor 50%, transparent); }
+.bar .field input:focus-visible { border-color: currentColor; background: color-mix(in oklab, currentColor 14%, transparent); box-shadow: none; }
+.bar .combo-list { top: calc(100% + 8px); background: var(--deep-2); color: var(--on-deep); border: 1px solid var(--deep-rule); min-width: 22rem; }
+.bar .combo-list li.on, .bar .combo-list li:hover { background: var(--color-accent); color: var(--deep); }
+.bar .key.small { min-height: 42px; padding: 0 var(--space-md); font-size: var(--text-sm); border-color: var(--color-accent); background: var(--color-accent); color: var(--deep); font-weight: 600; }
+.bar .key.small::before { background: var(--on-deep); }
+.bar[data-scrolled] .key.small { background: var(--color-ink); border-color: var(--color-ink); color: var(--color-paper); } .bar[data-scrolled] .key.small::before { background: var(--color-accent); } .bar[data-scrolled] .key.small:hover { color: var(--deep); }
+.bar .key.small .arrow { width: 16px; height: 16px; }
+.bar-help { position: absolute; left: var(--space-md); top: calc(100% + 6px); font-size: var(--text-xs); color: var(--color-ember); white-space: nowrap; }
+.bar-help:empty { display: none; }
+@media (max-width: 70rem) { .bar-search ~ nav .pill-note { display: none; } }
+@media (max-width: 40rem) { .bar-search { margin-inline: var(--space-sm) 0; } .bar .brand span { display: none; } .bar .key.small .arrow { display: none; } .bar .combo-list { min-width: 0; } }
+
+/* ---------- a calm result hero: it is read, not watched ---------- */
+.band .stage-map { opacity: 0.5; }
+.band-in { padding-block: 108px var(--space-xl); gap: var(--space-xl); }
+.band-head h1 { font-size: clamp(2rem, 4.4vw, 3.4rem); }
+.reading { font-size: clamp(3.6rem, 8vw, 5rem); }
+.band .ep-line { animation-duration: 700ms; animation-delay: 100ms; filter: none; }
+.band .ep-area { animation-duration: 500ms; animation-delay: 300ms; }
+.band .ep-dot { animation-delay: calc(150ms + var(--i, 0) * 60ms); animation-duration: 400ms; }
+.band .ep-drop, .band .ep-val { animation-delay: calc(200ms + var(--i, 0) * 60ms); animation-duration: 400ms; }
+
+/* ---------- one download button, sized like a primary action ---------- */
+.actions .key.primary { min-height: 52px; padding-inline: var(--space-xl); }
+.stage .actions .key.primary::before { background: var(--on-deep); }
+
+/* ---------- AI analysis ---------- */
+.tab .ai-dot { display: inline-block; width: 7px; height: 7px; margin: 0 0 0.55em 6px; border-radius: 50%; background: var(--color-accent-deep); vertical-align: middle; }
+.ai-nudge { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); flex-wrap: wrap; margin-top: var(--space-xl); padding: var(--space-lg) var(--space-xl); border-radius: var(--radius-card); background: var(--deep); color: var(--on-deep); }
+.ai-nudge p { max-width: 46ch; font-family: var(--font-display); font-weight: 300; font-size: 1.35rem; letter-spacing: -0.02em; line-height: 1.2; }
+.ai-nudge .key { border-color: var(--on-deep); color: var(--on-deep); } .ai-nudge .key::before { background: var(--color-accent); } .ai-nudge .key:hover { color: var(--deep); border-color: var(--color-accent); }
+.modes { border: 0; margin: 0; padding: 0; min-width: 0; border-top: 1px solid var(--color-ink); }
+.modes legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.mode { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); border-bottom: 1px solid var(--color-rule); transition: background-color var(--dur-short); }
+.mode:hover:not(.off) { background: var(--color-paper-2); }
+.mode label { flex: 1; display: flex; align-items: center; gap: var(--space-md); padding: 18px 0; cursor: pointer; min-width: 0; }
+.mode.off label { cursor: not-allowed; opacity: 0.45; }
+.mode input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.mode .radio { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--color-ink-2); display: grid; place-items: center; transition: border-color var(--dur-short), background-color var(--dur-short); }
+.mode .radio::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--color-ink); transform: scale(0); transition: transform 400ms var(--ease-out); }
+.mode.on .radio { border-color: var(--color-ink); } .mode.on .radio::after { transform: scale(1); }
+.mode input:focus-visible + .radio { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.mode .mt { font-family: var(--font-display); font-size: 1.35rem; letter-spacing: -0.02em; }
+.mode .calls { margin-left: auto; color: var(--color-muted); font-size: var(--text-xs); }
+.mode-what { margin-top: var(--space-md); min-height: 0; max-width: 62ch; color: var(--color-ink-2); font-size: var(--text-md); }
+.ai .helper { min-height: 0; margin-top: var(--space-sm); }
+.info { position: relative; display: inline-flex; flex: none; }
+.info-btn { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--color-muted); cursor: pointer; transition: color var(--dur-short), background-color var(--dur-short); }
+.info-btn:hover, .info-btn[aria-expanded="true"] { color: var(--color-ink); background: var(--color-paper-3); }
+.tip { position: absolute; z-index: 40; right: 0; top: calc(100% + 8px); width: min(22rem, 78vw); padding: var(--space-md); border-radius: 14px; background: var(--deep); color: var(--on-deep); font-size: var(--text-sm); line-height: 1.5; box-shadow: var(--shadow-lift); animation: rise 260ms var(--ease-out) both; }

@@ -49,8 +49,8 @@ def _fmt_pct(v: float, signed: bool = True) -> str:
 
 
 CSS = """
-:root{color-scheme:light;--surface:#fcfcfb;--page:#f9f9f7;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;
---axis:#c3c2b7;--s1:#2a78d6;--s2:#eb6834;--good:#006300;--bad:#d03b3b;--hair:rgba(11,11,11,.10)}
+:root{color-scheme:light;--surface:#fcfbf7;--page:#f6f4ee;--ink:#10201a;--ink2:#46524b;--muted:#6f786f;--grid:#e0ddd2;
+--axis:#c3c2b7;--s1:#1f6f4a;--s2:#e0662f;--good:#1d6b3a;--bad:#c4452a;--hair:rgba(16,32,26,.12)}
 @media (prefers-color-scheme: dark){:root:where(:not([data-theme="light"])){color-scheme:dark;--surface:#1a1a19;--page:#0d0d0d;
 --ink:#f0efec;--ink2:#c3c2b7;--grid:#2c2c2a;--axis:#383835;--s1:#3987e5;--s2:#d95926;--good:#0ca30c;--hair:rgba(255,255,255,.10)}}
 :root[data-theme="dark"]{color-scheme:dark;--surface:#1a1a19;--page:#0d0d0d;--ink:#f0efec;--ink2:#c3c2b7;--grid:#2c2c2a;
@@ -103,6 +103,11 @@ ul.claims{padding-left:0;list-style:none;margin:6px 0}ul.claims li{padding:5px 0
 .empty{color:var(--ink2);font-size:14px;padding:18px 0}
 footer{margin:18px 0 8px;font-size:12px;color:var(--muted)}
 @media print{#theme-toggle{display:none}}
+h1,h2{font-family:"Iowan Old Style",Georgia,serif;font-weight:400;letter-spacing:-.02em}h1{font-size:26px}h2{font-size:18px}
+.card,.tile,.banner{border-radius:14px}.tile .value{font-family:"Iowan Old Style",Georgia,serif;font-weight:400}
+/* embedded in the NexTrade page: no frame, no second theme switch, the page owns the scroll */
+html[data-embed]{background:transparent}html[data-embed] body{background:transparent}html[data-embed] main{max-width:none;padding:0}
+html[data-embed] .top{display:none}html[data-embed] footer{display:none}
 """
 
 JS = """

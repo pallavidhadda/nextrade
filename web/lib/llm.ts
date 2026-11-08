@@ -30,7 +30,10 @@ export function destination(m: Pick<OwnModel, "provider" | "baseUrl">): string {
   try { return new URL(m.baseUrl).host; } catch { return "(invalid address)"; }
 }
 
-export type Completion = { text: string; inTokens?: number; outTokens?: number };
+export type Completion = { text: string; inTokens?: number; outTokens?: number; truncated?: boolean };
+
+// Models that think first count their reasoning against the output limit, so the limit has to leave room for the JSON itself.
+const room = (n: number) => Math.max(n, 2048);
 
 class HttpError extends Error { constructor(public status: number, msg: string) { super(msg); } }
 
@@ -50,20 +53,20 @@ export async function complete(m: OwnModel, system: string, user: string, maxTok
     const j = await post(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m.model)}:generateContent`,
       { "x-goog-api-key": m.apiKey, "content-type": "application/json" },
       { systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: user }] }],
-        generationConfig: { maxOutputTokens: maxTokens, temperature: 0, responseMimeType: "application/json" } });
-    return { text: j.candidates?.[0]?.content?.parts?.[0]?.text ?? "", inTokens: j.usageMetadata?.promptTokenCount, outTokens: j.usageMetadata?.candidatesTokenCount };
+        generationConfig: { maxOutputTokens: room(maxTokens), temperature: 0, responseMimeType: "application/json" } });
+    return { text: j.candidates?.[0]?.content?.parts?.[0]?.text ?? "", inTokens: j.usageMetadata?.promptTokenCount, outTokens: j.usageMetadata?.candidatesTokenCount, truncated: j.candidates?.[0]?.finishReason === "MAX_TOKENS" };
   }
   if (m.provider === "anthropic") {
     const j = await post("https://api.anthropic.com/v1/messages",
       { "x-api-key": m.apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true", "content-type": "application/json" },
-      { model: m.model, max_tokens: maxTokens, temperature: 0, system, messages: [{ role: "user", content: user }] });
+      { model: m.model, max_tokens: room(maxTokens), temperature: 0, system, messages: [{ role: "user", content: user }] });
     const text = (j.content ?? []).filter((b: any) => b.type === "text").map((b: any) => b.text).join("");
-    return { text, inTokens: j.usage?.input_tokens, outTokens: j.usage?.output_tokens };
+    return { text, inTokens: j.usage?.input_tokens, outTokens: j.usage?.output_tokens, truncated: j.stop_reason === "max_tokens" };
   }
   const base = m.baseUrl.replace(/\/+$/, "");
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (m.apiKey) headers.authorization = `Bearer ${m.apiKey}`;
-  const body = { model: m.model, messages: [{ role: "system", content: system }, { role: "user", content: user }], max_tokens: maxTokens, temperature: 0 };
+  const body = { model: m.model, messages: [{ role: "system", content: system }, { role: "user", content: user }], max_tokens: room(maxTokens), temperature: 0 };
   let j: any;
   try {
     j = await post(`${base}/chat/completions`, headers, { ...body, response_format: { type: "json_object" } });
@@ -72,5 +75,5 @@ export async function complete(m: OwnModel, system: string, user: string, maxTok
     if (err instanceof HttpError && err.status === 400) j = await post(`${base}/chat/completions`, headers, body);
     else throw err;
   }
-  return { text: j.choices?.[0]?.message?.content ?? "", inTokens: j.usage?.prompt_tokens, outTokens: j.usage?.completion_tokens };
+  return { text: j.choices?.[0]?.message?.content ?? "", inTokens: j.usage?.prompt_tokens, outTokens: j.usage?.completion_tokens, truncated: j.choices?.[0]?.finish_reason === "length" };
 }

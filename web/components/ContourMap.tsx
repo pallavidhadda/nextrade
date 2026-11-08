@@ -12,6 +12,8 @@ type Props = {
   intro?: boolean;
   /** Terrain rises under the pointer. */
   interactive?: boolean;
+  /** Hold still: drawn once, no drift, pulse or pointer response. For pages that are read, not watched. */
+  calm?: boolean;
 };
 
 const L0 = -1.6, DL = 0.16, NL = 30;
@@ -27,7 +29,7 @@ function field(x: number, y: number, t: number): number {
 const clamp01 = (k: number) => Math.max(0, Math.min(1, k));
 function cssVar(el: Element, name: string, fallback: string) { return getComputedStyle(el).getPropertyValue(name).trim() || fallback; }
 
-export default function ContourMap({ progress = 1, ringX = 0.56, ring = true, intro = true, interactive = true }: Props) {
+export default function ContourMap({ progress = 1, ringX = 0.56, ring = true, intro = true, interactive = true, calm = false }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const target = useRef(progress);
   const ringTarget = useRef(ringX);
@@ -41,7 +43,7 @@ export default function ContourMap({ progress = 1, ringX = 0.56, ring = true, in
     const box = c.parentElement!;
     const ctx = c.getContext("2d");
     if (!ctx) return;
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = calm || matchMedia("(prefers-reduced-motion: reduce)").matches;
     let shown = intro && !reduce ? 0 : target.current;
     let ringNow = ringTarget.current;
     let colors = { line: "#7fa595", water: "#6aa0b8", accent: "#d6f36b", ink: "#eef2e2" };
@@ -170,7 +172,7 @@ export default function ContourMap({ progress = 1, ringX = 0.56, ring = true, in
       document.removeEventListener("visibilitychange", onVis);
       removeEventListener("pointermove", onMove); document.removeEventListener("pointerleave", onOut);
     };
-  }, [ring, intro, interactive]);
+  }, [ring, intro, interactive, calm]);
 
   useEffect(() => { kick.current(); }, [progress, ringX]);
 
