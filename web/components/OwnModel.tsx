@@ -1,33 +1,36 @@
 "use client";
 import { useState } from "react";
 import { validate } from "@/lib/api";
-import { DEFAULT_MODELS, complete, destination, type Provider } from "@/lib/llm";
+import { PRESETS, complete, destination } from "@/lib/llm";
 import type { PanelResult, Summary } from "@/lib/types";
 
 type Props = { jobId: string; summary: Summary; onExplanation: (e: NonNullable<Summary["explanation"]>) => void; onPanel: (r: PanelResult[]) => void };
 
 export default function OwnModelPanel({ jobId, summary, onExplanation, onPanel }: Props) {
   const [mode, setMode] = useState<"single" | "panel" | "debate">("single");
-  const [provider, setProvider] = useState<Provider>("gemini");
-  const [model, setModel] = useState(DEFAULT_MODELS.gemini);
-  const [baseUrl, setBaseUrl] = useState("http://localhost:11434/v1");
+  const [presetId, setPresetId] = useState("gemini");
+  const preset = PRESETS.find((p) => p.id === presetId) ?? PRESETS[0];
+  const provider = preset.provider;
+  const [model, setModel] = useState(PRESETS[0].model);
+  const [baseUrl, setBaseUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const llm = summary.llm;
   const dest = destination({ provider, baseUrl });
 
-  function pick(p: Provider) { setProvider(p); setModel(DEFAULT_MODELS[p]); setMsg(null); }
+  function pick(id: string) { const p = PRESETS.find((x) => x.id === id) ?? PRESETS[0]; setPresetId(id); setModel(p.model); setBaseUrl(p.baseUrl); setMsg(null); }
 
   async function run(e: React.FormEvent) {
     e.preventDefault();
     if (!llm) return;
     if (!model.trim()) { setMsg({ kind: "err", text: "Enter the model name." }); return; }
+    if (provider === "openai" && !/^https?:\/\//i.test(baseUrl.trim())) { setMsg({ kind: "err", text: "Enter the service address, starting with http:// or https://." }); return; }
     setBusy(true); setMsg(null);
     try {
       const steps = mode === "panel" ? llm.roles?.map((r) => ({ ...r, uses_notes: r.id === "manager" })) : mode === "debate" ? llm.debate : undefined;
       if (steps?.length) {
-        const cfg = { provider, model: model.trim(), baseUrl, apiKey };
+        const cfg = { provider, model: model.trim(), baseUrl: baseUrl.trim(), apiKey };
         const out: PanelResult[] = [];
         let notes = "";
         for (const role of steps) {
@@ -53,7 +56,7 @@ export default function OwnModelPanel({ jobId, summary, onExplanation, onPanel }
         setMsg({ kind: "ok", text: `Done. ${out.filter((r) => r.explanation).length} of ${out.length} answers passed the checks.` });
         return;
       }
-      const c = await complete({ provider, model: model.trim(), baseUrl, apiKey }, llm.system, llm.user, llm.max_tokens);
+      const c = await complete({ provider, model: model.trim(), baseUrl: baseUrl.trim(), apiKey }, llm.system, llm.user, llm.max_tokens);
       const v = await validate(jobId, c.text, model.trim());
       if (!v.explanation) { setMsg({ kind: "err", text: `Your model's answer failed the checks: ${v.reasons.join("; ") || "unknown reason"}. Nothing was shown from it.` }); return; }
       onExplanation({ ...v.explanation, usage: { in: c.inTokens ?? 0, out: c.outTokens ?? 0 } });
@@ -73,23 +76,24 @@ export default function OwnModelPanel({ jobId, summary, onExplanation, onPanel }
       <form className="body" onSubmit={run} autoComplete="off">
         <p className="helper">The facts digest (about {Math.round(llm.user.length / 2.8)} tokens, no personal data) goes from your browser straight to <strong>{dest}</strong>. Your key is used once and cleared. NexTrade&rsquo;s servers never receive it; they only check the answer.</p>
         <div className="chips" role="group" aria-label="Provider" style={{ marginTop: "var(--space-sm)" }}>
-          {([["gemini", "Gemini"], ["anthropic", "Anthropic"], ["openai", "OpenAI-compatible"]] as [Provider, string][]).map(([p, label]) => (
-            <button key={p} type="button" className="chip" aria-pressed={provider === p} onClick={() => pick(p)}>{label}</button>
+          {PRESETS.map((p) => (
+            <button key={p.id} type="button" className="chip" aria-pressed={presetId === p.id} onClick={() => pick(p.id)}>{p.label}</button>
           ))}
         </div>
+        {preset.note && <p className="helper" style={{ marginTop: "var(--space-xs)" }}>{preset.note}</p>}
         <div className="chips" role="group" aria-label="What to run" style={{ marginTop: "var(--space-sm)" }}>
           <button type="button" className="chip" aria-pressed={mode === "single"} onClick={() => setMode("single")}>One explanation</button>
           <button type="button" className="chip" aria-pressed={mode === "debate"} onClick={() => setMode("debate")} disabled={!llm.debate?.length}>Bull vs bear debate (3 calls)</button>
           <button type="button" className="chip" aria-pressed={mode === "panel"} onClick={() => setMode("panel")} disabled={!llm.roles?.length}>Analyst panel (6 calls)</button>
         </div>
         <div className="row" style={{ marginTop: "var(--space-sm)" }}>
-          <div className="field"><label htmlFor="own-model">Model</label><input id="own-model" name="model" value={model} onChange={(e) => setModel(e.target.value)} autoComplete="off" spellCheck={false} /></div>
-          {provider === "openai" && <div className="field"><label htmlFor="own-base">Address</label><input id="own-base" name="base" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} autoComplete="off" spellCheck={false} inputMode="url" /></div>}
+          <div className="field"><label htmlFor="own-model">Model</label><input id="own-model" name="model" value={model} placeholder={preset.modelHint} onChange={(e) => setModel(e.target.value)} autoComplete="off" spellCheck={false} /></div>
+          {provider === "openai" && <div className="field"><label htmlFor="own-base">Address</label><input id="own-base" name="base" value={baseUrl} placeholder="https://your-service.example/v1" onChange={(e) => setBaseUrl(e.target.value)} autoComplete="off" spellCheck={false} inputMode="url" /></div>}
         </div>
         <div className="row" style={{ marginTop: "var(--space-sm)" }}>
-          <div className="field"><label htmlFor="own-key">API key{provider === "openai" ? ", if needed" : ""}</label>
+          <div className="field"><label htmlFor="own-key">API key{preset.keyNeeded ? "" : ", if needed"}</label>
             <input id="own-key" name="own-key" type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} autoComplete="off" autoCapitalize="off" spellCheck={false} data-lpignore="true" data-1p-ignore="true" /></div>
-          <button className="key primary" type="submit" disabled={busy || (provider !== "openai" && !apiKey)}>{busy ? "Asking" : "Explain"}</button>
+          <button className="key primary" type="submit" disabled={busy || (preset.keyNeeded && !apiKey)}>{busy ? "Asking" : "Explain"}</button>
         </div>
         <p className={`helper${msg?.kind === "err" ? " err" : ""}`} role={msg ? "status" : undefined} style={{ marginTop: "var(--space-xs)" }}>{msg?.text ?? ""}</p>
       </form>

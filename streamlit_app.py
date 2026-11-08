@@ -74,8 +74,8 @@ def ai_panel(s: dict) -> None:
                "field is cleared right after you press Run. This is a shared server, so use a key with a spending limit, or run the app on your own machine.")
     c1, c2 = st.columns(2)
     c1.selectbox("Provider", list(webui.PROVIDER_KEYS), key="ai_provider")
-    c2.text_input("Model (blank for the default)", key="ai_model", placeholder="gemini-3.1-flash-lite")
-    st.text_input("Address, for OpenAI-compatible only", key="ai_base", placeholder="http://localhost:11434/v1")
+    c2.text_input("Model (blank for Gemini and Claude; required for the others)", key="ai_model", placeholder="gemini-3.1-flash-lite, or google/gemma-3-27b-it on OpenRouter")
+    st.text_input("Address (leave blank to use the provider's own; needed for 'Any other')", key="ai_base", placeholder="https://your-service.example/v1")
     st.text_input("API key (paste it here)", type="password", key="ai_key", autocomplete="off", placeholder="Paste your key")
     st.radio("What to run", ["One plain-English explanation (1 call, about 2.5k tokens)",
                              "Bull versus bear debate: a bull advocate, a bear advocate who answers it, then a referee (3 calls, about 8k tokens)",
@@ -83,7 +83,7 @@ def ai_panel(s: dict) -> None:
     st.button("Run", type="primary", key="ai_run", on_click=_ai_submit)
     job = ss.pop("_ai_pending", None)
     if job:
-        if not job["key"] and job["provider"] != "OpenAI-compatible":
+        if not job["key"] and webui.PROVIDER_KEYS[job["provider"]][4]:
             st.error("The key box was empty. Paste your API key, then press Run.")
         else:
             try:
