@@ -37,10 +37,14 @@ export function Score({ s }: { s: Summary }) {
 export function Checklist({ s }: { s: Summary }) {
   const pass = s.checklist.filter((c) => c.result === "pass").length;
   return (
-    <section className="entry" aria-labelledby="chk-h">
+    <section className="entry" data-r aria-labelledby="chk-h">
       <header><h2 id="chk-h">Nine-point checklist</h2><span className="note">{s.checklist.length ? `${pass} passed` : "needs a score run"}</span></header>
       <div className="body">
         {s.checklist.length === 0 ? <p>The checklist runs together with the score.</p> : (
+          <>
+          <div className="meter" role="img" aria-label={`${pass} of ${s.checklist.length} checks passed`}>
+            {s.checklist.map((c, i) => <i key={c.label} className={c.result} style={{ ["--i" as string]: i }} />)}
+          </div>
           <table>
             <thead><tr><th>Test</th><th>Result</th></tr></thead>
             <tbody>
@@ -52,6 +56,7 @@ export function Checklist({ s }: { s: Summary }) {
               ))}
             </tbody>
           </table>
+          </>
         )}
         <p className="helper" style={{ marginTop: "var(--space-sm)" }}>Project-defined tests. Missing data shows as unavailable, never as a fail.</p>
       </div>
@@ -61,7 +66,7 @@ export function Checklist({ s }: { s: Summary }) {
 
 export function KeyFacts({ s }: { s: Summary }) {
   return (
-    <section className="entry" aria-labelledby="kf-h">
+    <section className="entry" data-r aria-labelledby="kf-h">
       <header><h2 id="kf-h">Facts with their period and source</h2><span className="note">latest available</span></header>
       <div className="body">
         {s.key_facts.length === 0 ? <p>No verified figures came back for this company.</p> : (
@@ -87,7 +92,7 @@ export function KeyFacts({ s }: { s: Summary }) {
 export function Explanation({ s }: { s: Summary }) {
   const ex = s.explanation;
   return (
-    <section className="entry" aria-labelledby="ex-h">
+    <section className="entry" data-r aria-labelledby="ex-h">
       <header><h2 id="ex-h">In plain English</h2><span className="note">{ex ? (ex.source === "template" ? "template, no model used" : ex.source === "your model" ? "written by your model, checked here" : `written by ${ex.source}`) : ""}</span></header>
       <div className="body">
         {!ex ? <p>No explanation was produced for this run.</p> : (
@@ -111,7 +116,7 @@ export function Explanation({ s }: { s: Summary }) {
 
 export function Gaps({ s }: { s: Summary }) {
   return (
-    <section className="entry" aria-labelledby="gp-h">
+    <section className="entry" data-r aria-labelledby="gp-h">
       <header><h2 id="gp-h">What could not be checked</h2><span className="note">{s.gaps.length} items</span></header>
       <div className="body">
         {s.gaps.length === 0 ? <p>No missing periods or unavailable measures were found.</p> : (
@@ -138,7 +143,7 @@ export function Valuation({ s }: { s: Summary }) {
   const years = Array.from(new Set(rates.flatMap((r) => Object.keys(grid[r])))).sort((a, b) => Number(a) - Number(b));
   const pb = v.items.filter((i) => i.metric.startsWith("justified_pb"));
   return (
-    <section className="entry" aria-labelledby="val-h">
+    <section className="entry" data-r aria-labelledby="val-h">
       <header><h2 id="val-h">What the price implies</h2><span className="note">arithmetic, not a forecast</span></header>
       <div className="body">
         {v.unavailable_reason && v.items.length === 0 ? <p>Not available: {v.unavailable_reason}.</p> : v.method === "reverse_dcf_earnings" ? (
@@ -170,10 +175,15 @@ export function Debate({ s }: { s: Summary }) {
     </div>
   );
   return (
-    <section className="entry" aria-labelledby="deb-h">
+    <section className="entry" data-r aria-labelledby="deb-h">
       <header><h2 id="deb-h">Bull case versus bear case</h2><span className="note">educational</span></header>
       <div className="body">
         {s.prose && (<><p>{s.prose.favour}</p><p>{s.prose.against}</p><p><strong>{s.prose.weighing}</strong></p></>)}
+        {d.bull.length + d.bear.length > 0 && (
+          <div className="balance" role="img" aria-label={`${d.bull.length} points in favour, ${d.bear.length} points against`}>
+            <b style={{ flexGrow: d.bull.length || 0.0001 }}>{d.bull.length}</b><b className="bear" style={{ flexGrow: d.bear.length || 0.0001 }}>{d.bear.length}</b>
+          </div>
+        )}
         <div className="debate">{col("Bull case", d.bull)}{col("Bear case", d.bear)}</div>
         <p className="stance"><span className="tag stance-tag">{d.stance.label}</span> Confidence {d.stance.confidence}. {d.stance.reason}.</p>
         <p className="helper">Educational rating from a transparent rule applied to the evidence on this page. It ignores your own situation, is not a prediction, and is not a recommendation.</p>
@@ -185,7 +195,7 @@ export function Debate({ s }: { s: Summary }) {
 export function News({ s }: { s: Summary }) {
   if (!s.news || s.news.length === 0) return null;
   return (
-    <section className="entry" aria-labelledby="news-h">
+    <section className="entry" data-r aria-labelledby="news-h">
       <header><h2 id="news-h">Recent headlines</h2><span className="note">unverified, keyword hint only</span></header>
       <div className="body">
         <table>
@@ -206,7 +216,7 @@ export function Levels({ s }: { s: Summary }) {
   if (!lv || lv.last_close === null) return null;
   const inr = (v: number) => `₹${v.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   return (
-    <section className="entry" aria-labelledby="lev-h">
+    <section className="entry" data-r aria-labelledby="lev-h">
       <header><h2 id="lev-h">Reference levels and risk lenses</h2><span className="note">arithmetic</span></header>
       <div className="body">
         <table>
@@ -247,7 +257,7 @@ export function Health({ s }: { s: Summary }) {
   const rows = (s.fundamentals ?? []).filter((r) => r.status === "ok" || r.status === "unverified");
   const missing = (s.fundamentals ?? []).filter((r) => r.status !== "ok" && r.status !== "unverified");
   return (
-    <section className="entry" aria-labelledby="health-h">
+    <section className="entry" data-r aria-labelledby="health-h">
       <header><h2 id="health-h">Business health</h2><span className="note">annual statements</span></header>
       <div className="body">
         {rows.length === 0 ? <p>Annual statements were not available for this run, so year figures, cash flow and EV/EBITDA are missing.</p> : (
@@ -278,7 +288,7 @@ export function AtAGlance({ s, onTab }: { s: Summary; onTab: (t: string) => void
   const bull = s.debate?.bull.slice(0, REASONS) ?? [];
   const bear = s.debate?.bear.slice(0, REASONS) ?? [];
   return (
-    <section className="glance" aria-labelledby="glance-h">
+    <section className="glance" data-r aria-labelledby="glance-h">
       <h2 id="glance-h" className="sr">At a glance</h2>
       <div className="glance-row">
         <div><span className="glance-k">Educational rating</span><strong className="glance-v">{st ? st.label : "No rating"}</strong><span className="glance-s">{st ? `${st.confidence} confidence. A rule-based reading, not advice.` : "Not enough data."}</span></div>
@@ -300,7 +310,7 @@ export function Ownership({ s }: { s: Summary }) {
   const o = s.ownership;
   if (!o) return null;
   return (
-    <section className="entry" aria-labelledby="own-h">
+    <section className="entry" data-r aria-labelledby="own-h">
       <header><h2 id="own-h">Who owns it</h2><span className="note">{o.source === "official" ? `NSE filing, as on ${o.as_on}` : "vendor estimate"}</span></header>
       <div className="body">
         {o.rows.length === 0 ? <p>No ownership data this run.</p> : (
@@ -326,7 +336,7 @@ export function MarketFlows({ s }: { s: Summary }) {
   const f = s.market_flows;
   if (!f) return null;
   return (
-    <section className="entry" aria-labelledby="flow-h">
+    <section className="entry" data-r aria-labelledby="flow-h">
       <header><h2 id="flow-h">Market flows</h2><span className="note">as of {f.as_of}</span></header>
       <div className="body">
         {f.rows.length > 0 && <table>
@@ -364,7 +374,7 @@ export function AnalystPanel({ results }: { results: import("@/lib/types").Panel
   return (
     <>
       {results.map((r) => (
-        <section className="entry" key={r.id} aria-label={r.title}>
+        <section className="entry" data-r key={r.id} aria-label={r.title}>
           <header><h2>{r.title}</h2><span className="note">{r.explanation ? "checked against the facts" : "not shown"}</span></header>
           <div className="body">
             {r.explanation ? (
@@ -390,7 +400,7 @@ export function ScenarioPlan({ s }: { s: Summary }) {
   if (!sc) return null;
   const list = (title: string, items: string[]) => items.length > 0 && (<><h3 style={{ marginTop: "var(--space-sm)" }}>{title}</h3><ul className="plain">{items.map((x) => <li key={x}>{x}</li>)}</ul></>);
   return (
-    <section className="entry" aria-labelledby="scn-h">
+    <section className="entry" data-r aria-labelledby="scn-h">
       <header><h2 id="scn-h">Scenario plan</h2><span className="note">{sc.tone}, educational</span></header>
       <div className="body">
         <p><strong>{sc.headline}</strong></p>
