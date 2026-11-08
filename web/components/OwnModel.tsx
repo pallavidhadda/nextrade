@@ -6,6 +6,7 @@ import type { PanelResult, Summary } from "@/lib/types";
 import Info from "@/components/Info";
 
 type Mode = "debate" | "panel" | "single";
+const CUT_OFF = "The model stopped before it finished its answer (it hit its output limit, which thinking models reach quickly). Try again, or pick a model with a larger output limit.";
 
 type Props = { jobId: string; summary: Summary; onExplanation: (e: NonNullable<Summary["explanation"]>) => void; onPanel: (r: PanelResult[]) => void };
 
@@ -42,6 +43,7 @@ export default function OwnModelPanel({ jobId, summary, onExplanation, onPanel }
           setMsg({ kind: "ok", text: `Asking the ${role.title.toLowerCase()}...` });
           try {
             const c = await complete(cfg, role.system, user, 600);
+            if (c.truncated) throw new Error(CUT_OFF);
             const v = await validate(jobId, c.text, model.trim());
             if (v.explanation) {
               out.push({ id: role.id, title: role.title, explanation: v.explanation, error: "" });
@@ -57,6 +59,7 @@ export default function OwnModelPanel({ jobId, summary, onExplanation, onPanel }
         return;
       }
       const c = await complete({ provider, model: model.trim(), baseUrl, apiKey }, llm.system, llm.user, llm.max_tokens);
+      if (c.truncated) throw new Error(CUT_OFF);
       const v = await validate(jobId, c.text, model.trim());
       if (!v.explanation) { setMsg({ kind: "err", text: `Your model's answer failed the checks: ${v.reasons.join("; ") || "unknown reason"}. Nothing was shown from it.` }); return; }
       onExplanation({ ...v.explanation, usage: { in: c.inTokens ?? 0, out: c.outTokens ?? 0 } });

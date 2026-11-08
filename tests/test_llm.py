@@ -214,3 +214,11 @@ def test_quoted_educational_rating_is_allowed_but_other_advice_is_not():
     assert _advice("You should buy this stock now.") == "buy"
     assert _advice("Educational rating: Buy, so go ahead and sell your other shares.") == "sell"
     assert _advice("We recommend an overweight position.") in ("recommend", "overweight")
+
+
+def test_valid_json_wrapped_in_a_sentence_is_still_accepted(digest):
+    d, sc, fs = digest
+    ok, _ = validate_llm_output("Here is the JSON you asked for:\n" + good(d) + "\nHope that helps.", d)
+    assert ok is not None and len(ok.claims) == 2
+    cut, reasons = validate_llm_output(good(d)[:40], d)      # a truncated answer is still rejected
+    assert cut is None and reasons == ["output is not the requested JSON"]
