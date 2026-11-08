@@ -110,9 +110,16 @@ def flows_html(s: dict) -> str:
     return _card("Market flows", f"as of {f['as_of']}", fut + cash_html + f'<p class="helper">{e(f["note"] or (cash or {}).get("note", ""))}</p>')
 
 
-PROVIDER_KEYS = {"Gemini": ("gemini", "GOOGLE_API_KEY", "gemini-3.1-flash-lite"),
-                 "Anthropic": ("anthropic", "ANTHROPIC_API_KEY", "claude-haiku-5-5"),
-                 "OpenAI-compatible": ("openai", "OPENAI_API_KEY", "")}
+# label -> (wire format, key variable, default model, default address, key needed). Anything that speaks the OpenAI
+# chat-completions format works: OpenRouter, Ollama, LM Studio, Groq, vLLM, LiteLLM, Together, a company gateway.
+PROVIDER_KEYS = {"Gemini": ("gemini", "GOOGLE_API_KEY", "gemini-3.1-flash-lite", "", True),
+                 "Claude (Anthropic)": ("anthropic", "ANTHROPIC_API_KEY", "claude-haiku-5-5", "", True),
+                 "OpenAI": ("openai", "OPENAI_API_KEY", "", "https://api.openai.com/v1", True),
+                 "OpenRouter": ("openai", "OPENAI_API_KEY", "", "https://openrouter.ai/api/v1", True),
+                 "Ollama (on this machine)": ("openai", "OPENAI_API_KEY", "", "http://localhost:11434/v1", False),
+                 "LM Studio (on this machine)": ("openai", "OPENAI_API_KEY", "", "http://localhost:1234/v1", False),
+                 "Groq": ("openai", "OPENAI_API_KEY", "", "https://api.groq.com/openai/v1", True),
+                 "Any other OpenAI-compatible": ("openai", "OPENAI_API_KEY", "", "", False)}
 
 
 def _result_dict(title: str, ex, error: str = "") -> dict:
@@ -129,10 +136,10 @@ def ai_run(llm_block: dict, provider_label: str, model: str, base_url: str, key:
     from indiafacts.digest import Digest
     from indiafacts.llm import make_client, validate_llm_output
 
-    provider, env_name, default_model = PROVIDER_KEYS[provider_label]
+    provider, env_name, default_model, default_base, _ = PROVIDER_KEYS[provider_label]
     env = {env_name: key}
     if provider == "openai":
-        env["INDIAFACTS_LLM_BASE_URL"] = base_url.strip()
+        env["INDIAFACTS_LLM_BASE_URL"] = base_url.strip() or default_base
     client = make_client(provider, (model or default_model).strip() or None, env=env, post=post)
     digest = Digest(text=llm_block["digest"], ids={i: "" for i in llm_block["ids"]}, items={}, by_key={}, est_tokens=0)
     mode = mode or ("panel" if panel else "single")
