@@ -68,7 +68,7 @@ export default function OwnModelPanel({ jobId, summary, onExplanation, onPanel }
 
   if (!llm) return null;
   return (
-    <section className="entry" aria-labelledby="own-h">
+    <section className="entry" data-r aria-labelledby="own-h">
       <header><h2 id="own-h">Explain with your own model</h2><span className="note">optional</span></header>
       <form className="body" onSubmit={run} autoComplete="off">
         <p className="helper">The facts digest (about {Math.round(llm.user.length / 2.8)} tokens, no personal data) goes from your browser straight to <strong>{dest}</strong>. Your key is used once and cleared. NexTrade&rsquo;s servers never receive it; they only check the answer.</p>
