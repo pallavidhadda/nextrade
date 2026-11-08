@@ -3,11 +3,14 @@ import { useState } from "react";
 import { validate } from "@/lib/api";
 import { DEFAULT_MODELS, complete, destination, type Provider } from "@/lib/llm";
 import type { PanelResult, Summary } from "@/lib/types";
+import Info from "@/components/Info";
+
+type Mode = "debate" | "panel" | "single";
 
 type Props = { jobId: string; summary: Summary; onExplanation: (e: NonNullable<Summary["explanation"]>) => void; onPanel: (r: PanelResult[]) => void };
 
 export default function OwnModelPanel({ jobId, summary, onExplanation, onPanel }: Props) {
-  const [mode, setMode] = useState<"single" | "panel" | "debate">("single");
+  const [mode, setMode] = useState<Mode>(summary.llm?.debate?.length ? "debate" : "single");
   const [provider, setProvider] = useState<Provider>("gemini");
   const [model, setModel] = useState(DEFAULT_MODELS.gemini);
   const [baseUrl, setBaseUrl] = useState("http://localhost:11434/v1");
@@ -67,29 +70,45 @@ export default function OwnModelPanel({ jobId, summary, onExplanation, onPanel }
   }
 
   if (!llm) return null;
+  const modes: { id: Mode; title: string; calls: number; ok: boolean; what: string }[] = [
+    { id: "debate", title: "Bull vs bear debate", calls: llm.debate?.length ?? 3, ok: !!llm.debate?.length, what: "Three AI calls in a row. A bull advocate argues the case in favour, a bear advocate answers point by point and argues against, then a referee weighs both and says what is still uncertain. Each answer is checked against the facts before it is shown." },
+    { id: "panel", title: "Analyst panel", calls: llm.roles?.length ?? 6, ok: !!llm.roles?.length, what: "Five analysts each read the same facts from one angle: fundamentals, price and momentum, ownership and flows, news, and risk. A research manager then combines their notes into one balanced reading. Each answer is checked against the facts." },
+    { id: "single", title: "One explanation", calls: 1, ok: true, what: "A single AI call that rewrites the plain-English summary in your model's own words. It replaces the template summary on the Summary tab." },
+  ];
+  const chosen = modes.find((m) => m.id === mode)!;
   return (
     <section className="entry" data-r aria-labelledby="own-h">
-      <header><h2 id="own-h">Explain with your own model</h2><span className="note">optional</span></header>
-      <form className="body" onSubmit={run} autoComplete="off">
+      <header><h2 id="own-h">Run an AI analysis</h2><span className="note">your key, your model</span></header>
+      <form className="body ai" onSubmit={run} autoComplete="off">
+        <fieldset className="modes">
+          <legend>What should the AI do?</legend>
+          {modes.map((m) => (
+            <div className={`mode${mode === m.id ? " on" : ""}${m.ok ? "" : " off"}`} key={m.id}>
+              <label>
+                <input type="radio" name="ai-mode" value={m.id} checked={mode === m.id} disabled={!m.ok} onChange={() => setMode(m.id)} />
+                <span className="radio" aria-hidden="true" />
+                <span className="mt">{m.title}</span>
+                <span className="calls num">{m.calls} {m.calls === 1 ? "call" : "calls"}</span>
+              </label>
+              <Info label={m.title}>{m.what}</Info>
+            </div>
+          ))}
+        </fieldset>
+        <p className="helper mode-what" aria-live="polite">{chosen.what}</p>
         <p className="helper">The facts digest (about {Math.round(llm.user.length / 2.8)} tokens, no personal data) goes from your browser straight to <strong>{dest}</strong>. Your key is used once and cleared. NexTrade&rsquo;s servers never receive it; they only check the answer.</p>
-        <div className="chips" role="group" aria-label="Provider" style={{ marginTop: "var(--space-sm)" }}>
+        <div className="chips" role="group" aria-label="Provider" style={{ marginTop: "var(--space-md)" }}>
           {([["gemini", "Gemini"], ["anthropic", "Anthropic"], ["openai", "OpenAI-compatible"]] as [Provider, string][]).map(([p, label]) => (
             <button key={p} type="button" className="chip" aria-pressed={provider === p} onClick={() => pick(p)}>{label}</button>
           ))}
         </div>
-        <div className="chips" role="group" aria-label="What to run" style={{ marginTop: "var(--space-sm)" }}>
-          <button type="button" className="chip" aria-pressed={mode === "single"} onClick={() => setMode("single")}>One explanation</button>
-          <button type="button" className="chip" aria-pressed={mode === "debate"} onClick={() => setMode("debate")} disabled={!llm.debate?.length}>Bull vs bear debate (3 calls)</button>
-          <button type="button" className="chip" aria-pressed={mode === "panel"} onClick={() => setMode("panel")} disabled={!llm.roles?.length}>Analyst panel (6 calls)</button>
-        </div>
-        <div className="row" style={{ marginTop: "var(--space-sm)" }}>
+        <div className="row" style={{ marginTop: "var(--space-md)" }}>
           <div className="field"><label htmlFor="own-model">Model</label><input id="own-model" name="model" value={model} onChange={(e) => setModel(e.target.value)} autoComplete="off" spellCheck={false} /></div>
           {provider === "openai" && <div className="field"><label htmlFor="own-base">Address</label><input id="own-base" name="base" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} autoComplete="off" spellCheck={false} inputMode="url" /></div>}
         </div>
         <div className="row" style={{ marginTop: "var(--space-sm)" }}>
           <div className="field"><label htmlFor="own-key">API key{provider === "openai" ? ", if needed" : ""}</label>
             <input id="own-key" name="own-key" type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} autoComplete="off" autoCapitalize="off" spellCheck={false} data-lpignore="true" data-1p-ignore="true" /></div>
-          <button className="key primary" type="submit" disabled={busy || (provider !== "openai" && !apiKey)}>{busy ? "Asking" : "Explain"}</button>
+          <button className="key primary" type="submit" disabled={busy || (provider !== "openai" && !apiKey)}><span>{busy ? "Asking" : mode === "debate" ? "Run the debate" : mode === "panel" ? "Run the panel" : "Explain"}</span></button>
         </div>
         <p className={`helper${msg?.kind === "err" ? " err" : ""}`} role={msg ? "status" : undefined} style={{ marginTop: "var(--space-xs)" }}>{msg?.text ?? ""}</p>
       </form>

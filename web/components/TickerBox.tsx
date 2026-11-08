@@ -2,10 +2,10 @@
 import { useId, useMemo, useState } from "react";
 import { suggest } from "@/lib/search";
 
-type Props = { value: string; onChange: (v: string) => void; error?: string; helpId: string };
+type Props = { value: string; onChange: (v: string) => void; error?: string; helpId: string; compact?: boolean };
 
 /** Text box with a dropdown of matching companies. Forgives typos ("infosis" offers Infosys). Arrow keys, Enter and Escape work. */
-export default function TickerBox({ value, onChange, error, helpId }: Props) {
+export default function TickerBox({ value, onChange, error, helpId, compact }: Props) {
   const id = useId();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -30,14 +30,14 @@ export default function TickerBox({ value, onChange, error, helpId }: Props) {
   }
 
   return (
-    <div className="field combo">
-      <label htmlFor={`${id}-in`}>Company or ticker</label>
+    <div className={`field combo${compact ? " compact" : ""}`}>
+      <label htmlFor={`${id}-in`} className={compact ? "sr" : undefined}>Company or ticker</label>
       <input
         id={`${id}-in`} name="ticker" value={value} role="combobox" aria-expanded={show} aria-controls={`${id}-list`} aria-autocomplete="list"
         aria-activedescendant={active >= 0 ? `${id}-opt-${active}` : undefined} aria-describedby={helpId} aria-invalid={!!error}
         onChange={(e) => { onChange(e.target.value); setOpen(true); setActive(-1); }} onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 120)} onKeyDown={onKey}
-        autoComplete="off" autoCapitalize="characters" spellCheck={false} placeholder="Company name or ticker"
+        autoComplete="off" autoCapitalize="characters" spellCheck={false} placeholder={compact ? "Analyse another company" : "Company name or ticker"}
       />
       {show && (
         <ul className="combo-list" id={`${id}-list`} role="listbox" aria-label="Matching companies">
