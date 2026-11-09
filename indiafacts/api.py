@@ -123,7 +123,7 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
             log(f"job {job_id} done in {time.time() - t0:.0f}s")
         except (ValueError, TimeoutError) as exc:
             j.update(status="error", error=str(exc)[:300].replace(os.path.expanduser("~"), "~") or "analysis failed")
-            log(f"job {job_id} failed after {time.time() - t0:.0f}s: {type(exc).__name__}")
+            log(f"job {job_id} failed after {time.time() - t0:.0f}s: {type(exc).__name__}: {str(exc)[:200]}")
         except Exception as exc:
             j.update(status="error", error=f"analysis failed ({type(exc).__name__})")
             log(f"job {job_id} crashed after {time.time() - t0:.0f}s: {type(exc).__name__}")

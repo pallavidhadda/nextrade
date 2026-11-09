@@ -71,6 +71,7 @@ def subprocess_runner(opts: dict, progress: Callable[[str], None]) -> dict:
         except Exception:
             pass
         if code != 0 or not out_json.exists():
+            print(f"analysis child failed: exit={code} last_lines={tail!r}", file=sys.stderr, flush=True)      # the web page shows only the error line; keep the evidence in the server log
             raise ValueError(next((t[7:] for t in reversed(tail) if t.startswith("error: ")), "analysis failed"))
         return {"summary": json.loads(out_json.read_text(encoding="utf-8")), "html": out_html.read_text(encoding="utf-8")}
 

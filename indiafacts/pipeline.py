@@ -74,6 +74,8 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
     if fs.entity.resolution != "resolved":
         reason = ("no data at Yahoo and not in security master; not found at Yahoo under this symbol" if loaded
                   else "no data at Yahoo; symbol-change list not loaded, so a rename cannot be ruled out")
+        if fs.entity.resolution_reason:
+            reason += f" [{fs.entity.resolution_reason}]"                       # keep the vendor's own error for the server log
         fs = fs.model_copy(update={"entity": fs.entity.unresolved(reason)})
     if fs.entity.resolution != "resolved" and not filing:
         return fs.model_copy(update={"notices": notices})

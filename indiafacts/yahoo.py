@@ -88,7 +88,7 @@ def _fetch_payload(client: YahooClient, sleep: Callable[[float], None]):
                 return stmt, info or {}, ""
             last = "empty response"
         except Exception as exc:  # vendor/network errors are retried
-            last = f"{type(exc).__name__}"
+            last = f"{type(exc).__name__}: {str(exc)[:120]}".strip().rstrip(":")
         if attempt < RETRY_COUNT - 1:
             sleep(2 ** attempt)
     return None, {}, last
