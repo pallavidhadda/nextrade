@@ -142,7 +142,10 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
         return {"ok": True, "disclaimer": DISCLAIMER}
 
     def from_snapshot(opts: dict) -> str | None:
-        """An already-completed job built from a fresh precomputed snapshot, or None."""
+        """An already-completed job built from a fresh precomputed snapshot, or None.
+        Snapshots are computed with the labelled default profile, so a request that sets any profile field runs live."""
+        if any(v is not None for k, v in opts.items() if k != "ticker"):
+            return None
         snap = snapshots.lookup(opts["ticker"]) if snapshots is not None else None
         if snap is None:
             return None

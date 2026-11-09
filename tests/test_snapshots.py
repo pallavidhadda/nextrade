@@ -150,6 +150,15 @@ def test_api_refresh_bypasses_snapshot():
         assert j["summary"]["served_from"] == "live" and "snap" not in j["summary"]
 
 
+def test_api_custom_profile_runs_live():
+    """Snapshots use the default profile; a user who set horizon or risk must not get the default-profile result."""
+    c = client_for(date.today().isoformat())
+    for body in ({"ticker": "TCS.NS", "horizon": "1-3y"}, {"ticker": "TCS.NS", "risk_tolerance": "low"}):
+        r = c.post("/api/analyze", json=body)
+        assert r.json()["served_from"] == "live"
+        assert wait(c, r.json()["job_id"])["summary"]["served_from"] == "live"
+
+
 def test_api_stale_snapshot_falls_through_to_live():
     c = client_for("2020-01-01")
     r = c.post("/api/analyze", json={"ticker": "TCS.NS"})
