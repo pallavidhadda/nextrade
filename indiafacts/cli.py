@@ -88,6 +88,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
 
         _, sugg = resolve(args.ticker)
         hint = ("The ticker may be mistyped. Did you mean: " + ", ".join(m.label for m in sugg[:3]) + "? ") if sugg else ""
+        print(f"fetch detail: {fs.entity.resolution_reason}", file=sys.stderr)          # the vendor error, for the server log
         print(f"error: could not fetch any data for {fs.entity.ticker}. {hint}Otherwise this usually means this machine cannot reach "
               "Yahoo Finance (no network, a proxy or a sandbox), or the ticker has changed. Nothing was analysed. "
               "If the NexTrade connector is available, use it instead; otherwise retry with network access.", file=sys.stderr)
