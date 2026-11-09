@@ -17,9 +17,15 @@
     "strong_negative": -0.45
   },
   "confidence": {
-    "high_min_factors": 4,
-    "medium_min_factors": 3,
-    "max_unavailable_checks_for_high": 2
+    "high_min": 6,
+    "medium_min": 4,
+    "pool_large": 25,
+    "pool_ok": 12,
+    "edge_margin": 0.08
+  },
+  "evidence_gate": {
+    "note": "No rating (not even Hold) unless quality and value are both scored, or this many factors are scored including one of them. Added 2026-11-10 after alpha feedback: momentum alone carried an Overweight.",
+    "min_factors_with_one_fundamental": 4
   },
   "labels": {
     "strong_positive": "Buy",

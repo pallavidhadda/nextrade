@@ -22,6 +22,32 @@ def load_stance_params(path: Path | None = None, today: date | None = None, stri
     return data
 
 
+NO_RATING = "No rating"                       # the score itself could not be computed
+INSUFFICIENT = "Insufficient evidence"        # a score exists, but the fundamental pillars behind a rating are missing
+NO_DIRECTION = {NO_RATING, INSUFFICIENT}
+FUNDAMENTAL_FACTORS = ("quality", "value")
+
+
+def has_direction(label: str | None) -> bool:
+    """True when the label is an actual rating (Buy..Sell); False for No rating and Insufficient evidence."""
+    return bool(label) and label not in NO_DIRECTION
+
+
+def evidence_gate(scored: dict, p: dict) -> tuple[bool, str]:
+    """Minimum evidence for any rating, Hold included. A rating needs both fundamental pillars (quality and value),
+    or at least `min_factors_with_one_fundamental` factors including one of them. Momentum, risk and growth alone
+    describe the price and the trend, not whether the business or the price is sound, so they never carry a rating."""
+    g = {"min_factors_with_one_fundamental": 4, **p.get("evidence_gate", {})}
+    have = [k for k in FUNDAMENTAL_FACTORS if k in scored]
+    if len(have) == len(FUNDAMENTAL_FACTORS):
+        return True, ""
+    if have and len(scored) >= g["min_factors_with_one_fundamental"]:
+        return True, ""
+    missing = [FACTOR_NAMES[k] for k in FUNDAMENTAL_FACTORS if k not in scored]
+    return False, (f"{' and '.join(missing)} could not be scored, so {len(scored)} of 5 factors "
+                   f"({', '.join(FACTOR_NAMES.get(k, k) for k in scored) or 'none'}) are not enough for a rating")
+
+
 @dataclass
 class Point:
     text: str
@@ -30,17 +56,18 @@ class Point:
 
 @dataclass
 class Stance:
-    label: str               # Buy | Overweight | Hold | Underweight | Sell | No rating
+    label: str               # Buy | Overweight | Hold | Underweight | Sell | No rating | Insufficient evidence
     confidence: str          # High | Medium | Low | n/a
     reason: str
     value: float | None = None
+    partial: bool = False    # True when the report is a partial research snapshot (evidence gate not met)
 
 
 @dataclass
 class Debate:
     bull: list[Point] = field(default_factory=list)
     bear: list[Point] = field(default_factory=list)
-    stance: Stance = field(default_factory=lambda: Stance("No rating", "n/a", "no score available"))
+    stance: Stance = field(default_factory=lambda: Stance(NO_RATING, "n/a", "no score available", partial=True))
 
 
 def _fact(fs: FactSet, metric: str):
@@ -54,7 +81,7 @@ def build_debate(fs: FactSet, sc: dict | None, params: dict | None = None) -> De
     r = sc.get("result") if sc else None
     if r is None or r.status != "ok" or r.overall is None:
         reason = (r.reason if r is not None and r.reason else "no score available") if sc else "no score available"
-        d.stance = Stance("No rating", "n/a", f"no rating because the score could not be computed ({reason})")
+        d.stance = Stance(NO_RATING, "n/a", f"no rating because the score could not be computed ({reason})", partial=True)
         return d
 
     scored = {k: v.score for k, v in r.factors.items() if v.score is not None}
@@ -93,6 +120,14 @@ def build_debate(fs: FactSet, sc: dict | None, params: dict | None = None) -> De
     L = p["labels"]
     label = (L["strong_positive"] if s >= b["strong_positive"] else L["positive"] if s >= b["positive"] else
              L["neutral"] if s > b["negative"] else L["negative"] if s > b["strong_negative"] else L["strong_negative"])
+    ok, gap = evidence_gate(scored, p)
+    if not ok:
+        lean = "positive" if s >= b["positive"] else "negative" if s <= b["negative"] else "neutral"
+        d.stance = Stance(INSUFFICIENT, "n/a",
+                          f"no rating: {gap}; this is a partial research snapshot. The available evidence leans {lean} "
+                          f"(overall score {r.overall:.1f} of 100, {nb} supporting against {nr} cautionary points), "
+                          f"shown for information only", round(s, 3), partial=True)
+        return d
     conf, why = _confidence(fs, sc, scored, s, b, ratio, p)
     d.stance = Stance(label, conf, f"overall score {r.overall:.1f} of 100 and {nb} supporting against {nr} cautionary points; "
                                    f"{len(scored)} of 5 factors had enough data; confidence {conf.lower()} because {why}; a rule-based reading, not a prediction", round(s, 3))

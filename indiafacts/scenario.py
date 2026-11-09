@@ -61,8 +61,11 @@ def build_scenario(fs: FactSet, debate, levels, panel, today: date | None = None
     today = today or date.today()
     sc = Scenario()
     label = debate.stance.label if debate is not None else "No rating"
-    if label == "No rating" or levels is None or levels.last_close is None:
-        sc.reason = "no scenario plan without a rating and a last close"
+    from indiafacts.debate import has_direction
+
+    if not has_direction(label) or levels is None or levels.last_close is None:
+        sc.reason = ("no scenario plan: the evidence is not enough for a rating" if label == "Insufficient evidence"
+                     else "no scenario plan without a rating and a last close")
         return sc
     last = levels.last_close
     sc.applies = True

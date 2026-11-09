@@ -61,10 +61,51 @@ def test_d4_abstained_or_missing_score_gives_no_stance():
 
 
 def test_d5_confidence_drops_with_thin_coverage():
-    thin = sc_with(70, {"value": None, "quality": None, "growth": None, "momentum": 70, "risk": 72},
-                   {"profitable_latest_quarter": "pass", "positive_1y_return": "pass", "debt_moderate": "unavailable"})
+    # four factors with one fundamental pillar passes the gate but stays Low (fewer than five factors, other weak ingredients)
+    thin = sc_with(70, {"value": None, "quality": 72, "growth": 66, "momentum": 70, "risk": 72},
+                   {"profitable_latest_quarter": "pass", "positive_1y_return": "pass", "debt_moderate": "unavailable",
+                    "revenue_growing": "unavailable"})
+    thin["n"] = 6
     d = build_debate(fs_with(), thin)
-    assert d.stance.confidence == "Low"
+    assert d.stance.label not in ("Insufficient evidence", "No rating") and d.stance.confidence == "Low"
+
+
+# Reliance alpha run (2026-11-10): growth 50, momentum 75, risk 58; quality and value not scored; pool of 5 -> was "Overweight, low"
+RELIANCE_ALPHA = sc_with(55.2, {"value": None, "quality": None, "growth": 50, "momentum": 75, "risk": 58},
+                         {"profit_growth": "pass", "revenue_growing": "pass", "interest_cover": "pass", "positive_1y_return": "fail",
+                          "beats_nifty_1y": "fail"})
+
+
+def test_d9_gate_withholds_rating_without_fundamental_pillars():
+    d = build_debate(fs_with(), RELIANCE_ALPHA)
+    assert d.stance.label == "Insufficient evidence" and d.stance.confidence == "n/a" and d.stance.partial
+    assert "Quality and Value could not be scored" in d.stance.reason and "partial research snapshot" in d.stance.reason
+    assert d.bull and d.bear                     # the evidence is still shown, only the rating is withheld
+    assert not any(w in d.stance.reason.lower() for w in BANNED)
+
+
+def test_d9_gate_passes_with_both_pillars_or_four_factors_with_one():
+    both = sc_with(60, {"value": 60, "quality": 62, "growth": None, "momentum": None, "risk": 55}, {})
+    assert build_debate(fs_with(), both).stance.label not in ("Insufficient evidence", "No rating")
+    three_one = sc_with(60, {"value": None, "quality": 62, "growth": 55, "momentum": 70, "risk": None}, {})
+    assert build_debate(fs_with(), three_one).stance.label == "Insufficient evidence"
+    assert not build_debate(fs_with(), STRONG).stance.partial
+
+
+def test_d9_gate_threshold_comes_from_params():
+    p = load_stance_params(strict=False)
+    p["evidence_gate"] = {"min_factors_with_one_fundamental": 3}
+    three_one = sc_with(60, {"value": None, "quality": 62, "growth": 55, "momentum": 70, "risk": None}, {})
+    assert build_debate(fs_with(), three_one, params=p).stance.label != "Insufficient evidence"
+
+
+def test_d9_no_scenario_plan_without_a_rating():
+    from indiafacts.debate import has_direction
+    from indiafacts.scenario import build_scenario
+    d = build_debate(fs_with(), RELIANCE_ALPHA)
+    assert not has_direction(d.stance.label) and not has_direction("No rating") and has_direction("Hold")
+    sc = build_scenario(fs_with(), d, levels=None, panel=None, today=ASOF)
+    assert not sc.applies and "not enough for a rating" in sc.reason
 
 
 def test_d6_no_opinion_words_and_every_point_has_a_reason_text():

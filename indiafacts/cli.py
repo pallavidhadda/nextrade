@@ -146,7 +146,9 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
 
     scenario = build_scenario(fs, debate, levels, panel, today=args.as_of)
     prose = case_prose(debate, scorecard)
-    if not args.no_remember and debate.stance.label != "No rating":
+    from indiafacts.debate import has_direction
+
+    if not args.no_remember and has_direction(debate.stance.label):
         try:
             from indiafacts.journal import Journal
 
