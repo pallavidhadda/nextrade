@@ -269,10 +269,17 @@ def _scorecard_block(sc: dict, x: dict | None = None) -> list[str]:
     if sc["failed"]:
         lines.append("  not loaded: " + "; ".join(f"{t} ({why})" for t, why in sc["failed"].items()))
     lines += ["", f"CHECKLIST (project-defined, 9 pass/fail tests): {sc['checklist_summary']}"]
-    for c in sc["checklist"]:
-        tag = {"pass": "pass", "fail": "fail", "unavailable": "unav"}[c.result]
-        detail = f"{c.display}, needs {c.threshold}" if c.value is not None else c.reason
-        lines.append(f"  [{tag}] {c.label} ({detail})")
+    from indiafacts.checklist import grouped
+
+    for g in grouped(sc["checklist"]):
+        lines.append(f" {g['group']}: {g['text']}")
+        for c in sc["checklist"]:
+            if c.id not in g["checks"]:
+                continue
+            tag = {"pass": "pass", "fail": "fail", "unavailable": "unav"}[c.result]
+            detail = f"{c.display}, needs {c.threshold}" if c.value is not None else c.reason
+            lines.append(f"  [{tag}] {c.label} ({detail})")
+    lines.append(" each check counts once; there are no weights")
     return lines
 
 

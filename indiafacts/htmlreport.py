@@ -377,17 +377,22 @@ def _score_card(sc: dict | None) -> str:
 def _checklist_card(sc: dict | None) -> str:
     if not sc:
         return _card("checklist", "Nine-point checklist", "", '<p class="empty">Run with --score to see the checklist.</p>')
+    from indiafacts.checklist import grouped
+
     items = ""
-    for c in sc["checklist"]:
-        cls, icon, word = {"pass": ("pass", "✓", "pass"), "fail": ("fail", "✗", "fail"),
-                           "unavailable": ("na", "–", "unavailable")}[c.result]
-        val = f"{c.display}, needs {c.threshold}" if c.value is not None else c.reason
-        items += (f'<li class="check {cls}"><span class="icon" aria-hidden="true">{icon}</span>'
-                  f'<span>{esc(c.label)}<span class="state">{word}</span></span><span class="val">{esc(val)}</span></li>')
-    twin = _table(["Test", "Result", "Value"], [[c.label, c.result, c.display or c.reason] for c in sc["checklist"]])
+    for g in grouped(sc["checklist"]):
+        items += f'<h3>{esc(g["group"])}: {esc(g["text"])}</h3><ul class="checks">'
+        for c in (c for c in sc["checklist"] if c.id in g["checks"]):
+            cls, icon, word = {"pass": ("pass", "✓", "pass"), "fail": ("fail", "✗", "fail"),
+                               "unavailable": ("na", "–", "unavailable")}[c.result]
+            val = f"{c.display}, needs {c.threshold}" if c.value is not None else c.reason
+            items += (f'<li class="check {cls}"><span class="icon" aria-hidden="true">{icon}</span>'
+                      f'<span>{esc(c.label)}<span class="state">{word}</span></span><span class="val">{esc(val)}</span></li>')
+        items += "</ul>"
+    twin = _table(["Group", "Test", "Result", "Value"], [[c.group, c.label, c.result, c.display or c.reason] for c in sc["checklist"]])
     return _card("checklist", f"Nine-point checklist: {sc['checklist_summary']}",
-                 "Project-defined pass/fail tests (not the Piotroski score). Missing data shows as unavailable, never as a fail.",
-                 f'<ul class="checks">{items}</ul>', twin)
+                 "Project-defined pass/fail tests (not the Piotroski score), grouped for reading. Each check counts once; there are no weights. Missing data shows as unavailable, never as a fail.",
+                 items, twin)
 
 
 def _health_card(fs) -> str:

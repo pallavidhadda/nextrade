@@ -21,24 +21,29 @@ class Check:
     threshold: str
     kind: str = "num"            # inr | pct | num
     fallback: str = ""           # annual metric used when the quarterly one is unavailable (labelled as such)
+    group: str = ""
 
 
+F, B, T = "Fundamentals", "Balance sheet", "Price trend"
 CHECKS = [
-    Check("profitable_latest_quarter", "Latest quarter profit is positive", "net_income", lambda v: v > 0, "> 0", "inr"),
-    Check("positive_eps_ttm", "Trailing earnings per share is positive", "eps_ttm", lambda v: v > 0, "> 0", "inr"),
-    Check("earnings_growing", "Profit is higher than a year earlier", "net_income_yoy", lambda v: v > 0, "> 0%", "pct", "fy_net_income_yoy"),
-    Check("revenue_growing", "Revenue is higher than a year earlier", "revenue_yoy", lambda v: v > 0, "> 0%", "pct", "fy_revenue_yoy"),
+    Check("profitable_latest_quarter", "Latest quarter profit is positive", "net_income", lambda v: v > 0, "> 0", "inr", group=F),
+    Check("positive_eps_ttm", "Trailing earnings per share is positive", "eps_ttm", lambda v: v > 0, "> 0", "inr", group=F),
+    Check("earnings_growing", "Profit is higher than a year earlier", "net_income_yoy", lambda v: v > 0, "> 0%", "pct", "fy_net_income_yoy", F),
+    Check("revenue_growing", "Revenue is higher than a year earlier", "revenue_yoy", lambda v: v > 0, "> 0%", "pct", "fy_revenue_yoy", F),
     Check("interest_cover", "Profit covers interest costs at least 3 times", "interest_service_coverage_ratio",
-          lambda v: v >= 3, ">= 3", "num", "fy_interest_cover"),
-    Check("debt_moderate", "Debt is below equity (debt-to-equity under 1)", "debt_to_equity", lambda v: v < 1, "< 1"),
-    Check("positive_1y_return", "Price is higher than a year ago", "return_1y", lambda v: v > 0, "> 0%", "pct"),
-    Check("beats_nifty_1y", "Price did better than the Nifty 50 over a year", "relative_return_1y", lambda v: v > 0, "> 0%", "pct"),
-    Check("near_52w_high", "Price is within 25% of its 52-week high", "pct_from_52w_high", lambda v: v >= -0.25, ">= -25%", "pct"),
+          lambda v: v >= 3, ">= 3", "num", "fy_interest_cover", B),
+    Check("debt_moderate", "Debt is below equity (debt-to-equity under 1)", "debt_to_equity", lambda v: v < 1, "< 1", group=B),
+    Check("positive_1y_return", "Price is higher than a year ago", "return_1y", lambda v: v > 0, "> 0%", "pct", group=T),
+    Check("beats_nifty_1y", "Price did better than the Nifty 50 over a year", "relative_return_1y", lambda v: v > 0, "> 0%", "pct", group=T),
+    Check("near_52w_high", "Price is within 25% of its 52-week high", "pct_from_52w_high", lambda v: v >= -0.25, ">= -25%", "pct", group=T),
 ]
+# No existing check is a valuation test, so the Valuation group is empty and not shown (no check is invented to fill it).
+GROUP_ORDER = ("Fundamentals", "Balance sheet", "Valuation", "Price trend")
 
 
 class CheckResult(BaseModel):
     id: str
+    group: str = ""
     label: str
     result: str                     # pass | fail | unavailable
     value: float | None = None
@@ -62,14 +67,31 @@ def checklist(fs: FactSet) -> list[CheckResult]:
             f = _latest(fs, c.fallback)
             annual = f is not None
         if f is None:
-            out.append(CheckResult(id=c.id, label=c.label, result="unavailable", threshold=c.threshold,
+            out.append(CheckResult(id=c.id, group=c.group, label=c.label, result="unavailable", threshold=c.threshold,
                                    fact_ids=[], reason=f"no data for {c.metric}"))
             continue
         v = float(f.value)
         shown = (format_inr(Decimal(str(f.value))) if c.kind == "inr" else f"{v:+.1%}" if c.kind == "pct" else f"{v:.2f}")
-        out.append(CheckResult(id=c.id, label=c.label, result="pass" if c.test(v) else "fail", value=v,
+        out.append(CheckResult(id=c.id, group=c.group, label=c.label, result="pass" if c.test(v) else "fail", value=v,
                                threshold=c.threshold, display=shown + (" (last financial year)" if annual else ""),
                                fact_ids=[f.fact_id]))
+    return out
+
+
+def group_text(rs: list[CheckResult]) -> str:
+    unav = sum(1 for r in rs if r.result == "unavailable")
+    return f"{sum(1 for r in rs if r.result == 'pass')} of {len(rs)} passed, {unav} unavailable"
+
+
+def grouped(results: list[CheckResult]) -> list[dict]:
+    """Per-group counts. Each check counts once and equally; no weights. A group with no check is left out."""
+    out = []
+    for g in GROUP_ORDER:
+        rs = [r for r in results if r.group == g]
+        if rs:
+            out.append({"group": g, "passed": sum(1 for r in rs if r.result == "pass"), "total": len(rs),
+                        "unavailable": sum(1 for r in rs if r.result == "unavailable"), "text": group_text(rs),
+                        "checks": [r.id for r in rs]})
     return out
 
 

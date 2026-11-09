@@ -108,20 +108,25 @@ export function Checklist({ s }: { s: Summary }) {
           <div className="meter" role="img" aria-label={`${pass} of ${s.checklist.length} checks passed`}>
             {s.checklist.map((c, i) => <i key={c.label} className={c.result} style={{ ["--i" as string]: i }} />)}
           </div>
-          <table>
-            <thead><tr><th>Test</th><th>Result</th></tr></thead>
-            <tbody>
-              {s.checklist.map((c, i) => (
-                <tr key={c.label}>
-                  <td>{c.label}<span className="ids">{c.display ? `${c.display}, needs ${c.threshold}` : c.reason}</span></td>
-                  <td><span className={`tag resolve ${c.result}`} style={{ ["--i" as string]: i }}>{c.result === "unavailable" ? "Unavailable" : c.result === "pass" ? "Pass" : "Fail"}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {(s.checklist_groups?.length ? s.checklist_groups : [{ group: "", text: "" }]).map((g) => (
+            <div key={g.group}>
+              {g.group && <h3>{g.group}: {g.text}</h3>}
+              <table>
+                <thead><tr><th>Test</th><th>Result</th></tr></thead>
+                <tbody>
+                  {s.checklist.filter((c) => !g.group || c.group === g.group).map((c, i) => (
+                    <tr key={c.label}>
+                      <td>{c.label}<span className="ids">{c.display ? `${c.display}, needs ${c.threshold}` : c.reason}</span></td>
+                      <td><span className={`tag resolve ${c.result}`} style={{ ["--i" as string]: i }}>{c.result === "unavailable" ? "Unavailable" : c.result === "pass" ? "Pass" : "Fail"}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
           </>
         )}
-        <p className="helper" style={{ marginTop: "var(--space-sm)" }}>Project-defined tests. Missing data shows as unavailable, never as a fail.</p>
+        <p className="helper" style={{ marginTop: "var(--space-sm)" }}>Project-defined tests, grouped for reading. Each counts once; there are no weights. Missing data shows as unavailable, never as a fail.</p>
       </div>
     </section>
   );
