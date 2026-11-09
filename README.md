@@ -6,8 +6,8 @@
 |---|---|
 | **Role** | Product manager and builder (discovery, strategy, prioritisation, specs, build with AI assistance, measurement) |
 | **Status** | Live and working, early. No external users yet and no outcome data yet (first settlement due about 8 Dec 2026). Both stated plainly below. |
-| **Live** | [Streamlit app](https://nextrade.streamlit.app) · API and Claude connector on Render · Next.js web app · Claude Code plugin |
-| **Stack** | Python (analysis engine, tested offline), Next.js, Streamlit, MCP connector, GitHub Actions |
+| **Live** | Next.js web app on Vercel · API and Claude connector on Render · Claude Code plugin |
+| **Stack** | Python (analysis engine, tested offline), Next.js, MCP connector, GitHub Actions |
 
 > Research and education only. Not financial, investment or trading advice. Free data (Yahoo Finance) is unofficial and can be late, incomplete or wrong.
 
@@ -61,7 +61,7 @@ Per company, one report with:
 - Educational rating (Buy / Overweight / Hold / Underweight / Sell) with confidence built from six visible ingredients
 - Recent headlines, exchange filings, a **decision journal** that settles each past rating against the Nifty 50, and a **claim checker**
 
-Surfaces: Streamlit app, Next.js web app, HTTP API, Claude connector (works in chat and Cowork), Claude Code plugin, CLI.
+Surfaces: Next.js web app (Vercel), HTTP API, Claude connector (works in chat and Cowork), Claude Code plugin, CLI.
 
 ## 5. Key product decisions and trade-offs
 
@@ -133,9 +133,8 @@ python -m indiafacts.journal board                                       # score
 python -m indiafacts.backtest --from-year 2016 --oos-start 2023-01-01     # price-signal scorecard
 python -m indiafacts TCS.NS --shareholding SHP_file.xml --flows        # ownership from a saved NSE file, plus market flows
 python -m indiafacts TCS.NS --announcements                              # latest exchange filings from NSE's public RSS feed
-streamlit run streamlit_app.py                                           # the Streamlit app
 ```
-Web app (Next.js): [web/README.md](web/README.md) · Streamlit deploy: [docs/DEPLOY_STREAMLIT.md](docs/DEPLOY_STREAMLIT.md) · API and connector hosting: [docs/DEPLOY.md](docs/DEPLOY.md) · Connector lock: [docs/CONNECTOR_LOCK.md](docs/CONNECTOR_LOCK.md) · Token accounting: [docs/TOKEN_COMPARISON.md](docs/TOKEN_COMPARISON.md)
+Web app (Next.js, hosted on Vercel): [web/README.md](web/README.md) · API and connector hosting: [docs/DEPLOY.md](docs/DEPLOY.md) · Connector lock: [docs/CONNECTOR_LOCK.md](docs/CONNECTOR_LOCK.md) · Token accounting: [docs/TOKEN_COMPARISON.md](docs/TOKEN_COMPARISON.md)
 
 Claude Code plugin (private repo for now):
 ```

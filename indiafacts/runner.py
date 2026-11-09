@@ -1,4 +1,4 @@
-"""Run one analysis in its own process and read its JSON and HTML outputs. Shared by the HTTP API and the Streamlit app.
+"""Run one analysis in its own process and read its JSON and HTML outputs. Shared by the HTTP API and the snapshot job.
 No keys are passed to the child. Education only; not financial, investment or trading advice."""
 from __future__ import annotations
 

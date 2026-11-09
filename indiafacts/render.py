@@ -111,7 +111,7 @@ def _profile_block(profile, is_default: bool, view: str) -> list[str]:
 
 
 # ---------------------------------------------------------------------------------------------------------------------------
-# Shared "how sure is this report" view. Works on the same dict shape as the JSON summary so the text, HTML and Streamlit
+# Shared "how sure is this report" view. Works on the same dict shape as the JSON summary so the text, HTML and web
 # renderers print identical wording. Education only; no buy/sell/target words.
 # ---------------------------------------------------------------------------------------------------------------------------
 SMALL_POOL = 12

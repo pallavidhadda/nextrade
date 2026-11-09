@@ -20,7 +20,7 @@ Research/education only; not financial, investment or trading advice. Goal: an i
 | S3 | EV/EBITDA versus peers | DONE 2026-11-07 (peer median table and score) | no |
 | S4 | Free cash flow | DONE 2026-11-07 (FCF, margin, yield in Business health, rating points) | no |
 | S5 | Marketaux per-ticker sentiment trial (5 Indian tickers) | needs a free key | yes |
-| S6 | Deploy the Streamlit app and the Next.js app | guides written | yes: accounts |
+| S6 | Deploy the Next.js app | live on Vercel; Streamlit app removed 2026-11-10 (the Vercel app replaces it) | no |
 
 ## Could have (nice, later)
 C1 Reddit mention counts, Market Mood Index, Google Trends. C2 Tune rating thresholds from settled outcomes (needs weeks of decisions). C3 Persistent report storage (Supabase or R2; needs credentials). C4 Precomputed comparison-pool snapshot for speed. C5 Holdings input kept in the browser. C6 Thesis notes and journal views.
