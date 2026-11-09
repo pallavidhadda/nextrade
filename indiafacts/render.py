@@ -431,10 +431,11 @@ def _levels_block(lv, panel, scenario=None, directional: bool = True) -> list[st
 
 
 def _news_block(items) -> list[str]:
-    out = ["", "RECENT HEADLINES (unverified third-party text; keyword hint only, not analysis)"]
+    out = ["", "RECENT HEADLINES (NSE announcements first, then third-party text that names the company; unverified; keyword hints only, not analysis)"]
     for n in items:
         when = n.published.date().isoformat() if n.published else "undated"
-        out.append(f"- {when} {n.publisher}: {n.title} [{n.sentiment_hint}]")
+        src = f"NSE announcement{': ' + n.category if n.category else ''}" if n.source_kind == "exchange" else "third-party headline"
+        out.append(f"- {when} {n.publisher} ({src}): {n.title} [{n.sentiment_hint}; event type, keyword guess: {n.event_type}]")
     return out
 
 

@@ -84,7 +84,7 @@ def test_news_debate_and_stance_flow_through_digest_text_and_json(tmp_path, caps
 
     class N:
         def news(self, symbol):
-            return [{"title": "Company wins record order; shares surge", "publisher": "Wire", "providerPublishTime": int(datetime.now(timezone.utc).timestamp()) - 3600}]
+            return [{"title": "Reliance wins record order; shares surge", "publisher": "Wire", "providerPublishTime": int(datetime.now(timezone.utc).timestamp()) - 3600}]
 
     c = tmp_path / "ind.csv"
     c.write_text(NSE_CSV, encoding="utf-8")
@@ -127,7 +127,7 @@ def test_html_report_includes_debate_levels_and_escapes_headlines(tmp_path, caps
 
     class N:
         def news(self, symbol):
-            return [{"title": "<script>alert(1)</script> wins deal", "publisher": "Wire", "providerPublishTime": int(datetime.now(timezone.utc).timestamp()) - 60}]
+            return [{"title": "Reliance <script>alert(1)</script> wins deal", "publisher": "Wire", "providerPublishTime": int(datetime.now(timezone.utc).timestamp()) - 60}]
 
     c = tmp_path / "ind.csv"
     c.write_text(NSE_CSV, encoding="utf-8")

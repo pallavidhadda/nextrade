@@ -1,0 +1,14 @@
+{
+  "note": "Keyword lists for the rough event-type label on news items. First matching type wins, in this order. A keyword guess, not analysis. Project author's choices, not evidence-based.",
+  "reviewed_on": "2026-11-10",
+  "review_by": "2027-05-10",
+  "exchange_max": 4,
+  "event_types": [
+    ["results", ["result", "results", "earnings", "quarterly", "q1", "q2", "q3", "q4", "net profit", "revenue", "profit"]],
+    ["dividend/corporate action", ["dividend", "bonus", "split", "buyback", "buy back", "rights issue", "record date", "demerger", "merger", "amalgamation", "stake sale", "fund raise", "qip", "ncd"]],
+    ["order/contract", ["order", "contract", "bags", "wins", "awarded", "deal", "tender", "partnership"]],
+    ["regulatory", ["sebi", "rbi", "nclt", "court", "probe", "penalty", "fine", "notice", "tribunal", "regulator", "investigation", "raid", "ban", "approval"]],
+    ["management", ["appoint", "appoints", "resign", "resigns", "ceo", "cfo", "chairman", "director", "board", "succession"]],
+    ["rating", ["rating", "upgrade", "downgrade", "brokerage", "initiates coverage", "outlook", "crisil", "icra", "moody", "fitch"]]
+  ]
+}

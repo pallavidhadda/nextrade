@@ -50,7 +50,7 @@ export type Summary = {
   debate: null | { bull: { text: string; evidence: string }[]; bear: { text: string; evidence: string }[]; stance: { label: string; confidence: string; reason: string; partial?: boolean } };
   levels: null | { applies: boolean; last_close: number | null; stop: number | null; risk_pct: number | null; targets: { r: number; price: number }[]; support: { name: string; price: number }[]; resistance: { name: string; price: number }[]; reason: string; notes: string[] };
   risk_panel: null | { profile_lens: string; notes: string[]; lenses: { name: string; fits: boolean | null; breaches: string[]; max_position_pct: number | null; reason: string }[] };
-  news: { title: string; publisher: string; published: string | null; url: string; sentiment_hint: "positive" | "negative" | "neutral" }[];
+  news: { title: string; publisher: string; published: string | null; url: string; sentiment_hint: "positive" | "negative" | "neutral"; source_kind?: "exchange" | "media"; category?: string; event_type?: string }[];
   explanation: null | { source: string; summary: string; uncertainty: string; claims: Claim[]; triggers: { text: string; ids: string[] }[]; usage: Record<string, number> };
   llm: null | { system: string; user: string; max_tokens: number; ids: string[]; digest: string; roles?: { id: string; title: string; system: string }[]; debate?: { id: string; title: string; system: string; uses_notes: boolean }[] };
   disclaimer: string;

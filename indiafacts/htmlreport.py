@@ -663,9 +663,10 @@ def _extra_cards(debate, news, levels, panel, scenario=None) -> str:
         body += "<p class='sub'>Arithmetic on past closes: not predictions, not price targets, not personal advice.</p>"
         out += _card("levels", "Reference levels (not targets) and risk lenses", "Volatility-based.", body)
     if news:
-        rows = [[(n.published.date().isoformat() if n.published else "undated"), n.publisher, n.title, n.sentiment_hint] for n in news]
-        out += _card("news", "Recent headlines", "Unverified third-party titles; keyword hint only.",
-                     _table(["Date", "Source", "Headline", "Hint"], rows) + "<p class='sub'>Not facts about the company; the hint is a keyword guess.</p>")
+        rows = [[(n.published.date().isoformat() if n.published else "undated"),
+                 n.publisher + (f" ({n.category})" if n.source_kind == "exchange" and n.category else ""), n.title, n.event_type, n.sentiment_hint] for n in news]
+        out += _card("news", "Recent news", "NSE announcements first, then third-party titles that name the company; keyword hints only.",
+                     _table(["Date", "Source", "Headline", "Event type (keyword guess)", "Hint"], rows) + "<p class='sub'>Third-party titles are not facts about the company; the event type and the hint are keyword guesses.</p>")
     return out
 
 

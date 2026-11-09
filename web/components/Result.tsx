@@ -299,16 +299,16 @@ export function News({ s }: { s: Summary }) {
   if (!s.news || s.news.length === 0) return null;
   return (
     <section className="entry" data-r aria-labelledby="news-h">
-      <header><h2 id="news-h">Recent headlines</h2><span className="note">unverified, keyword hint only</span></header>
+      <header><h2 id="news-h">Recent news</h2><span className="note">NSE announcements first; keyword hints only</span></header>
       <div className="body">
         <table>
-          <thead><tr><th>Date</th><th>Source</th><th>Headline</th><th>Hint</th></tr></thead>
+          <thead><tr><th>Date</th><th>Source</th><th>Headline</th><th>Event type (keyword guess)</th><th>Hint</th></tr></thead>
           <tbody>{s.news.map((n, i) => (
-            <tr key={i}><td>{n.published ?? "undated"}</td><td>{n.publisher}</td><td>{n.title}</td>
+            <tr key={i}><td>{n.published ?? "undated"}</td><td>{n.publisher}{n.source_kind === "exchange" && n.category ? ` (${n.category})` : ""}</td><td>{n.title}</td><td>{n.event_type ?? "other"}</td>
               <td><span className={`tag ${n.sentiment_hint === "neutral" ? "hypothesis" : n.sentiment_hint === "positive" ? "fact" : "fail"}`}>{n.sentiment_hint}</span></td></tr>
           ))}</tbody>
         </table>
-        <p className="helper" style={{ marginTop: "var(--space-sm)" }}>Third-party headlines are not verified and are not facts about the company. The hint is a keyword guess, not analysis.</p>
+        <p className="helper" style={{ marginTop: "var(--space-sm)" }}>Third-party headlines are not verified and are not facts about the company; only those naming the company are kept. The event type and the hint are keyword guesses, not analysis.</p>
       </div>
     </section>
   );

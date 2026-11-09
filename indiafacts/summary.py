@@ -91,7 +91,8 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
         rp = {"profile_lens": panel.profile_lens, "notes": panel.notes,
               "lenses": [{"name": l.name, "fits": l.fits, "breaches": l.breaches, "max_position_pct": l.max_position_pct, "reason": l.reason} for l in panel.lenses]}
     nws = [{"title": n.title, "publisher": n.publisher, "published": n.published.date().isoformat() if n.published else None,
-            "url": n.url, "sentiment_hint": n.sentiment_hint} for n in (news or [])]
+            "url": n.url, "sentiment_hint": n.sentiment_hint, "source_kind": n.source_kind, "category": n.category,
+            "event_type": n.event_type} for n in (news or [])]
     return {"ticker": e.ticker, "name": e.name, "sector": e.sector, "industry": e.industry,
             "isin": e.isin.value, "retrieved_at": fs.retrieved_at.isoformat(),
             "profile": {"horizon": profile.horizon, "risk": profile.effective_risk, "experience": profile.experience},

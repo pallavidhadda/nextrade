@@ -49,6 +49,23 @@ def _companies() -> tuple[tuple[str, str, str, str, tuple[str, ...]], ...]:
     return tuple(out)
 
 
+_LEGAL = {"ltd", "limited", "pvt", "private"}
+
+
+def aliases_for(ticker: str) -> list[str]:
+    """Normalised names a headline may use for this company: its symbol, its listed name without legal suffixes, and the
+    brand names in ALIASES that point at it. Derived from the data above; nothing is invented. Only whole-word matching is safe."""
+    sym = ticker.upper().rsplit(".", 1)[0] if re.search(r"\.(NS|BO)$", ticker.upper()) else ticker.upper()
+    out = [_norm(sym)]
+    for s_, n, _i, norm, _t in _companies():
+        if s_ == sym:
+            words = [w for w in norm.split() if w not in _LEGAL]
+            if words:
+                out.append(" ".join(words))
+    out += [k for k, v in ALIASES.items() if v == sym]
+    return list(dict.fromkeys(a for a in out if len(a) >= 2))
+
+
 def _norm(s: str) -> str:
     s = s.lower().replace("&", " and ")
     return " ".join(re.sub(r"[^a-z0-9 ]", " ", s).split())
