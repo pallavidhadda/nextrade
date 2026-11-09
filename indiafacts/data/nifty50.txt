@@ -1,4 +1,6 @@
-# Nifty 50 constituents (approximate, from memory; the index is reconstituted twice a year, so edit as needed).
+# Nifty 50 constituents as of 2026-11-10: BSE.NS replaced WIPRO.NS from 2026-09-30 (press reports, not yet checked
+# against NSE's ind_nifty50list.csv); TMPV.NS is Tata Motors' passenger-vehicle company after the 2025 demerger.
+# Reconstituted twice a year (March, September): update after each review.
 # Used only by the daily snapshot job (indiafacts/snapshots.py). Not an official list.
 ADANIENT.NS
 ADANIPORTS.NS
@@ -6,10 +8,11 @@ APOLLOHOSP.NS
 ASIANPAINT.NS
 AXISBANK.NS
 BAJAJ-AUTO.NS
-BAJFINANCE.NS
 BAJAJFINSV.NS
+BAJFINANCE.NS
 BEL.NS
 BHARTIARTL.NS
+BSE.NS
 CIPLA.NS
 COALINDIA.NS
 DRREDDY.NS
@@ -22,30 +25,30 @@ HDFCLIFE.NS
 HINDALCO.NS
 HINDUNILVR.NS
 ICICIBANK.NS
-ITC.NS
-INFY.NS
 INDIGO.NS
-JSWSTEEL.NS
+INFY.NS
+ITC.NS
 JIOFIN.NS
+JSWSTEEL.NS
 KOTAKBANK.NS
 LT.NS
 M&M.NS
 MARUTI.NS
 MAXHEALTH.NS
-NTPC.NS
 NESTLEIND.NS
+NTPC.NS
 ONGC.NS
 POWERGRID.NS
 RELIANCE.NS
 SBILIFE.NS
-SHRIRAMFIN.NS
 SBIN.NS
+SHRIRAMFIN.NS
 SUNPHARMA.NS
-TCS.NS
 TATACONSUM.NS
 TATASTEEL.NS
+TCS.NS
 TECHM.NS
 TITAN.NS
+TMPV.NS
 TRENT.NS
 ULTRACEMCO.NS
-WIPRO.NS
