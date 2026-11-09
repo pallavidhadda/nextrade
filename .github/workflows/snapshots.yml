@@ -1,0 +1,53 @@
+name: snapshots
+# Precomputes analyses for the Nifty 50 and the web app's example tickers once per weekday and publishes them to the
+# orphan `snapshots` branch (never main). The API serves them instantly; live analysis stays as "Refresh now". Education only.
+on:
+  schedule:
+    - cron: "30 12 * * 1-5"      # 18:00 IST, after the NSE close
+  workflow_dispatch:
+    inputs:
+      probe:
+        description: "Only fetch 1-2 tickers and report whether Yahoo works from GitHub's runners"
+        type: boolean
+        default: false
+      tickers:
+        description: "Optional comma-separated tickers (default: Nifty 50 plus example tickers)"
+        type: string
+        default: ""
+permissions:
+  contents: write
+concurrency: snapshots-branch
+jobs:
+  snapshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --python 3.12
+      - name: probe
+        if: ${{ inputs.probe }}
+        run: uv run python -m indiafacts.snapshots --probe ${{ inputs.tickers != '' && format('--tickers "{0}"', inputs.tickers) || '' }}
+      - name: fetch the current snapshots branch
+        if: ${{ !inputs.probe }}
+        run: |
+          if git ls-remote --exit-code --heads origin snapshots >/dev/null 2>&1; then
+            git clone --depth 1 --branch snapshots "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" snapshots
+          else
+            mkdir snapshots
+          fi
+      - name: precompute
+        if: ${{ !inputs.probe }}
+        env:
+          INDIAFACTS_POOL_SIZE: "30"
+        run: uv run python -m indiafacts.snapshots --out snapshots ${{ inputs.tickers != '' && format('--tickers "{0}"', inputs.tickers) || '' }}
+      - name: publish to the snapshots branch
+        if: ${{ !inputs.probe && always() && hashFiles('snapshots/index.json') != '' }}
+        working-directory: snapshots
+        run: |
+          [ -d .git ] || { git init -q -b snapshots; git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"; }
+          git config user.name "nextrade-snapshots"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -q -m "snapshots: $(date -u +%F)"
+          git push origin snapshots

@@ -35,6 +35,7 @@ class AnalyzeRequest(BaseModel):
     risk_tolerance: Literal["low", "medium", "high"] | None = None
     risk_capacity: Literal["low", "medium", "high"] | None = None
     experience: Literal["beginner", "expert"] | None = None
+    refresh: bool = False          # true skips any precomputed snapshot and runs live
 
     @field_validator("ticker")
     @classmethod
@@ -60,10 +61,17 @@ class ValidateRequest(BaseModel):
     model: str | None = Field(default=None, max_length=80)
 
 
-def create_app(runner: Runner = subprocess_runner, max_running: int | None = None, per_minute: int = 6, claim_runner=None) -> FastAPI:
+BUSY_MESSAGE = "The server is busy with another analysis; try again in a minute."
+
+
+def create_app(runner: Runner = subprocess_runner, max_running: int | None = None, per_minute: int = 6, claim_runner=None, snapshots="env") -> FastAPI:
     if max_running is None:
         max_running = int(os.environ.get("INDIAFACTS_MAX_RUNNING", "2"))
     holder: dict = {}
+    if snapshots == "env":
+        from indiafacts.snapshots import client_from_env
+
+        snapshots = client_from_env()          # None when INDIAFACTS_SNAPSHOT_BASE is unset: live analysis only
 
     def log(msg: str) -> None:
         print(f"{datetime.now(timezone.utc).strftime('%H:%M:%S')} {msg}", file=sys.stderr, flush=True)
@@ -119,7 +127,8 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
         t0 = time.time()
         try:
             res = runner(opts, lambda p: j.__setitem__("progress", p))
-            j.update(status="done", summary=res["summary"], html=res["html"])
+            res["summary"]["served_from"] = "live"
+            j.update(status="done", summary=res["summary"], html=res["html"], served_from="live")
             log(f"job {job_id} done in {time.time() - t0:.0f}s")
         except (ValueError, TimeoutError) as exc:
             j.update(status="error", error=str(exc)[:300].replace(os.path.expanduser("~"), "~") or "analysis failed")
@@ -132,7 +141,26 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
     def health():
         return {"ok": True, "disclaimer": DISCLAIMER}
 
-    def submit(opts: dict, who: str) -> tuple[str, bool]:
+    def from_snapshot(opts: dict) -> str | None:
+        """An already-completed job built from a fresh precomputed snapshot, or None."""
+        snap = snapshots.lookup(opts["ticker"]) if snapshots is not None else None
+        if snap is None:
+            return None
+        summary = dict(snap["summary"], served_from="snapshot", snapshot_as_of=snap["as_of"])
+        job_id = uuid.uuid4().hex[:16]
+        with lock:
+            jobs[job_id] = {"status": "done", "created": time.time(), "progress": "", "summary": summary, "html": snap["html"],
+                            "served_from": "snapshot", "snapshot_as_of": snap["as_of"]}
+        log(f"job {job_id} served from snapshot {opts['ticker']} as_of {snap['as_of']}")
+        return job_id
+
+    def submit(opts: dict, who: str, refresh: bool = False) -> tuple[str, bool]:
+        refresh = refresh or bool(opts.get("refresh"))
+        opts = {k: v for k, v in opts.items() if k != "refresh"}
+        if not refresh:
+            snap_id = from_snapshot(opts)
+            if snap_id:
+                return snap_id, True
         key = repr(sorted(opts.items()))
         with lock:
             now = time.time()
@@ -147,11 +175,11 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
             if len(window) >= per_minute:
                 raise Busy("Too many requests from this connection; wait a minute.")
             window.append(now)
-            hit = cache.get(key)
+            hit = None if refresh else cache.get(key)
             if hit and now - hit[0] < CACHE_SECONDS and hit[1] in jobs and jobs[hit[1]]["status"] == "done":
                 return hit[1], True
             if running() >= max_running:
-                raise Busy("The service is busy with other analyses; try again in a minute.")
+                raise Busy(BUSY_MESSAGE)
             job_id = uuid.uuid4().hex[:16]
             jobs[job_id] = {"status": "queued", "created": now, "progress": ""}
             cache[key] = (now, job_id)
@@ -164,19 +192,19 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
     app.state.claim_runner = claim_runner or _default_claim
 
     @app.post("/api/analyze", status_code=202)
-    def analyze(req: AnalyzeRequest, request: Request):
+    def analyze(req: AnalyzeRequest, request: Request, refresh: bool = False):
         try:
-            job_id, cached = submit(req.model_dump(), client_key(request))
+            job_id, cached = submit(req.model_dump(exclude={"refresh"}), client_key(request), refresh or req.refresh)
         except Busy as exc:
             raise HTTPException(429, str(exc))
-        return {"job_id": job_id, "cached": cached}
+        return {"job_id": job_id, "cached": cached, "served_from": jobs[job_id].get("served_from", "live")}
 
     @app.get("/api/jobs/{job_id}")
     def job(job_id: str):
         j = jobs.get(job_id)
         if not j:
             raise HTTPException(404, "unknown job")
-        return {k: j[k] for k in ("status", "progress", "summary", "error") if k in j}
+        return {k: j[k] for k in ("status", "progress", "summary", "error", "served_from", "snapshot_as_of") if k in j}
 
     @app.post("/api/jobs/{job_id}/validate")
     def validate(job_id: str, req: ValidateRequest):
