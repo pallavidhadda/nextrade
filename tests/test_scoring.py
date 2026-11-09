@@ -221,3 +221,22 @@ def test_s14_financial_sector_company_drops_debt_to_equity_with_flag(cfg):
     assert any("financial company" in x and "debt_to_equity" in x for x in r.flags)
     assert r.factors["quality"].coverage == pytest.approx(2 / 3, abs=1e-3)
     assert "debt_to_equity" in run(u, cfg)["A06.NS"].metric_scores
+
+
+def test_contributions_sum_to_overall_and_effective_weights_sum_to_one(cfg):
+    r = run(universe(), cfg)["A05.NS"]
+    assert r.status == "ok" and r.contributions and not r.missing_factors
+    assert abs(sum(c.contribution for c in r.contributions.values()) - r.overall) < 0.01
+    assert abs(sum(c.effective_weight for c in r.contributions.values()) - 1) < 1e-4
+    c = r.contributions["quality"]
+    assert c.base_weight == weights_for(profile())["quality"] and c.score == r.factors["quality"].score
+    assert c.n_metrics == len(r.factors["quality"].input_fact_ids) and c.coverage == r.factors["quality"].coverage
+
+
+def test_missing_factor_listed_and_weight_renormalised(cfg):
+    r = run(universe(**{"A03.NS": {"pe_ttm": -10}}), cfg)["A03.NS"]
+    assert [m.factor for m in r.missing_factors] == ["value"]
+    assert r.missing_factors[0].base_weight == weights_for(profile())["value"] and r.missing_factors[0].reason
+    assert "value" not in r.contributions
+    assert abs(sum(c.contribution for c in r.contributions.values()) - r.overall) < 0.01
+    assert all(c.effective_weight > c.base_weight for c in r.contributions.values())

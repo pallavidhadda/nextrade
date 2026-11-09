@@ -36,7 +36,9 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
         r = scorecard["result"]
         score = {"status": r.status, "overall": r.overall, "rank": r.rank, "n": scorecard.get("n"),
                  "reason": r.reason, "pool": _pool_name(scorecard), "flags": list(r.flags),
-                 "factors": {k: {"score": v.score, "coverage": v.coverage, "reason": v.reason} for k, v in r.factors.items()}}
+                 "factors": {k: {"score": v.score, "coverage": v.coverage, "reason": v.reason} for k, v in r.factors.items()},
+                 "contributions": {k: c.model_dump() for k, c in r.contributions.items()},
+                 "missing_factors": [m.model_dump() for m in r.missing_factors]}
         checklist = [{"label": c.label, "result": c.result, "display": c.display, "threshold": c.threshold, "reason": c.reason}
                      for c in scorecard["checklist"]]
     key = []
