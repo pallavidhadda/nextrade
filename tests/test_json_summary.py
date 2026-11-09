@@ -110,7 +110,7 @@ def test_levels_and_risk_lenses_flow_through_text_digest_and_json(tmp_path, caps
     out = tmp_path / "s.json"
     code, text, _ = run(tmp_path, capsys, "--explain", "--json", str(out))
     d = json.loads(out.read_text())
-    assert code == 0 and "REFERENCE LEVELS AND RISK LENSES" in text and "risk lenses" in text
+    assert code == 0 and "REFERENCE LEVELS (NOT TARGETS) AND RISK LENSES" in text and "risk lenses" in text
     assert d["levels"]["last_close"] and {l["name"] for l in d["risk_panel"]["lenses"]} == {"aggressive", "neutral", "conservative"}
     assert "LEVELS last close" in d["llm"]["digest"] and "RISK neutral lens" in d["llm"]["digest"]
     assert "not predictions or price targets" in d["llm"]["digest"]
@@ -135,7 +135,7 @@ def test_html_report_includes_debate_levels_and_escapes_headlines(tmp_path, caps
     main(["RELIANCE.NS", "--score", "--universe", str(c), "--no-tej", "--no-remember", "--news", "--html", str(page)],
          client=FakeClient(stmt=QUARTERLY, info=INFO2), sleep=lambda s: None, price_client=prices_for(SYMS), news_client=N())
     html = page.read_text(encoding="utf-8")
-    assert "Bull case versus bear case" in html and "Educational rating:" in html and "Reference levels and risk lenses" in html
+    assert "Bull case versus bear case" in html and "Educational rating:" in html and "Reference levels (not targets) and risk lenses" in html
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html and "<script>alert(1)" not in html
 
 

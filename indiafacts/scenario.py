@@ -13,6 +13,12 @@ from indiafacts.availability import available_from
 from indiafacts.models import FactSet, PeriodType, Status
 from indiafacts.narrative import clean
 
+
+def level_formula(*a, **k):
+    from indiafacts.render import level_formula as lf
+
+    return lf(*a, **k)
+
 BULLISH, NEUTRAL, CAUTIOUS = ("Buy", "Overweight"), ("Hold",), ("Underweight", "Sell")
 TRANCHES = (1 / 3, 1 / 3, 1 / 3)
 
@@ -137,11 +143,16 @@ def build_scenario(fs: FactSet, debate, levels, panel, today: date | None = None
     return sc
 
 
-def scenario_lines(sc: Scenario) -> list[str]:
+def scenario_lines(sc: Scenario, levels=None) -> list[str]:
     if not sc.applies:
         return []
     out = ["", f"SCENARIO PLAN (educational arithmetic, not a forecast and not advice): {sc.headline}", f"  {sc.summary}"]
-    out += [f"  level: {l} {_inr(v)}: {m}" for l, v, m in sc.levels]
+    if sc.levels:
+        out.append("  Reference levels (not targets):")
+    tg = list(zip(levels.reward_risk, levels.targets)) if levels is not None else []
+    for l, v, m in sc.levels:
+        f = level_formula(v, levels.last_close, levels.stop, tg, levels.notes) if levels is not None else ""
+        out.append(f"  level: {l} {_inr(v)}: {m}" + (f" ({f})" if f else ""))
     for label, pct, cond in sc.stages:
         size = "size depends on your ceiling" if pct is None else f"up to {pct:.1f}% of a portfolio"
         out.append(f"  stage: {label}: {size}; {cond}")

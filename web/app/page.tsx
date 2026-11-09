@@ -5,10 +5,11 @@ import ContourMap from "@/components/ContourMap";
 import TickerBox from "@/components/TickerBox";
 import ProfileChooser from "@/components/Profile";
 import OwnModelPanel from "@/components/OwnModel";
-import { AnalystPanel, AtAGlance, ScenarioPlan, Checklist, Debate, Health, MarketFlows, Ownership, Explanation, Gaps, KeyFacts, Levels, News, Valuation } from "@/components/Result";
+import { AnalystPanel, AtAGlance, CompBadge, Executive, ScenarioPlan, Checklist, Debate, Health, MarketFlows, Ownership, Explanation, Gaps, KeyFacts, Levels, News, Valuation } from "@/components/Result";
 import { Scrub, ScoreFactors, ScoreNumber, SplitWords } from "@/components/Reveal";
 import companies from "@/lib/companies.json";
 import { ApiError, poll, reportDownloadUrl, reportUrl, submit } from "@/lib/api";
+import { execView } from "@/lib/exec";
 import type { Job, PanelResult, Profile, Summary } from "@/lib/types";
 
 const EXAMPLES = ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ITC.NS"];
@@ -186,7 +187,7 @@ function Home() {
     </form>
   );
 
-  if (summary && jobId) return <Shell search={barSearch}><ResultView s={summary} jobId={jobId} tab={tab} onTab={(t) => setUrl({ tab: t })} /></Shell>;
+  if (summary && jobId) return <Shell search={barSearch}><ResultView s={summary} served={job?.served_from ?? summary.served_from} servedAsOf={job?.snapshot_as_of ?? summary.snapshot_as_of} jobId={jobId} tab={tab} onTab={(t) => setUrl({ tab: t })} /></Shell>;
 
   if (running) {
     const pr = progressRatio(job?.progress);
@@ -295,7 +296,7 @@ function ReportFrame({ src, ticker }: { src: string; ticker: string }) {
   return <iframe ref={ref} className="report" title={`Full report for ${ticker}`} src={src} sandbox="allow-scripts" scrolling="no" style={{ height: h }} />;
 }
 
-function ResultView({ s: base, jobId, tab, onTab }: { s: Summary; jobId: string; tab: string; onTab: (t: string) => void }) {
+function ResultView({ s: base, served, servedAsOf, jobId, tab, onTab }: { s: Summary; served?: string; servedAsOf?: string; jobId: string; tab: string; onTab: (t: string) => void }) {
   const [own, setOwn] = useState<Summary["explanation"]>(null);
   const [panel, setPanel] = useState<PanelResult[]>([]);
   const s: Summary = own ? { ...base, explanation: own } : base;
@@ -314,6 +315,8 @@ function ResultView({ s: base, jobId, tab, onTab }: { s: Summary; jobId: string;
               <a className="key primary" href={reportDownloadUrl(jobId)} download><span>Download report</span></a>
             </div>
           </div>
+          {served === "snapshot" && servedAsOf && <p className="snap-label">Precomputed as of close on {servedAsOf}</p>}
+          <CompBadge s={s} />
           <div className="band-read"><ScoreNumber s={s} /><ScoreFactors s={s} /></div>
         </div>
       </section>
@@ -330,7 +333,7 @@ function ResultView({ s: base, jobId, tab, onTab }: { s: Summary; jobId: string;
         </div>
       </div>
       <div className="container body-pad" key={tab} hidden={tab === "ai"}>
-        {tab === "summary" && <AtAGlance s={s} onTab={onTab} />}
+        {tab === "summary" && <><AtAGlance s={s} onTab={onTab} /><div className="stack"><Executive s={s} /></div></>}
         {tab === "report" ? (
           <ReportFrame ticker={s.ticker} src={`${reportUrl(jobId)}?embed=1`} />
         ) : tab === "gaps" ? (
@@ -342,6 +345,7 @@ function ResultView({ s: base, jobId, tab, onTab }: { s: Summary; jobId: string;
           </div>
         )}
       </div>
+      {execView(s).stampLine && <div className="container"><p className="helper stamp-line">{execView(s).stampLine}</p></div>}
       <div className="container body-pad" hidden={tab !== "ai"}>
         <div className="stack">
           <OwnModelPanel jobId={jobId} summary={base} onExplanation={setOwn} onPanel={setPanel} />

@@ -1,6 +1,68 @@
 "use client";
 import { factorLabel, formatValue, metricLabel } from "@/lib/format";
 import type { Summary } from "@/lib/types";
+import { execView, levelFormula } from "@/lib/exec";
+
+export function Decomposition({ s }: { s: Summary }) {
+  const x = execView(s);
+  if (x.rows.length === 0 && x.rankNotes.length === 0) return null;
+  const overall = s.score?.overall;
+  return (
+    <>
+      {x.rows.length > 0 && (
+        <table style={{ marginTop: "var(--space-md)" }}>
+          <caption className="sr">How the overall score is built</caption>
+          <thead><tr><th>Factor</th><th className="num">Score</th><th className="num">Base weight</th><th className="num">Effective weight</th><th className="num">Contribution</th></tr></thead>
+          <tbody>
+            {x.rows.map((r) => <tr key={r.name}><td>{r.name}</td><td className="num">{r.score.toFixed(1)}</td><td className="num">{Math.round(r.base_weight * 100)}%</td><td className="num">{Math.round(r.effective_weight * 100)}%</td><td className="num">{r.contribution.toFixed(1)}</td></tr>)}
+            <tr><td><strong>Sum of contributions</strong></td><td /><td /><td /><td className="num"><strong>{x.total.toFixed(1)}</strong>{overall != null ? ` = overall ${overall.toFixed(1)}` : ""}</td></tr>
+          </tbody>
+        </table>
+      )}
+      {x.sentence && <p className="helper">{x.sentence}</p>}
+      {x.rankNotes.map((n) => <p className="helper" key={n}>{n}</p>)}
+    </>
+  );
+}
+
+export function CompBadge({ s }: { s: Summary }) {
+  const x = execView(s);
+  const c = x.comp;
+  if (!c) return null;
+  const mark = ({ good: "✓", warn: "!", bad: "✕" } as Record<string, string>)[x.tone];
+  return <p className="comp-badge"><span className={`light ${x.tone}`}><span aria-hidden="true">{mark}</span> Data completeness: {c.level}</span> overall coverage {Math.round(c.overall_coverage_pct)}% · stale figures: {c.stale_total}</p>;
+}
+
+export function Executive({ s }: { s: Summary }) {
+  const x = execView(s);
+  const c = x.comp;
+  const mark = ({ good: "✓", warn: "!", bad: "✕" } as Record<string, string>)[x.tone];
+  const list = (items: string[], empty: string) => <ul className="plain">{(items.length ? items : [empty]).map((i) => <li key={i}>{i}</li>)}</ul>;
+  return (
+    <>
+      <section className="entry" data-r aria-labelledby="exec-h">
+        <header><h2 id="exec-h">At a glance, in plain English</h2><span className="note">read this first</span></header>
+        <div className="body">
+          <h3>What this means</h3>
+          <p><span className={`tag stance-tag${x.directional ? "" : " neutral"}`}>{x.label}</span> {x.meaning}</p>
+          <h3>What is missing</h3>{list(x.missing, "nothing flagged")}
+          <h3>What to monitor</h3>{list(x.monitor, "nothing specific flagged")}
+        </div>
+      </section>
+      {c && (
+        <section className="entry" data-r aria-labelledby="comp-h">
+          <header><h2 id="comp-h">Data completeness</h2><span className="note">{c.level}</span></header>
+          <div className="body">
+            <p><span className={`light ${x.tone}`}><span aria-hidden="true">{mark}</span> {c.level}</span> overall coverage {Math.round(c.overall_coverage_pct)}% · stale figures: {c.stale_total}</p>
+            <p className="helper">{c.reason}</p>
+            <ul className="plain pillars">{x.pills.map((p) => <li key={p.label}>{p.label}: {Math.round(p.pct)}%</li>)}</ul>
+            {x.conflicts.length > 0 && (<><h3>Conflicting figures</h3><ul className="plain">{x.conflicts.map((t) => <li key={t}>{t}</li>)}</ul></>)}
+          </div>
+        </section>
+      )}
+    </>
+  );
+}
 
 export function Score({ s }: { s: Summary }) {
   const sc = s.score;
@@ -25,6 +87,7 @@ export function Score({ s }: { s: Summary }) {
                 </div>
               ))}
             </div>
+            <Decomposition s={s} />
           </>
         ) : (
           <p>No score for this run{sc?.reason ? `: ${sc.reason}` : ", because the company is not in the comparison pool"}.</p>
@@ -168,6 +231,7 @@ export function Valuation({ s }: { s: Summary }) {
 export function Debate({ s }: { s: Summary }) {
   const d = s.debate;
   if (!d) return null;
+  const hasDir = execView(s).directional;
   const col = (title: string, pts: { text: string; evidence: string }[]) => (
     <div>
       <h3>{title}</h3>
@@ -185,7 +249,7 @@ export function Debate({ s }: { s: Summary }) {
           </div>
         )}
         <div className="debate">{col("Bull case", d.bull)}{col("Bear case", d.bear)}</div>
-        <p className="stance"><span className="tag stance-tag">{d.stance.label}</span> Confidence {d.stance.confidence}. {d.stance.reason}.</p>
+        <p className="stance"><span className={`tag stance-tag${hasDir ? "" : " neutral"}`}>{d.stance.label}</span> {hasDir ? `Confidence ${d.stance.confidence}. ` : "Partial research snapshot; no rating is given. "}{d.stance.reason}.</p>
         <p className="helper">Educational rating from a transparent rule applied to the evidence on this page. It ignores your own situation, is not a prediction, and is not a recommendation.</p>
       </div>
     </section>
@@ -214,10 +278,20 @@ export function News({ s }: { s: Summary }) {
 export function Levels({ s }: { s: Summary }) {
   const lv = s.levels, rp = s.risk_panel;
   if (!lv || lv.last_close === null) return null;
+  const x = execView(s);
+  if (!x.directional) {
+    return (
+      <section className="entry" data-r aria-labelledby="lev-h">
+        <header><h2 id="lev-h">Reference levels (not targets)</h2><span className="note">not shown</span></header>
+        <div className="body"><p>Not shown: {x.scenarioReason}.</p></div>
+      </section>
+    );
+  }
+  const fm = (v: number) => levelFormula(v, lv.last_close, lv.stop, lv.targets, lv.notes);
   const inr = (v: number) => `₹${v.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   return (
     <section className="entry" data-r aria-labelledby="lev-h">
-      <header><h2 id="lev-h">Reference levels and risk lenses</h2><span className="note">arithmetic</span></header>
+      <header><h2 id="lev-h">Reference levels (not targets) and risk lenses</h2><span className="note">arithmetic</span></header>
       <div className="body">
         <table>
           <thead><tr><th>Level</th><th className="num">Price</th></tr></thead>
@@ -225,8 +299,8 @@ export function Levels({ s }: { s: Summary }) {
             <tr><td>Last close</td><td className="num">{inr(lv.last_close)}</td></tr>
             {lv.support.map((x) => <tr key={x.name}><td>Support: {x.name}</td><td className="num">{inr(x.price)}</td></tr>)}
             {lv.resistance.map((x) => <tr key={x.name}><td>Resistance: {x.name}</td><td className="num">{inr(x.price)}</td></tr>)}
-            {lv.applies && lv.stop !== null && <tr><td>Reference stop ({lv.risk_pct?.toFixed(1)}% below)</td><td className="num">{inr(lv.stop)}</td></tr>}
-            {lv.applies && lv.targets.map((t) => <tr key={t.r}><td>Reward-to-risk {t.r}R</td><td className="num">{inr(t.price)}</td></tr>)}
+            {lv.applies && lv.stop !== null && <tr><td>Reference stop ({lv.risk_pct?.toFixed(1)}% below)<span className="ids">{fm(lv.stop)}</span></td><td className="num">{inr(lv.stop)}</td></tr>}
+            {lv.applies && lv.targets.map((t) => <tr key={t.r}><td>Reference level at {t.r}x the risk<span className="ids">{fm(t.price)}</span></td><td className="num">{inr(t.price)}</td></tr>)}
           </tbody>
         </table>
         {!lv.applies && <p className="helper">Stop and reward-to-risk levels are not shown: {lv.reason}.</p>}
@@ -291,8 +365,8 @@ export function AtAGlance({ s, onTab }: { s: Summary; onTab: (t: string) => void
     <section className="glance" data-r aria-labelledby="glance-h">
       <h2 id="glance-h" className="sr">At a glance</h2>
       <div className="glance-row">
-        <div><span className="glance-k">Educational rating</span><strong className="glance-v">{st ? st.label : "No rating"}</strong><span className="glance-s">{st ? `${st.confidence} confidence. A rule-based reading, not advice.` : "Not enough data."}</span></div>
-        <div><span className="glance-k">Score in pool</span><strong className="glance-v">{s.score?.overall != null ? `${s.score.overall.toFixed(0)}/100` : "n/a"}</strong><span className="glance-s">{s.score?.rank ? `rank ${s.score.rank} of ${s.score.n}` : "not scored"}</span></div>
+        <div><span className="glance-k">Educational rating</span><strong className="glance-v">{st ? st.label : "No rating"}</strong><span className="glance-s">{st ? (execView(s).directional ? `${st.confidence} confidence. A rule-based reading, not advice.` : "Partial snapshot: no rating given.") : "Not enough data."}</span></div>
+        <div><span className="glance-k">Score in pool</span><strong className="glance-v">{s.score?.overall != null ? `${s.score.overall.toFixed(0)}/100` : "n/a"}</strong><span className="glance-s">{s.score?.rank ? `rank ${s.score.rank} of ${s.score.n}${(s.score.n ?? 99) < 12 ? " (small set: unstable)" : ""}` : "not scored"}</span></div>
         <div><span className="glance-k">Checks passed</span><strong className="glance-v">{known ? `${pass}/${known}` : "n/a"}</strong><span className="glance-s">{s.checklist.length - known > 0 ? `${s.checklist.length - known} unavailable` : "all measurable"}</span></div>
         <div><span className="glance-k">Gaps to know about</span><strong className="glance-v">{s.gaps.length}</strong><span className="glance-s"><button type="button" className="linkish" onClick={() => onTab("gaps")}>see what is missing</button></span></div>
       </div>
@@ -397,7 +471,17 @@ export function AnalystPanel({ results }: { results: import("@/lib/types").Panel
 
 export function ScenarioPlan({ s }: { s: Summary }) {
   const sc = s.scenario;
-  if (!sc) return null;
+  if (!sc) {
+    const why = execView(s).scenarioReason;
+    return why ? (
+      <section className="entry" data-r aria-labelledby="scn-h">
+        <header><h2 id="scn-h">Scenario plan</h2><span className="note">not shown</span></header>
+        <div className="body"><p>Not shown: {why}.</p></div>
+      </section>
+    ) : null;
+  }
+  const lvs = s.levels;
+  const fm = (v: number) => (lvs ? levelFormula(v, lvs.last_close, lvs.stop, lvs.targets, lvs.notes) : "");
   const list = (title: string, items: string[]) => items.length > 0 && (<><h3 style={{ marginTop: "var(--space-sm)" }}>{title}</h3><ul className="plain">{items.map((x) => <li key={x}>{x}</li>)}</ul></>);
   return (
     <section className="entry" data-r aria-labelledby="scn-h">
@@ -406,8 +490,8 @@ export function ScenarioPlan({ s }: { s: Summary }) {
         <p><strong>{sc.headline}</strong></p>
         <p>{sc.summary}</p>
         <table style={{ marginTop: "var(--space-sm)" }}>
-          <thead><tr><th>Level</th><th>Price</th></tr></thead>
-          <tbody>{sc.levels.map((l) => <tr key={l.label}><td>{l.label}<span className="ids">{l.meaning}</span></td><td><span className="num">₹{l.price.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></td></tr>)}</tbody>
+          <thead><tr><th>Reference levels (not targets)</th><th>Price</th></tr></thead>
+          <tbody>{sc.levels.map((l) => <tr key={l.label}><td>{l.label}<span className="ids">{l.meaning}</span>{fm(l.price) && <span className="ids">{fm(l.price)}</span>}</td><td><span className="num">₹{l.price.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></td></tr>)}</tbody>
         </table>
         <table style={{ marginTop: "var(--space-sm)" }}>
           <thead><tr><th>Staged exposure</th><th>Size</th></tr></thead>

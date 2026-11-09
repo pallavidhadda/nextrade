@@ -40,7 +40,8 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
                  "reason": r.reason, "pool": _pool_name(scorecard), "flags": list(r.flags),
                  "factors": {k: {"score": v.score, "coverage": v.coverage, "reason": v.reason} for k, v in r.factors.items()},
                  "contributions": {k: c.model_dump() for k, c in r.contributions.items()},
-                 "missing_factors": [m.model_dump() for m in r.missing_factors]}
+                 "missing_factors": [m.model_dump() for m in r.missing_factors],
+                 "pool_failed": len(scorecard.get("failed") or {})}
         checklist = [{"label": c.label, "result": c.result, "display": c.display, "threshold": c.threshold, "reason": c.reason}
                      for c in scorecard["checklist"]]
     key = []
@@ -91,4 +92,4 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
             "profile": {"horizon": profile.horizon, "risk": profile.effective_risk, "experience": profile.experience},
             "key_facts": key, "fundamentals": fundamentals_rows(fs), "ownership": ownership(fs), "market_flows": flows, "scenario": (None if scenario is None or not scenario.applies else {"tone": scenario.tone, "headline": scenario.headline, "summary": scenario.summary, "levels": [{"label": l, "price": v, "meaning": m} for l, v, m in scenario.levels], "stages": [{"label": l, "pct": p, "condition": c} for l, p, c in scenario.stages], "watch": scenario.watch, "more_positive_if": scenario.more_positive_if, "more_cautious_if": scenario.more_cautious_if, "notes": scenario.notes}), "prose": (None if prose is None or not prose.favour else {"favour": prose.favour, "against": prose.against, "weighing": prose.weighing}), "score": score, "completeness": completeness(fs, as_of, news=news if news_fetched else None),"checklist": checklist, "gaps": gaps,
             "notices": list(fs.notices), "changes": [str(c) for c in (changes or [])][:20],
-            "valuation": valuation, "debate": deb, "levels": lev, "risk_panel": rp, "news": nws, "explanation": ex, "llm": llm, "stamp": stamp, "disclaimer": DISCLAIMER}
+            "valuation": valuation, "debate": deb, "levels": lev, "risk_panel": rp, "news": nws, "explanation": ex, "llm": llm, "stamp": stamp, "scenario_reason": getattr(scenario, "reason", "") if scenario is not None else "", "disclaimer": DISCLAIMER}
