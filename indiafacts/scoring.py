@@ -97,6 +97,12 @@ def load_score_config(path: Path | str | None = None, today: date | None = None,
     return ScoreConfig(specs, data["params"], review_by, base, overdue)
 
 
+def _rank(f: Fact) -> int:
+    from indiafacts.analysis import SOURCE_RANK
+
+    return SOURCE_RANK.index(f.source) if f.source in SOURCE_RANK else len(SOURCE_RANK)
+
+
 def _extract(fs: FactSet, cfg: ScoreConfig, as_of: date, now: datetime):
     flags: list[str] = []
     out: dict[str, tuple[float, str]] = {}
@@ -109,6 +115,10 @@ def _extract(fs: FactSet, cfg: ScoreConfig, as_of: date, now: datetime):
         cands = [f for f in fs.facts if f.metric == spec.id and f.status == Status.ok and f.value is not None]
         if not cands:
             continue
+        pts = [f for f in cands if f.period_type == PeriodType.point]
+        if pts and len({f.source for f in pts}) > 1:                   # snapshots from several sources: the best-ranked source wins
+            best = min(_rank(f) for f in pts)
+            cands = [f for f in cands if f.period_type != PeriodType.point or _rank(f) == best]
         cands.sort(key=lambda f: (f.period_end, f.retrieved_at))
         f = cands[-1]
         if f.available_from is not None and f.available_from > as_of:

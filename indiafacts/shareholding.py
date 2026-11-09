@@ -46,7 +46,7 @@ CATEGORIES = {
     "ShareholdingPatternMember": "total",
 }
 STORE_FIELDS = ["symbol", "isin", "as_on", "promoter", "pledged_of_promoter", "foreign_inst", "domestic_inst", "mutual_funds",
-                "insurance", "public", "retail", "shareholders", "source", "fetched_on"]
+                "insurance", "public", "retail", "shareholders", "total_shares", "source", "fetched_on"]
 
 
 @dataclass
@@ -58,6 +58,7 @@ class Shareholding:
     pct: dict[str, float] = field(default_factory=dict)          # fraction of all shares, 0..1
     pledged_of_promoter: float | None = None                     # fraction of the promoters' shares that are pledged
     shareholders: int | None = None
+    total_shares: float | None = None                            # total equity shares in issue, from the "total" row's share count
     source: str = ""                                             # file name or URL it came from
 
 
@@ -130,7 +131,8 @@ def parse_shp(data: bytes | str | Path, source: str = "") -> Shareholding:
     if prom_shares and prom_shares > 0 and "promoter" in pledged:
         pl = min(1.0, pledged["promoter"] / prom_shares)
     return Shareholding(symbol=scalar.get("Symbol", "").upper(), isin=scalar.get("ISIN", ""), name=scalar.get("NameOfTheCompany", ""),
-                        as_on=as_on, pct=pct, pledged_of_promoter=pl, shareholders=holders.get("total"), source=source)
+                        as_on=as_on, pct=pct, pledged_of_promoter=pl, shareholders=holders.get("total"),
+                        total_shares=shares.get("total") if shares.get("total", 0) > 0 else None, source=source)
 
 
 # ---- local store (CSV) ---------------------------------------------------------------------------------------
@@ -153,7 +155,8 @@ def _row(sh: Shareholding, today: date) -> dict:
             "pledged_of_promoter": "" if sh.pledged_of_promoter is None else f"{sh.pledged_of_promoter:.6f}",
             "foreign_inst": g("foreign_inst"), "domestic_inst": g("domestic_inst"), "mutual_funds": g("mutual_funds"),
             "insurance": g("insurance"), "public": g("public"), "retail": g("retail"),
-            "shareholders": "" if sh.shareholders is None else sh.shareholders, "source": sh.source, "fetched_on": today.isoformat()}
+            "shareholders": "" if sh.shareholders is None else sh.shareholders,
+            "total_shares": "" if sh.total_shares is None else f"{sh.total_shares:.0f}", "source": sh.source, "fetched_on": today.isoformat()}
 
 
 def save_snapshot(sh: Shareholding, path: Path | None = None, today: date | None = None) -> bool:
@@ -165,6 +168,7 @@ def save_snapshot(sh: Shareholding, path: Path | None = None, today: date | None
     if (sh.symbol, sh.as_on.isoformat()) in have:
         return False
     path.parent.mkdir(parents=True, exist_ok=True)
+    _upgrade_header(path)
     new = not path.exists()
     with open(path, "a", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=STORE_FIELDS)
@@ -172,6 +176,21 @@ def save_snapshot(sh: Shareholding, path: Path | None = None, today: date | None
             w.writeheader()
         w.writerow(_row(sh, today or date.today()))
     return True
+
+
+def _upgrade_header(path: Path) -> None:
+    """A store written before a column existed gets the new header, so appended rows line up."""
+    rows = _read(path)
+    if not rows:
+        return
+    with open(path, newline="", encoding="utf-8") as fh:
+        header = next(csv.reader(fh), [])
+    if header == STORE_FIELDS:
+        return
+    with open(path, "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=STORE_FIELDS, extrasaction="ignore")
+        w.writeheader()
+        w.writerows(rows)
 
 
 def _read(path: Path) -> list[dict]:
@@ -187,7 +206,8 @@ def _from_row(r: dict) -> Shareholding:
     pct = {k: f(k) for k in ("promoter", "foreign_inst", "domestic_inst", "mutual_funds", "insurance", "public", "retail") if f(k) is not None}
     return Shareholding(symbol=r["symbol"], isin=r.get("isin", ""), as_on=date.fromisoformat(r["as_on"]) if r.get("as_on") else None,
                         pct=pct, pledged_of_promoter=f("pledged_of_promoter"),
-                        shareholders=int(r["shareholders"]) if r.get("shareholders") else None, source=r.get("source", ""))
+                        shareholders=int(r["shareholders"]) if r.get("shareholders") else None,
+                        total_shares=f("total_shares"), source=r.get("source", ""))
 
 
 def history(symbol: str, stores: list[Path] | None = None) -> list[Shareholding]:
@@ -289,6 +309,8 @@ def shareholding_facts(entity_key: str, snaps: list[Shareholding], now: datetime
         add("sh_promoter_pledged", cur.pledged_of_promoter)
     if cur.shareholders is not None:
         add("sh_shareholders", float(cur.shareholders), "count")
+    if cur.total_shares:
+        add("shares_outstanding", cur.total_shares, "shares")
     if prev is not None:
         for key in ("promoter", "foreign_inst", "domestic_inst"):
             if key in cur.pct and key in prev.pct:

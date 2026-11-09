@@ -158,6 +158,12 @@ def fetch_facts(
             value = Decimal(str(raw)) / 100 if yf_key in _PERCENT_TO_RATIO else Decimal(str(raw))
             facts.append(Fact.make(value=value, status=status, reason=reason, **common))
 
+    shares = info.get("sharesOutstanding")                     # a missing share count is not a gap of its own: the official one is tried first
+    if not _is_nan(shares) and float(shares) > 0:
+        facts.append(Fact.make(entity_key=key, metric="shares_outstanding", value=Decimal(str(shares)), unit="shares", period_end=today,
+                               period_type=PeriodType.point, source=SOURCE, source_field="sharesOutstanding", retrieved_at=now,
+                               available_from=today, evidence="yfinance Ticker.info['sharesOutstanding']"))
+
     pending: list[Fact] = []
     if as_of is not None:
         facts, pending = filter_as_of(facts, as_of)
