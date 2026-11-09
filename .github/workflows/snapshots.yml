@@ -14,38 +14,60 @@ on:
         description: "Optional comma-separated tickers (default: Nifty 50 plus example tickers)"
         type: string
         default: ""
+  pull_request:                  # probe only: checks Yahoo from GitHub's runners before the workflow reaches main
+    paths:
+      - ".github/workflows/snapshots.yml"
+      - "indiafacts/snapshots.py"
 permissions:
-  contents: write
-concurrency: snapshots-branch
+  contents: read
 jobs:
-  snapshots:
+  probe:
+    if: ${{ github.event_name == 'pull_request' || inputs.probe }}
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --python 3.12
       - name: probe
-        if: ${{ inputs.probe }}
-        run: uv run python -m indiafacts.snapshots --probe ${{ inputs.tickers != '' && format('--tickers "{0}"', inputs.tickers) || '' }}
+        env:
+          TICKERS: ${{ inputs.tickers }}
+        run: uv run python -m indiafacts.snapshots --probe ${TICKERS:+--tickers "$TICKERS"}
+
+  snapshots:
+    if: ${{ github.event_name != 'pull_request' && !inputs.probe }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    concurrency: snapshots-branch
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --python 3.12
       - name: fetch the current snapshots branch
-        if: ${{ !inputs.probe }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
           if git ls-remote --exit-code --heads origin snapshots >/dev/null 2>&1; then
-            git clone --depth 1 --branch snapshots "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" snapshots
+            git clone --depth 1 --branch snapshots "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" snapshots
           else
             mkdir snapshots
           fi
       - name: precompute
-        if: ${{ !inputs.probe }}
         env:
           INDIAFACTS_POOL_SIZE: "30"
-        run: uv run python -m indiafacts.snapshots --out snapshots ${{ inputs.tickers != '' && format('--tickers "{0}"', inputs.tickers) || '' }}
+          TICKERS: ${{ inputs.tickers }}
+        run: uv run python -m indiafacts.snapshots --out snapshots ${TICKERS:+--tickers "$TICKERS"}
       - name: publish to the snapshots branch
-        if: ${{ !inputs.probe && always() && hashFiles('snapshots/index.json') != '' }}
+        if: ${{ always() && hashFiles('snapshots/index.json') != '' }}
         working-directory: snapshots
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
-          [ -d .git ] || { git init -q -b snapshots; git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"; }
+          [ -d .git ] || { git init -q -b snapshots; git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"; }
           git config user.name "nextrade-snapshots"
           git config user.email "actions@users.noreply.github.com"
           git add -A
