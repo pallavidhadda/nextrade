@@ -127,6 +127,40 @@ export function Checklist({ s }: { s: Summary }) {
   );
 }
 
+const fmtPeer = (v: number | null) => (v === null ? "n/a" : Number(v.toPrecision(3)).toString());
+
+export function PeerSpread({ s }: { s: Summary }) {
+  const p = s.peers;
+  if (!p) return null;
+  return (
+    <section className="entry" data-r aria-labelledby="peer-h">
+      <header><h2 id="peer-h">Peer comparison</h2><span className="note">{p.n_peers} peers used</span></header>
+      <div className="body">
+        {p.unavailable_reason ? <p>No peer comparison: {p.unavailable_reason}.</p> : (
+          <>
+            {p.approximate && <p className="helper"><strong>Approximate peers:</strong> a diversified group compared with single-business companies.</p>}
+            {p.few_peers && <p className="helper"><strong>Only {p.n_peers} peer(s) used</strong>, fewer than 5. Treat this as rough.</p>}
+            <table>
+              <thead><tr><th>Metric</th><th className="num">{s.ticker}</th><th className="num">Median</th><th className="num">Q1</th><th className="num">Q3</th><th>Where it sits</th><th className="num">n</th></tr></thead>
+              <tbody>
+                {p.metrics.map((m) => (
+                  <tr key={m.metric}>
+                    <td>{metricLabel(m.metric)}{m.status !== "ok" && <span className="ids">{m.reason}</span>}</td>
+                    <td className="num">{fmtPeer(m.target)}</td><td className="num">{fmtPeer(m.median)}</td><td className="num">{fmtPeer(m.q1)}</td><td className="num">{fmtPeer(m.q3)}</td>
+                    <td>{m.position ?? "n/a"}</td><td className="num">{m.n}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="helper">Q1 and Q3 are the 25th and 75th percentiles of valid peer values. Peers: {p.picks.map((k) => k.ticker).join(", ")}. A place in the spread is not a verdict.</p>
+            {p.notes.filter((n) => !n.startsWith("approximate peers") && !n.startsWith("only ")).map((n) => <p className="helper" key={n}>{n}</p>)}
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export function KeyFacts({ s }: { s: Summary }) {
   return (
     <section className="entry" data-r aria-labelledby="kf-h">

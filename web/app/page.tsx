@@ -5,7 +5,7 @@ import ContourMap from "@/components/ContourMap";
 import TickerBox from "@/components/TickerBox";
 import ProfileChooser from "@/components/Profile";
 import OwnModelPanel from "@/components/OwnModel";
-import { AnalystPanel, AtAGlance, CompBadge, Executive, ScenarioPlan, Checklist, Debate, Health, MarketFlows, Ownership, Explanation, Gaps, KeyFacts, Levels, News, Valuation } from "@/components/Result";
+import { AnalystPanel, AtAGlance, CompBadge, Executive, ScenarioPlan, Checklist, Debate, Health, MarketFlows, Ownership, Explanation, Gaps, KeyFacts, Levels, News, PeerSpread, Valuation } from "@/components/Result";
 import { Scrub, ScoreFactors, ScoreNumber, SplitWords } from "@/components/Reveal";
 import companies from "@/lib/companies.json";
 import { ApiError, poll, reportDownloadUrl, reportUrl, submit } from "@/lib/api";
@@ -340,7 +340,7 @@ function ResultView({ s: base, served, servedAsOf, jobId, tab, onTab }: { s: Sum
           <div className="stack"><Gaps s={s} /></div>
         ) : (
           <div className="stack">
-            <Explanation s={s} /><Debate s={s} /><Checklist s={s} /><Health s={s} /><Valuation s={s} /><Ownership s={s} /><ScenarioPlan s={s} /><Levels s={s} /><MarketFlows s={s} /><News s={s} /><KeyFacts s={s} />
+            <Explanation s={s} /><Debate s={s} /><Checklist s={s} /><Health s={s} /><Valuation s={s} /><PeerSpread s={s} /><Ownership s={s} /><ScenarioPlan s={s} /><Levels s={s} /><MarketFlows s={s} /><News s={s} /><KeyFacts s={s} />
             {base.llm && <aside className="ai-nudge" data-r><p>Want a second opinion? Run a bull vs bear debate or an analyst panel with your own AI model.</p><button type="button" className="key" onClick={() => onTab("ai")}><span>Open AI analysis</span><Arrow /></button></aside>}
           </div>
         )}

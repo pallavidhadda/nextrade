@@ -24,6 +24,7 @@ def _pool_name(sc: dict) -> str | None:
 
 from indiafacts.fundamentals_view import fundamentals_rows
 from indiafacts.ownership_view import ownership
+from indiafacts.peers import peer_summary
 
 
 def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, changes=None, digest=None, news=None, debate=None, levels=None, panel=None, flows=None, scenario=None, prose=None, as_of=None, news_fetched=False, stamp=None) -> dict:
@@ -90,6 +91,6 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
     return {"ticker": e.ticker, "name": e.name, "sector": e.sector, "industry": e.industry,
             "isin": e.isin.value, "retrieved_at": fs.retrieved_at.isoformat(),
             "profile": {"horizon": profile.horizon, "risk": profile.effective_risk, "experience": profile.experience},
-            "key_facts": key, "fundamentals": fundamentals_rows(fs), "ownership": ownership(fs), "market_flows": flows, "scenario": (None if scenario is None or not scenario.applies else {"tone": scenario.tone, "headline": scenario.headline, "summary": scenario.summary, "levels": [{"label": l, "price": v, "meaning": m} for l, v, m in scenario.levels], "stages": [{"label": l, "pct": p, "condition": c} for l, p, c in scenario.stages], "watch": scenario.watch, "more_positive_if": scenario.more_positive_if, "more_cautious_if": scenario.more_cautious_if, "notes": scenario.notes}), "prose": (None if prose is None or not prose.favour else {"favour": prose.favour, "against": prose.against, "weighing": prose.weighing}), "score": score, "completeness": completeness(fs, as_of, news=news if news_fetched else None),"checklist": checklist, "gaps": gaps,
+            "key_facts": key, "fundamentals": fundamentals_rows(fs), "ownership": ownership(fs), "market_flows": flows, "scenario": (None if scenario is None or not scenario.applies else {"tone": scenario.tone, "headline": scenario.headline, "summary": scenario.summary, "levels": [{"label": l, "price": v, "meaning": m} for l, v, m in scenario.levels], "stages": [{"label": l, "pct": p, "condition": c} for l, p, c in scenario.stages], "watch": scenario.watch, "more_positive_if": scenario.more_positive_if, "more_cautious_if": scenario.more_cautious_if, "notes": scenario.notes}), "prose": (None if prose is None or not prose.favour else {"favour": prose.favour, "against": prose.against, "weighing": prose.weighing}), "score": score, "completeness": completeness(fs, as_of, news=news if news_fetched else None),"checklist": checklist, "peers": peer_summary(scorecard), "gaps": gaps,
             "notices": list(fs.notices), "changes": [str(c) for c in (changes or [])][:20],
             "valuation": valuation, "debate": deb, "levels": lev, "risk_panel": rp, "news": nws, "explanation": ex, "llm": llm, "stamp": stamp, "scenario_reason": getattr(scenario, "reason", "") if scenario is not None else "", "disclaimer": DISCLAIMER}

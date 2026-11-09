@@ -288,6 +288,7 @@ def _prose_lines(p) -> list[str]:
     return ["", "IN PLAIN WORDS", "  " + p.favour, "  " + p.against, "  " + p.weighing]
 
 from indiafacts.flows import lines as flows_lines_raw  # noqa: E402
+from indiafacts.peers import POSITION_TEXT  # noqa: E402
 
 
 def flows_lines(flows):
@@ -301,22 +302,24 @@ def _peers_block(sc: dict, ticker: str) -> list[str]:
     lines = ["", "PEERS (picked by rule from the loaded pool; medians use valid values only; not-meaningful P/E above 75 is left out)"]
     if g.unavailable_reason:
         return lines[:1] + [f"no peer comparison: {g.unavailable_reason}"] + [f"note: {n}" for n in g.notes]
+    lines.append(f"peers used: {len(g.picks)}" + (f" (of {g.candidates} candidates in the pool)" if g.candidates else "")
+                 + (f"; WARNING: fewer than 5 peers, treat as rough" if g.few_peers else ""))
     lines.append("picks: " + "; ".join(f"{p.ticker} (tier {p.tier}, {'same industry' if p.tier == 1 else 'same sector'}, "
                                          f"{p.size_ratio:.2f}x size)" for p in g.picks))
     if g.excluded:
         lines.append("left out: " + "; ".join(f"{e.ticker} ({e.reason})" for e in g.excluded))
     lines += [f"note: {n}" for n in g.notes]
-    lines += [f"| metric | {ticker} | peer median | vs median | position | n |", "|---|---|---|---|---|---|"]
+    lines += [f"| metric | {ticker} | peer median | Q1 | Q3 | vs median | position | n |", "|---|---|---|---|---|---|---|---|"]
     for c in sc.get("peer_comparisons", []):
         if c.status != "ok":
-            lines.append(f"| {c.metric} | {'-' if c.target_value is None else f'{c.target_value:.3g}'} | unav | unav | unav | {c.n} |")
+            lines.append(f"| {c.metric} | {'-' if c.target_value is None else f'{c.target_value:.3g}'} | unav | unav | unav | unav | unav | {c.n} |")
             lines.append(f"  {c.metric}: {c.reason}")
             continue
         tv = "-" if c.target_value is None else f"{c.target_value:.3g}"
         prem = (f"{c.premium:+.1%}" if c.premium is not None
                 else f"{c.diff * 100:+.1f} pp" if c.diff is not None else "-")
-        pos = "-" if c.higher_than is None else f"above {c.higher_than} of {c.of}"
-        lines.append(f"| {c.metric} | {tv} | {c.peer_median:.3g} | {prem} | {pos} | {c.n} |")
+        pos = "-" if c.higher_than is None else f"{POSITION_TEXT.get(c.position or '', '-')} (above {c.higher_than} of {c.of})"
+        lines.append(f"| {c.metric} | {tv} | {c.peer_median:.3g} | {c.q1:.3g} | {c.q3:.3g} | {prem} | {pos} | {c.n} |")
     lines.append("for pe_ttm, pb and ev_ebitda a positive 'vs median' means pricier than the peer median (relative); "
                  "for roe, fy_roce, net_margin_q and net_income_yoy it is the gap in percentage points; "
                  "this is a comparison of ratios, not a statement about value or a recommendation")

@@ -7,6 +7,13 @@
   "size_floor_tier1": 200,
   "size_floor_tier2": 20,
   "min_valid_peers": 3,
+  "warn_below_peers": 5,
+  "conglomerates": {
+    "note": "Judgment list of diversified groups: their consolidated ratios blend several businesses, so single-business peers are approximate. Project author's judgment, not a classification by any exchange or regulator.",
+    "reviewed_on": "2026-11-10",
+    "review_by": "2027-05-10",
+    "tickers": ["RELIANCE.NS", "ADANIENT.NS", "ITC.NS", "GRASIM.NS", "LT.NS", "M&M.NS"]
+  },
   "valid_ranges": {
     "pe_ttm": [
       0,

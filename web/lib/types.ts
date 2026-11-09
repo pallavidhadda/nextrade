@@ -7,6 +7,8 @@ export type Profile = {
 
 export type KeyFact = { metric: string; value: number | null; unit: string; period: string; source: string; basis: string; fact_id: string };
 export type Check = { label: string; result: "pass" | "fail" | "unavailable"; display: string; threshold: string; reason: string };
+export type PeerMetric = { metric: string; status: string; target: number | null; median: number | null; q1: number | null; q3: number | null; position: string | null; n: number; premium: number | null; diff: number | null; reason: string };
+export type Peers = { n_peers: number; candidates: number; approximate: boolean; few_peers: boolean; unavailable_reason: string | null; notes: string[]; picks: { ticker: string; tier: number; size_ratio: number }[]; metrics: PeerMetric[] };
 export type Health = { metric: string; label: string; display: string; reading: string; status: string; meaning: string; reason: string; period: string };
 export type OwnRow = { metric: string; label: string; display: string; reading: string; change: string | null; meaning: string };
 export type Ownership = { source: "official" | "proxy" | "none"; as_on: string; rows: OwnRow[]; how_to: string };
@@ -41,6 +43,7 @@ export type Summary = {
   scenario_reason?: string;
   served_from?: "snapshot" | "live";
   snapshot_as_of?: string;
+  peers?: null | Peers;
   checklist: Check[]; gaps: Gap[]; notices: string[]; changes: string[];
   valuation: null | { method: "reverse_dcf_earnings" | "justified_pb"; assumptions: string; unavailable_reason: string | null; items: { metric: string; value: number | null; unit: string; fact_id: string }[] };
   debate: null | { bull: { text: string; evidence: string }[]; bear: { text: string; evidence: string }[]; stance: { label: string; confidence: string; reason: string; partial?: boolean } };

@@ -505,6 +505,29 @@ def _peer_card(sc: dict | None, metric: str, target: str) -> str:
                  svg, _table(["Company", "Value"], rows, num=(1,)))
 
 
+def _peer_table_card(sc: dict | None, target: str) -> str:
+    from indiafacts.peers import POSITION_TEXT
+
+    g = (sc or {}).get("peers")
+    if g is None or g.unavailable_reason or not g.picks:
+        return ""
+    warn = ""
+    if g.approximate:
+        warn += '<p class="banner">Approximate peers: a diversified group compared with single-business companies.</p>'
+    if g.few_peers:
+        warn += f'<p class="banner">Only {len(g.picks)} peer(s) used, fewer than 5: treat this comparison as rough.</p>'
+    rows = []
+    for c in (sc or {}).get("peer_comparisons", []):
+        if c.status != "ok":
+            rows.append([c.metric, "n/a" if c.target_value is None else f"{c.target_value:.3g}", "unavailable", "", "", "", str(c.n)])
+        else:
+            rows.append([c.metric, "n/a" if c.target_value is None else f"{c.target_value:.3g}", f"{c.peer_median:.3g}",
+                         f"{c.q1:.3g}", f"{c.q3:.3g}", POSITION_TEXT.get(c.position or "", "n/a"), str(c.n)])
+    return _card("peer-table", "Peer spread by metric",
+                 f"{len(g.picks)} peers used, picked by rule from the pool. Q1 and Q3 are the 25th and 75th percentiles of valid peer values. A position is a place in the spread, not a verdict.",
+                 warn + _table(["Metric", target, "Peer median", "Q1", "Q3", "Position", "Peers (n)"], rows, num=(1, 2, 3, 4, 6)))
+
+
 def _segment_cards(facts: list[Fact], ctx: _Ctx) -> str:
     out = ""
     for kind, title in (("segment_revenue", "Segment revenue"), ("segment_result", "Segment result before interest and tax")):
@@ -673,7 +696,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
     q = _quarter_card("chart-q-net_income", "Net profit by quarter", "net_income", facts, ctx) + \
         _quarter_card("chart-q-revenue", "Revenue by quarter", "revenue", facts, ctx)
     sc_block = _score_card(scorecard) + _decomp_card(x) + _checklist_card(scorecard) + _scenario_card(scenario, prose, levels, x["scenario_reason"] if not x["directional"] else "") + _health_card(fs) + _ownership_card(fs) + _flows_card(flows)
-    peers = _peer_card(scorecard, "pe_ttm", e.ticker) + _peer_card(scorecard, "pb", e.ticker) if scorecard else ""
+    peers = (_peer_table_card(scorecard, e.ticker) + _peer_card(scorecard, "pe_ttm", e.ticker) + _peer_card(scorecard, "pb", e.ticker)) if scorecard else ""
     peer_note = ""
     if scorecard and scorecard.get("peers") and scorecard["peers"].picks:
         g = scorecard["peers"]
