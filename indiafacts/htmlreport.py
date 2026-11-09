@@ -322,6 +322,89 @@ def _quarter_card(ident: str, title: str, metric: str, facts: list[Fact], ctx: _
     return _card(ident, title, "Quarterly, in rupees. A gap means the source returned no figure for that quarter.", svg, twin)
 
 
+def _quarter_map(facts: list[Fact], metric: str) -> dict[date, Fact]:
+    qs = prefer_sources([f for f in facts if f.metric == metric and f.period_type == PeriodType.Q and f.source != "computed"])
+    return {f.period_end: f for f in qs if f.value is not None}
+
+
+def _prior_year(m: dict[date, Fact], d: date) -> Fact | None:
+    return next((f for p, f in m.items() if 350 <= (d - p).days <= 380), None)
+
+
+def _gap_lines_card(ident: str, title: str, sub: str, labels: list[str], series: list[tuple[str, list[float | None], list[str]]], empty: str) -> str:
+    """Percent lines over quarter labels; a None breaks the line (a gap, never a filled value)."""
+    if not any(v is not None for _, vals, _ in series for v in vals):
+        return _card(ident, title, sub, f'<p class="empty">{esc(empty)}</p>')
+    W = HALF
+    L, R, T, B, H = 52, 16, 22, 40, 230
+    allv = [v for _, vals, _ in series for v in vals if v is not None] + [0.0]
+    ticks = nice_ticks(min(allv), max(allv), 4)
+    lo, hi = min(min(allv), ticks[0]), max(max(allv), ticks[-1])
+    Y = lambda v: T + (hi - v) / (hi - lo) * (H - T - B)
+    slot = (W - L - R) / len(labels)
+    X = lambda i: L + slot * (i + 0.5)
+    g = "".join(f'<line class="gridline" x1="{L}" x2="{W - R}" y1="{Y(v):.1f}" y2="{Y(v):.1f}"/>'
+                f'<text x="{L - 6}" y="{Y(v) + 4:.1f}" text-anchor="end">{v:g}%</text>' for v in ticks)
+    xt = "".join(f'<text x="{X(i):.1f}" y="{H - 22}" text-anchor="middle">{esc(lb)}</text>' for i, lb in enumerate(labels))
+    body, rows = "", []
+    for k, (name, vals, tips) in enumerate(series):
+        cls, col = ("line1", "var(--s1)") if k == 0 else ("line2", "var(--s2)")
+        run: list[str] = []
+        for i, v in enumerate(vals + [None]):
+            if v is not None:
+                run.append(f"{X(i):.1f},{Y(v):.1f}")
+                body += (f'<g tabindex="0" data-tip="{esc(tips[i])}"><circle class="hit" cx="{X(i):.1f}" cy="{Y(v):.1f}" r="12"/>'
+                         f'<circle class="enddot" cx="{X(i):.1f}" cy="{Y(v):.1f}" r="4" style="fill:{col}"/></g>')
+            else:
+                if len(run) > 1:
+                    body += f'<polyline class="{cls}" points="{" ".join(run)}"/>'
+                run = []
+    for i, lb in enumerate(labels):
+        rows.append([lb] + [("gap" if vals[i] is None else f"{vals[i]:.1f}%") for _, vals, _ in series])
+    legend = " · ".join(f"{'blue' if k == 0 else 'orange'} line: {n}" for k, (n, _, _) in enumerate(series))
+    svg = (f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="Line chart: {esc(title)} by quarter; gaps where a figure is missing">'
+           f'{g}<line class="axisline" x1="{L}" x2="{W - R}" y1="{Y(0):.1f}" y2="{Y(0):.1f}"/>{xt}{body}</svg>')
+    return _card(ident, title, f"{sub} {legend}.", svg, _table(["Quarter"] + [n for n, _, _ in series], rows, title, num=tuple(range(1, len(series) + 1))))
+
+
+def _ratio_cards(facts: list[Fact], ctx: _Ctx) -> str:
+    rev, ni = _quarter_map(facts, "revenue"), _quarter_map(facts, "net_income")
+    dates = sorted(set(rev) | set(ni))
+    if not dates:
+        return ""
+    labels = [(rev.get(d) or ni[d]).fiscal_label or d.isoformat() for d in dates]
+    margin, mtips = [], []
+    for d, lb in zip(dates, labels):
+        r, n = rev.get(d), ni.get(d)
+        if r is not None and n is not None and float(r.value) != 0:
+            v = float(n.value) / float(r.value) * 100
+            ctx.use(r), ctx.use(n)
+            margin.append(v)
+            mtips.append(f"{lb}: net margin {v:.1f}% (net profit / revenue)")
+        else:
+            margin.append(None)
+            mtips.append("")
+    yoy = []
+    for m, name in ((rev, "Revenue"), (ni, "Net profit")):
+        vals, tips = [], []
+        for d, lb in zip(dates, labels):
+            cur, prev = m.get(d), (_prior_year(m, d) if d in m else None)
+            if cur is not None and prev is not None and float(prev.value) > 0:
+                v = (float(cur.value) / float(prev.value) - 1) * 100
+                ctx.use(cur), ctx.use(prev)
+                vals.append(v)
+                tips.append(f"{lb}: {name.lower()} {v:+.1f}% against the same quarter a year earlier")
+            else:
+                vals.append(None)
+                tips.append("")
+        yoy.append((f"{name} year-on-year", vals, tips))
+    return (_gap_lines_card("chart-q-margin", "Net margin by quarter", "Net profit divided by revenue, same quarter.", labels,
+                            [("Net margin", margin, mtips)], "Needs both revenue and net profit for the same quarter.")
+            + _gap_lines_card("chart-q-yoy", "Quarterly growth against a year earlier",
+                              "Shown only where both quarters exist and the earlier quarter was positive; otherwise a gap.", labels, yoy,
+                              "No quarter has a figure for the same quarter a year earlier."))
+
+
 def _hbars(rows: list[tuple[str, float | None, str, str, str | None]], lo: float, hi: float, fmt, zero_line: float | None = None) -> str:
     """rows: (label, value|None, tip, note_if_none, fact_id). Horizontal bars, <= 24px thick."""
     W = HALF
@@ -701,6 +784,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
     charts = _price_card(fs.charts, price_facts, e.ticker) + _drawdown_card(fs.charts)
     q = _quarter_card("chart-q-net_income", "Net profit by quarter", "net_income", facts, ctx) + \
         _quarter_card("chart-q-revenue", "Revenue by quarter", "revenue", facts, ctx)
+    q += _ratio_cards(facts, ctx)
     sc_block = _score_card(scorecard) + _decomp_card(x) + _checklist_card(scorecard) + _scenario_card(scenario, prose, levels, x["scenario_reason"] if not x["directional"] else "") + _health_card(fs) + _ownership_card(fs) + _flows_card(flows)
     peers = (_peer_table_card(scorecard, e.ticker) + _peer_card(scorecard, "pe_ttm", e.ticker) + _peer_card(scorecard, "pb", e.ticker)) if scorecard else ""
     peer_note = ""
