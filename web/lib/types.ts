@@ -21,6 +21,7 @@ export type Summary = {
   ticker: string; name: string | null; sector: string | null; industry: string | null; isin: string | null; retrieved_at: string;
   profile: { horizon: string; risk: string; experience: string };
   key_facts: KeyFact[];
+  facts_total?: number;
   fundamentals?: Health[];
   ownership?: Ownership;
   scenario?: null | { tone: string; headline: string; summary: string; levels: { label: string; price: number; meaning: string }[]; stages: { label: string; pct: number | null; condition: string }[]; watch: string[]; more_positive_if: string[]; more_cautious_if: string[]; notes: string[] };
