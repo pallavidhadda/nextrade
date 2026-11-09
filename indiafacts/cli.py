@@ -191,7 +191,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         from indiafacts.summary import summarize_run
 
         args.json.parent.mkdir(parents=True, exist_ok=True)
-        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes, digest or _build_digest(fs, scorecard, profile, news=news, debate=debate, levels=levels, panel=panel), news=news, debate=debate, levels=levels, panel=panel, flows=flows, scenario=scenario, prose=prose), default=str), encoding="utf-8")
+        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes, digest or _build_digest(fs, scorecard, profile, news=news, debate=debate, levels=levels, panel=panel), news=news, debate=debate, levels=levels, panel=panel, flows=flows, scenario=scenario, prose=prose, as_of=args.as_of, news_fetched=args.news), default=str), encoding="utf-8")
     if args.html:
         from indiafacts.htmlreport import build_html
 
