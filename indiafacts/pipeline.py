@@ -258,7 +258,8 @@ def _fundamental_facts(fs, facts, client, notices: list[str]):
     except Exception as exc:                                    # network or vendor failure must not sink the report
         notices.append(f"annual statements could not be fetched ({type(exc).__name__}); year figures, free cash flow and EV/EBITDA are unavailable")
         return []
-    new = annual_facts(fs.entity.ticker, statements, fs.entity.sector, fs.entity.industry, now=fs.retrieved_at)
+    new = annual_facts(fs.entity.ticker, statements, fs.entity.sector, fs.entity.industry, now=fs.retrieved_at,
+                       notices=notices)
     new += holding_facts(fs.entity.ticker, info or {}, now=fs.retrieved_at)
     probe = fs.model_copy(update={"facts": list(facts) + new})
     checks = []
