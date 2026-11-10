@@ -149,3 +149,5 @@ Apache-2.0 (see `LICENSE`, `NOTICE`). Real NSE/BSE files and third-party dataset
 ## Data sources
 
 Yahoo Finance (unofficial), NSE filings and shareholding XBRL, and NSE Market Lens (the exchange screener, used under the owner's stated permission for educational use; see docs/DATA_PERMISSIONS.md). Switch Market Lens off with `--no-marketlens`.
+
+Official filings: for the analysed company, NexTrade fetches the filed shareholding pattern and the newest five quarterly results (XBRL) from NSE's website data API, again under the owner's stated permission (see docs/DATA_PERMISSIONS.md). It is polite (one request a second, cached), and `--no-nse-api` switches it off. If NSE is unreachable the run continues from the other sources and says so.

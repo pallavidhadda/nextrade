@@ -185,3 +185,6 @@ See docs/SNAPSHOTS.md: GitHub Actions precomputes Nifty 50 analyses to the `snap
 
 ## NSE Market Lens (added 2026-11-10)
 See docs/DATA_PERMISSIONS.md: `indiafacts/marketlens.py` reads the exchange screener (market cap, P/E, P/B, debt/equity, dividend yield, promoter/public holding, sector peers); snapshots publish `marketlens.json` so Render never calls NSE. Next: owner adds the permission reference; prove units of netProfit/revenue before using them; use Market Lens sector for the sector pool.
+
+## NSE website data API (added 2026-11-10)
+See docs/DATA_PERMISSIONS.md: `indiafacts/nseapi.py` fetches the target's filed shareholding XBRL and newest five consolidated quarterly results XBRL (integrated-filing list; the older results list stops at Q3 FY25). Next: owner adds the permission reference; bank revenue definition (left to Yahoo); use `results-comparision` only if units are proven; fix the ownership as-of label when Market Lens supplies the figures for banks with no promoter group.
