@@ -182,3 +182,6 @@ Live connector status 2026-11-02: three jobs (TCS, TCS, INFY) all became "unknow
 
 ## Daily snapshots (added 2026-11-10)
 See docs/SNAPSHOTS.md: GitHub Actions precomputes Nifty 50 analyses to the `snapshots` branch; the API serves them (served_from/snapshot_as_of) with live as fallback. Next: run the probe workflow, set INDIAFACTS_SNAPSHOT_BASE on Render, show "as of" and a Refresh now button in the web app.
+
+## NSE Market Lens (added 2026-11-10)
+See docs/DATA_PERMISSIONS.md: `indiafacts/marketlens.py` reads the exchange screener (market cap, P/E, P/B, debt/equity, dividend yield, promoter/public holding, sector peers); snapshots publish `marketlens.json` so Render never calls NSE. Next: owner adds the permission reference; prove units of netProfit/revenue before using them; use Market Lens sector for the sector pool.
