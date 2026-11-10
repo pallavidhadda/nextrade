@@ -239,20 +239,20 @@ def merge_filings(filings: list[FactSet]) -> tuple[FactSet, list[str]]:
     notes: list[str] = []
     for key, versions in groups.items():
         versions.sort(key=lambda v: (v[1].facts[0].available_from or date.min, v[0]))
-        current = {f.metric: f for f in versions[-1][1].facts}
+        current = {(f.metric, f.period_type, f.period_end): f for f in versions[-1][1].facts}   # a filing can carry quarter and year-to-date values
         changed: dict[str, Fact] = {}
         for _, old_fs in versions[:-1]:
             for old in old_fs.facts:
-                new = current.get(old.metric)
+                new = current.get((old.metric, old.period_type, old.period_end))
                 if new is None or old.value == new.value:
                     continue
-                changed[old.metric] = new
+                changed[(old.metric, old.period_type, old.period_end)] = new
                 facts.append(old.model_copy(update={"source": SOURCE + "_superseded", "status": Status.stale,
                     "reason": f"superseded by the filing dated {new.available_from}",
                     "fact_id": Fact.compute_id(old.entity_key, old.metric, old.period_end, str(old.period_type.value), SOURCE + "_superseded")}))
                 notes.append(f"restatement: {old.metric} {old.fiscal_label}: {old.value} (filing dated {old.available_from or 'unknown date'}) -> "
                              f"{new.value} (filing dated {new.available_from or 'unknown date'}); both versions are kept")
-        for m, f in current.items():
-            facts.append(f.model_copy(update={"restated": "yes"}) if m in changed else f)
+        for k, f in current.items():
+            facts.append(f.model_copy(update={"restated": "yes"}) if k in changed else f)
     metas = sorted((m for fs in filings for m in fs.filings), key=lambda m: (m.filing_date or date.min))
     return filings[-1].model_copy(update={"facts": facts, "filings": metas}), notes
