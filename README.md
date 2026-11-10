@@ -145,3 +145,7 @@ Claude Code plugin (private repo for now):
 
 ## Licence
 Apache-2.0 (see `LICENSE`, `NOTICE`). Real NSE/BSE files and third-party datasets are not included and keep their own terms. TejHQ data: attribute TejHQ.
+
+## Data sources
+
+Yahoo Finance (unofficial), NSE filings and shareholding XBRL, and NSE Market Lens (the exchange screener, used under the owner's stated permission for educational use; see docs/DATA_PERMISSIONS.md). Switch Market Lens off with `--no-marketlens`.
