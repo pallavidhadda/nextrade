@@ -108,7 +108,7 @@ def test_pe9_median_not_mean_and_pe10_premium_math(params):
 def test_pe12_missing_target_inputs(params):
     no_cap = co("T.NS", "Energy", "Refining", None)
     g = select_peers(no_cap, pool_of(co("A.NS", "Energy", "Refining", 1e13)), params=params)
-    assert g.picks == [] and "target market cap" in g.unavailable_reason
+    assert [p.ticker for p in g.picks] == ["A.NS"] and g.picks[0].size_ratio is None
     no_ind = co("T.NS", None, None, 1e13)
     g = select_peers(no_ind, pool_of(co("A.NS", "Energy", "Refining", 1e13)), params=params)
     assert g.picks == [] and "industry or sector" in g.unavailable_reason
@@ -182,3 +182,23 @@ def test_conglomerate_target_flagged_approximate(params):
     g = select_peers(t, pool_of(*cos), params=params)
     assert g.approximate and "approximate peers: a diversified group" in " ".join(g.notes) and not g.few_peers
     assert params["conglomerates"]["review_by"]
+
+
+def test_pe18_missing_target_cap_falls_back_to_industry_peers(params):
+    t = co("T.NS", "Energy", "Refining", None)
+    pool = pool_of(co("A.NS", "Energy", "Refining", 1e9), co("B.NS", "Energy", "Gas", 1e15), co("C.NS", "Tech", "Software", 1e12))
+    g = select_peers(t, pool, params=params)
+    assert g.size_matched is False
+    assert [(p.ticker, p.tier) for p in g.picks] == [("A.NS", 1), ("B.NS", 2)]
+    assert "peers chosen by industry only; company size could not be matched" in g.notes
+    assert co("T.NS", "Energy", "Refining", 1e13) and select_peers(TARGET(), pool, params=params).size_matched is True
+
+
+def test_digest_survives_peer_comparison_with_missing_values():
+    from indiafacts.digest import build_digest
+    from indiafacts.peers import MetricComparison
+    fs = mkfs("TMPV.NS", {"market_cap": 1e12})
+    sc = {"peer_comparisons": [MetricComparison(metric="pe_ttm", status="ok", target_value=None, peer_median=None, n=3)],
+          "checklist": [], "checklist_summary": "x"}
+    d = build_digest(fs, sc)
+    assert "PEER pe_ttm n/a vs median n/a" in d.text
