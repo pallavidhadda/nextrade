@@ -14,7 +14,7 @@ Owner confirmed on 2026-11-10 that the permission covers publishing derived figu
 - No browser impersonation, no cookie handling, no key extraction or token decryption.
 - One request at a time, at least 1 second apart (the client enforces a floor of 1 s); 20 s timeout; size cap.
 - Endpoints: `GET /api/sectors` and `GET /api/sectors/{id}/stocks`. About 58 sector requests build the whole universe.
-- Cached on disk for one day (`~/.indiafacts/marketlens.json`). The scheduled snapshot job fetches once per run and publishes the file as `marketlens.json` on the `snapshots` branch; Render reads that file (`INDIAFACTS_MARKETLENS_URL`) and never calls NSE. Failures never raise: the run continues without Market Lens and says why.
+- Cached on disk for one day (`~/.indiafacts/marketlens.json`). The scheduled snapshot job fetches once per run and publishes the file as `marketlens.json` on the `snapshots` branch; Render reads that file (`INDIAFACTS_MARKETLENS_URL`) for the universe and peers; for a live analysis it also makes one direct request for the target's sector, falling back to that file. Failures never raise: the run continues without Market Lens and says why.
 - Switch off with `--no-marketlens` or `INDIAFACTS_MARKETLENS=0`.
 
 **Fields used** (percent fields converted to ratios, so 0.45 means 45%; same units as the Yahoo and shareholding facts):
@@ -41,3 +41,5 @@ Each fact's evidence names the endpoint, field and `lastUpdated` stamp.
 - `eps`: 12.54 for RELIANCE, which does not reconcile with price / P/E, so the basis is unknown.
 
 **Open point for the owner.** Snapshots publish figures derived from Market Lens (and the raw `marketlens.json` universe file) on a public branch. The owner confirmed on 2026-11-10 that the permission covers this. Add the correspondence reference above.
+
+**Live analyses.** For the target only, a live run first makes one direct request for the target's sector (`/api/sectors/{id}/stocks`, 10 s timeout, cached 1 h in the process; the sector id comes from the stored copy). If that fails it uses the published daily copy (`INDIAFACTS_MARKETLENS_URL`), then the local cache. The origin ("live", "daily copy as of <date>", "local cache as of <date>") is written into each fact's evidence and into the run notices. Peers always come from the stored copy. `INDIAFACTS_MARKETLENS_LIVE=0` disables the direct call (the snapshot job sets it, so it makes one fetch per run, not one per ticker).

@@ -27,11 +27,12 @@ BASE = "https://marketlens.nseindia.com"
 USER_AGENT = "NexTrade-research/0.1 (education; permitted use of NSE Market Lens)"
 MIN_DELAY = 1.0
 TIMEOUT = 20
+LIVE_TIMEOUT = 10
 MAX_BYTES = 8_000_000
 CACHE_TTL = 24 * 3600
 URL_TTL = 3600
 
-_mem: dict = {"url": None, "at": 0.0, "rows": None}
+_mem: dict = {"url": None, "at": 0.0, "rows": None, "fetched": None}
 
 
 def enabled() -> bool:
@@ -47,8 +48,9 @@ class Client:
     """Polite reader. `opener(request, timeout=)` is injectable for tests; `sleep` too."""
 
     def __init__(self, opener: Callable = urlopen, sleep: Callable[[float], None] = time.sleep, delay: float = MIN_DELAY,
-                 clock: Callable[[], float] = time.monotonic):
+                 clock: Callable[[], float] = time.monotonic, timeout: float = TIMEOUT):
         self.opener, self.sleep, self.delay, self.clock = opener, sleep, max(delay, MIN_DELAY), clock
+        self.timeout = timeout
         self._last: float | None = None
 
     def _get(self, path: str) -> dict:
@@ -58,7 +60,7 @@ class Client:
                 self.sleep(wait)
         self._last = self.clock()
         req = Request(BASE + path, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
-        with self.opener(req, timeout=TIMEOUT) as r:
+        with self.opener(req, timeout=self.timeout) as r:
             raw = r.read(MAX_BYTES + 1)
         if len(raw) > MAX_BYTES:
             raise ValueError("response larger than the size cap")
@@ -152,38 +154,108 @@ def refresh(path: Path | None = None, client: Client | None = None, now: datetim
     return rows, problems
 
 
+LAST: dict = {"kind": "", "at": None}          # where the last universe_with_reason() result came from
+
+
+def _since(at: datetime | None) -> str:
+    return f" as of {at.date().isoformat()}" if at else ""
+
+
 def universe_with_reason(client: Client | None = None, now: datetime | None = None, mono: Callable[[], float] = time.monotonic) -> tuple[dict[str, dict], str]:
-    """{symbol: row} and a reason string ('' when fine). URL source (Render) > fresh disk cache > live fetch > stale cache."""
+    """{symbol: row} and a reason string ('' when fine). Published daily copy (Render) > fresh disk cache > full live fetch >
+    older disk cache. LAST records which one answered."""
+    LAST.update(kind="", at=None)
     if not enabled():
         return {}, "Market Lens switched off"
     now = now or datetime.now(timezone.utc)
     url = os.environ.get("INDIAFACTS_MARKETLENS_URL", "").strip()
+    why_url = ""
     if url:
         if _mem["rows"] is not None and _mem["url"] == url and mono() - _mem["at"] < URL_TTL:
+            LAST.update(kind="daily copy", at=_mem.get("fetched"))
             return _mem["rows"], ""
         try:
             req = Request(url, headers={"User-Agent": USER_AGENT})
             with urlopen(req, timeout=10) as r:
                 raw = r.read(MAX_BYTES * 2)
-            rows = json.loads(raw).get("rows") or {}
-            _mem.update(url=url, at=mono(), rows=rows)
-            return rows, "" if rows else "published Market Lens file was empty"
+            body = json.loads(raw)
+            rows = body.get("rows") or {}
+            try:
+                fetched = datetime.fromisoformat(body["fetched_at"])
+            except Exception:
+                fetched = None
+            if rows:
+                _mem.update(url=url, at=mono(), rows=rows, fetched=fetched)
+                LAST.update(kind="daily copy", at=fetched)
+                return rows, ""
+            why_url = "published Market Lens file was empty"
         except Exception as exc:
-            return (_mem["rows"] or {}) if _mem["url"] == url else {}, f"published Market Lens file unavailable ({type(exc).__name__})"
+            why_url = f"published Market Lens file unavailable ({type(exc).__name__})"
+        if _mem["rows"] is not None and _mem["url"] == url:
+            LAST.update(kind="daily copy", at=_mem.get("fetched"))
+            return _mem["rows"], why_url
     path = cache_path()
     cached, at = _read(path)
     if cached and at is not None and (now - at).total_seconds() < CACHE_TTL:
-        return cached, ""
+        LAST.update(kind="local cache", at=at)
+        return cached, why_url
+    if url:                                          # Render never walks all of NSE: older cache or nothing
+        if cached:
+            LAST.update(kind="local cache", at=at)
+        return cached, why_url or "Market Lens unavailable"
     rows, problems = refresh(path, client, now)
     if rows:
+        LAST.update(kind="live", at=now)
         return rows, "; ".join(problems[:3])
     if cached:
+        LAST.update(kind="local cache", at=at)
         return cached, "Market Lens refresh failed; using an older cache (" + (problems[0] if problems else "no detail") + ")"
     return {}, problems[0] if problems else "Market Lens unavailable"
 
 
 def universe(client: Client | None = None, now: datetime | None = None) -> dict[str, dict]:
     return universe_with_reason(client, now)[0]
+
+
+_live: dict = {}
+
+
+def live_enabled() -> bool:
+    return os.environ.get("INDIAFACTS_MARKETLENS_LIVE", "1").strip().lower() not in ("0", "off", "false", "no")
+
+
+def target_row(symbol: str, opener: Callable | None = None, now: datetime | None = None, mono: Callable[[], float] = time.monotonic,
+               sleep: Callable[[float], None] = time.sleep) -> tuple[dict | None, str, str]:
+    """The target's own row for a live analysis: (row or None, origin, reason). Order: a direct Market Lens request for the
+    target's sector (10 s timeout, cached 1 h in this process), then the published daily copy, then the local cache.
+    origin is 'live', 'daily copy as of <date>' or 'local cache as of <date>'. Never raises."""
+    if not enabled():
+        return None, "", "Market Lens switched off"
+    sym = symbol.upper().removesuffix(".NS")
+    opener = opener or (lambda req, timeout=None: urlopen(req, timeout=timeout))
+    try:
+        hit = _live.get(sym)
+        if hit and mono() - hit[0] < URL_TTL:
+            return hit[1], "live", ""
+        rows, why = universe_with_reason(Client(opener=opener, sleep=sleep), now, mono)
+        kind, at = LAST["kind"], LAST["at"]
+        row = rows.get(sym)
+        if row is None:
+            return None, "", why
+        if kind == "live":                                       # the whole universe was just fetched from NSE
+            _live[sym] = (mono(), row)
+            return row, "live", why
+        if live_enabled() and row.get("_sectorId"):
+            got, note = Client(opener=opener, sleep=sleep, timeout=LIVE_TIMEOUT).sector_stocks(row["_sectorId"])
+            fresh = next((r for r in got if str(r.get("id") or r.get("ticker") or "").upper() == sym), None)
+            if fresh is not None:
+                fresh = {**fresh, "_sectorId": row["_sectorId"]}
+                _live[sym] = (mono(), fresh)
+                return fresh, "live", ""
+            why = (why + "; " if why else "") + (note or "target not in the sector response") + "; live request failed, using the stored copy"
+        return row, f"{kind}{_since(at)}", why
+    except Exception as exc:
+        return None, "", f"Market Lens target lookup failed ({type(exc).__name__})"
 
 
 # ---- facts ------------------------------------------------------------------------------------------------------
@@ -203,7 +275,7 @@ def _stamp(row: dict, now: datetime) -> tuple[date, str]:
         return now.date(), ts or "unknown"
 
 
-def facts_for(symbol: str, row: dict, now: datetime | None = None) -> list[Fact]:
+def facts_for(symbol: str, row: dict, now: datetime | None = None, origin: str = "") -> list[Fact]:
     """Facts from one Market Lens row. Placeholder zeros and unknown units produce nothing."""
     now = now or datetime.now(timezone.utc)
     sym = symbol.upper().removesuffix(".NS")
@@ -217,7 +289,7 @@ def facts_for(symbol: str, row: dict, now: datetime | None = None) -> list[Fact]
             entity_key=key, metric=metric, value=Decimal(str(round(value / scale, 8))), unit=unit, period_end=end,
             period_type=PeriodType.point, source=SOURCE, source_field=field, retrieved_at=now, available_from=end,
             status=status, reason=reason,
-            evidence=f"NSE Market Lens /api/sectors/{sid}/stocks field {field}, lastUpdated {ts}"))
+            evidence=f"NSE Market Lens /api/sectors/{sid}/stocks field {field}, lastUpdated {ts}" + (f"; fetched {origin}" if origin else "")))
 
     v = _num(row, "marketCap")
     if v and v > 0:

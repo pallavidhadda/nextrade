@@ -213,6 +213,7 @@ def _prepare_marketlens(out: Path, log=print) -> None:
     log(f"marketlens: {len(rows)} stocks, {len(problems)} problem(s)" + (f" ({problems[0]})" if problems else ""))
     if path.exists():
         os.environ["INDIAFACTS_MARKETLENS_URL"] = path.resolve().as_uri()
+        os.environ["INDIAFACTS_MARKETLENS_LIVE"] = "0"       # one fetch per run, not one per ticker
     else:
         os.environ["INDIAFACTS_MARKETLENS"] = "0"
 
