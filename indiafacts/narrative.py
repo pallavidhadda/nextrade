@@ -66,7 +66,9 @@ def _side(points, lead: str) -> tuple[str, str]:
     parts = [f"{lead} rests mostly on {top}: {_lower(first)}."]
     rest = [p for t in order for p in by[t]][1:4]
     if rest:
-        parts.append("It is helped by " + "; ".join(_lower(clean(p.text)) for p in rest[:2]) + ("." if len(rest) <= 2 else f", and {_lower(clean(rest[2].text))}."))
+        also = "Also in its favour" if "favour" in lead else "Also against it"
+        items = [_lower(clean(p.text)).rstrip(".") for p in rest[:3]]
+        parts.append(f"{also}: " + ("; ".join(items[:-1]) + f"; and {items[-1]}" if len(items) > 1 else items[0]) + ".")
     if len(order) > 1:
         parts.append(f"Other areas on this side: {', '.join(order[1:4])}.")
     return " ".join(parts), top

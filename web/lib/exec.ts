@@ -83,7 +83,15 @@ export function execView(s: Summary) {
   const comp = s.completeness ?? null;
   const missing = missingItems(comp);
   const items = areaItems(comp);
-  const monitor = (s.explanation?.triggers ?? []).map((t) => t.text).filter((t) => !t.startsWith("Needs data")).slice(0, 4);
+  // same order as indiafacts/render.py monitor_items: check boundaries, next results date, scenario trigger prices
+  const scen = s.scenario;
+  const rupees = (v: number) => `₹${v.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const monitor = Array.from(new Set([
+    ...(s.explanation?.triggers ?? []).map((t) => t.text).filter((t) => !t.startsWith("Needs data")),
+    ...(scen?.watch ?? []).filter((w) => w.includes("results are due")),
+    ...(scen?.levels ?? []).filter((l) => l.label.toLowerCase().includes("trigger") && l.price != null)
+      .map((l) => { const m = (l.meaning ?? "").trim().replace(/\.$/, ""); return `${l.label} at ${rupees(l.price)}${m ? `: ${m}` : ""}`; }),
+  ])).slice(0, 4);
   const stale = (comp?.stale_total ?? 0) > 0 ? `${comp!.stale_total} figure${comp!.stale_total === 1 ? " is" : "s are"} out of date` : "";
   const words = LEVEL_WORDS[comp?.level ?? ""] ?? "";
   const verification = comp?.verification?.label ?? "";

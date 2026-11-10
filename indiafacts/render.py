@@ -163,8 +163,10 @@ def exec_input(fs: FactSet, as_of: date | None, scorecard: dict | None, debate, 
                                        "targets": [{"r": a, "price": b} for a, b in zip(levels.reward_risk, levels.targets)], "notes": levels.notes}
     ex = None if explanation is None else {"triggers": [{"text": t.text} for t in explanation.triggers]}
     st = stamp or report_stamp(fs.entity.ticker, when, (scorecard or {}).get("members") or [])
+    scn = None if scenario is None or not getattr(scenario, "applies", False) else {
+        "watch": list(scenario.watch), "levels": [{"label": l, "price": v, "meaning": m} for l, v, m in scenario.levels]}
     return {"completeness": completeness(fs, when), "score": score, "debate": deb, "levels": lev, "explanation": ex, "stamp": st,
-            "scenario_reason": getattr(scenario, "reason", "") if scenario is not None else ""}
+            "scenario": scn, "scenario_reason": getattr(scenario, "reason", "") if scenario is not None else ""}
 
 
 LEVEL_WORDS = {"High": "Nearly all the figures we look for were found",
@@ -222,6 +224,24 @@ def missing_items(comp: dict) -> list[str]:
     return [t for _, t in sorted(rows, key=lambda r: r[0])][:4]
 
 
+def monitor_items(s: dict, limit: int = 4) -> list[str]:
+    """Forward-looking things to watch: check boundaries first, then the next results date, then the scenario's
+    upside and downside trigger prices. Never 'needs data' items (those belong under what is missing)."""
+    out: list[str] = [t["text"] for t in ((s.get("explanation") or {}).get("triggers") or []) if not t["text"].startswith("Needs data")]
+    sc = s.get("scenario") or {}
+    out += [w for w in (sc.get("watch") or []) if "results are due" in w]
+    for lv in sc.get("levels") or []:
+        if "trigger" in str(lv.get("label", "")).lower() and lv.get("price") is not None:
+            m = str(lv.get("meaning") or "").strip().rstrip(".")
+            out.append(f"{lv['label']} at ₹{float(lv['price']):,.2f}" + (f": {m}" if m else ""))
+    seen, uniq = set(), []
+    for x in out:
+        if x not in seen:
+            seen.add(x)
+            uniq.append(x)
+    return uniq[:limit]
+
+
 def exec_view(s: dict) -> dict:
     """Plain-English executive block, completeness badge, score decomposition, rank caveat and stamp line from a summary-shaped dict."""
     from indiafacts.debate import has_direction
@@ -243,7 +263,7 @@ def exec_view(s: dict) -> dict:
         out["meaning"] = "No rating: the score could not be computed."
     comp = s.get("completeness") or {}
     out["missing"] = missing_items(comp)
-    out["monitor"] = [t["text"] for t in ((s.get("explanation") or {}).get("triggers") or []) if not t["text"].startswith("Needs data")][:4]
+    out["monitor"] = monitor_items(s)
     level = comp.get("level")
     conflicts = []
     for c in comp.get("conflicts") or []:
