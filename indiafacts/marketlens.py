@@ -260,7 +260,28 @@ def target_row(symbol: str, opener: Callable | None = None, now: datetime | None
 
 # ---- facts ------------------------------------------------------------------------------------------------------
 
+_drift: dict = {"key": None, "fields": frozenset()}
+
+
+def disabled_fields() -> frozenset:
+    """Fields the daily drift check found to be placeholders today (drift_report.json named by INDIAFACTS_DRIFT_REPORT); never used. See drift.py."""
+    path = os.environ.get("INDIAFACTS_DRIFT_REPORT", "").strip()
+    if not path:
+        return frozenset()
+    try:
+        key = (path, Path(path.removeprefix("file://")).stat().st_mtime_ns)
+    except OSError:
+        key = (path, None)
+    if _drift["key"] != key:
+        from indiafacts.drift import disabled_marketlens_fields
+
+        _drift.update(key=key, fields=disabled_marketlens_fields(path))
+    return _drift["fields"]
+
+
 def _num(row: dict, key: str) -> float | None:
+    if key in disabled_fields():
+        return None
     v = row.get(key)
     if isinstance(v, bool) or not isinstance(v, (int, float)) or v != v:
         return None

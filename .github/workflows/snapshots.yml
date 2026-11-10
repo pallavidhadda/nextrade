@@ -14,6 +14,10 @@ on:
         description: "Optional comma-separated tickers (default: Nifty 50, examples and the TejHQ top 500)"
         type: string
         default: ""
+      dry_run:
+        description: "Drift issues: print the issue title and body instead of opening or updating a GitHub issue"
+        type: boolean
+        default: false
   pull_request:                  # probe only: checks Yahoo from GitHub's runners before the workflow reaches main
     paths:
       - ".github/workflows/snapshots.yml"
@@ -73,6 +77,17 @@ jobs:
           INDIAFACTS_POOL_SIZE: "30"
           TICKERS: ${{ inputs.tickers }}
         run: uv run python -m indiafacts.snapshots --out snapshots --universe tej500 ${TICKERS:+--tickers "$TICKERS"}
+      - name: drift summary
+        # drift_report.json is written by the precompute step (python -m indiafacts.snapshots); a warning shows here, a breaking
+        # change also opens an issue in the drift-issue job and keeps yesterday's marketlens.json / pool_metrics.json.
+        if: ${{ always() && hashFiles('snapshots/drift_report.json') != '' }}
+        run: uv run python -m indiafacts.drift summary snapshots/drift_report.json >> "$GITHUB_STEP_SUMMARY"
+      - name: keep the drift report for the issue job
+        if: ${{ always() && hashFiles('snapshots/drift_report.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-report
+          path: snapshots/drift_report.json
       - name: publish to the snapshots branch
         if: ${{ always() && hashFiles('snapshots/index.json') != '' }}
         working-directory: snapshots
@@ -86,3 +101,28 @@ jobs:
           git add -A
           git diff --cached --quiet || git commit -q -m "snapshots: $(date -u +%F)"
           git push origin snapshots
+
+  drift-issue:
+    # Opens or updates one issue per breaking source, titled "Source drift: <source>" (deduplicated by title). issues: write lives here only.
+    needs: snapshots
+    if: ${{ always() && github.event_name != 'pull_request' && !inputs.probe }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: drift-report
+          path: drift
+      - name: open or update drift issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -f drift/drift_report.json ] || { echo "no drift report"; exit 0; }
+          python3 -m indiafacts.drift issues drift/drift_report.json --run-url "$RUN_URL" $([ "$DRY_RUN" = "true" ] && echo --dry-run)
