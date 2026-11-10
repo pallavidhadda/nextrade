@@ -28,6 +28,34 @@ def is_issue(f: Fact) -> bool:
     return f.status in ISSUE_STATUSES and f.reason != LENDER_REASON
 
 
+def attention_items(facts: list[Fact]) -> list[Fact]:
+    """Issue facts, minus gaps/unavailable/unverified figures that another source fills with an ok value for the same period."""
+    filled = {(f.metric, f.period_end, f.period_type): f.source for f in facts if f.status == Status.ok and f.value is not None}
+    out = []
+    for f in facts:
+        if not is_issue(f):
+            continue
+        if f.status != Status.conflict and (f.metric, f.period_end, f.period_type) in filled \
+                and filled[(f.metric, f.period_end, f.period_type)] != f.source:
+            continue
+        out.append(f)
+    return out
+
+
+def data_notes(items: list[Fact]) -> str:
+    """'Data notes: X figures missing, Y figures where sources disagree, Z vendor figures not checked against filings'."""
+    def n(pred) -> int:
+        return len({(f.metric, f.period_end, f.period_type) for f in items if pred(f)})
+
+    missing = n(lambda f: f.status in (Status.gap, Status.unavailable))
+    conflicts = n(lambda f: f.status == Status.conflict)
+    vendor = n(lambda f: f.status == Status.unverified and f.source == "yahoo" and not f.metric.startswith("fy_"))
+    parts = [p for p in (f"{missing} figures missing" if missing else "",
+                         f"{conflicts} figures where sources disagree" if conflicts else "",
+                         f"{vendor} vendor figures not checked against filings" if vendor else "") if p]
+    return "Data notes: " + ", ".join(parts) if parts else "Data notes: nothing flagged"
+
+
 def _val(f: Fact | None):
     return None if f is None or f.value is None else str(f.value)
 

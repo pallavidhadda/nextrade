@@ -69,6 +69,21 @@ def _cell(f: Fact | None, refs: _Refs) -> str:
     return tag
 
 
+def one_per_metric(facts: Sequence[Fact]) -> list[Fact]:
+    """One figure per metric: the latest period, then consolidated over other bases, then the best-ranked source."""
+    from indiafacts.analysis import SOURCE_RANK
+
+    def key(f: Fact):
+        r = SOURCE_RANK.index(f.source) if f.source in SOURCE_RANK else len(SOURCE_RANK)
+        return (-f.period_end.toordinal(), f.basis.value != "consolidated", r)
+
+    best: dict[str, Fact] = {}
+    for f in facts:
+        if f.metric not in best or key(f) < key(best[f.metric]):
+            best[f.metric] = f
+    return [f for f in facts if best[f.metric] is f]
+
+
 def render_table(facts: Sequence[Fact], refs: _Refs | None = None) -> str:
     for f in facts:
         if not isinstance(f, Fact):
@@ -580,7 +595,9 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
 
     x = exec_view(exec_input(factset, as_of, scorecard, debate, explanation, scenario, levels, stamp))
     directional = debate is None or has_direction(debate.stance.label)
-    bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified) and f.reason != LENDER_REASON]
+    from indiafacts.completeness import attention_items, data_notes
+
+    bad = attention_items(list(facts))
     refs = _Refs()
     parts = [head, *notes, *exec_lines(x), *(_profile_block(profile, profile_is_default, view) if profile else []),
              *_filings_block(factset.filings),
@@ -597,12 +614,13 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
              *([f"SCENARIO PLAN: not shown: {x['scenario_reason']}"] if not directional else []),
              *(_levels_block(levels, panel, scenario, directional) if levels is not None else []),
              *(_news_block(news) if news else []),
-             "", f"DATA QUALITY: {len(bad)} item(s) need attention (gaps, unavailable, conflicts, unverified)"]
+             "", data_notes(bad)]
 
     parts += ["", "QUARTERLY (Yahoo; availability dates are deadline estimates)", render_table([f for f in facts if view == "pro" or not (f.metric in PRO_ONLY or f.metric.startswith("segment_"))], refs)]
 
     overview = [f for f in facts if f.period_type == PeriodType.point and f.status == Status.ok
                 and not f.source.startswith("computed")]
+    overview = one_per_metric(overview)
     if overview:
         parts += ["", "OVERVIEW (live snapshot)"]
         parts += [f"{f.metric}: {_fmt(f)} [{refs.ref(f)}]" for f in overview]

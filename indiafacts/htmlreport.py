@@ -814,9 +814,11 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
     seg = _segment_cards(facts, ctx)
     extra = _extra_cards(debate, news, levels, panel, scenario)
 
-    bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified) and f.reason != LENDER_REASON]
+    from indiafacts.completeness import attention_items, data_notes
+
+    bad = attention_items(list(facts))
     dq_rows = [[f.metric, f.fiscal_label or f.period_end.isoformat(), f.status.value, f.reason] for f in bad[:60]]
-    dq = _card("data-quality", f"Data quality: {len(bad)} item(s) need attention",
+    dq = _card("data-quality", data_notes(bad),
                "Gaps, unavailable values, conflicts and unverified figures are listed instead of hidden.",
                _table(["Metric", "Period", "Status", "Reason"], dq_rows) if dq_rows else '<p class="empty">None.</p>')
     src_rows = [[fid, f.metric, f.fiscal_label or f.period_end.isoformat(), format_inr(f.value) if f.unit == "INR" else str(f.value),
