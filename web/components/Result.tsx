@@ -67,6 +67,7 @@ export function Executive({ s }: { s: Summary }) {
             {x.stale && <p className="helper">{x.stale}</p>}
             {x.verification && <p className="helper">{x.verification}</p>}
             {x.conflicts.length > 0 && (<><h3>Conflicting figures</h3><ul className="plain">{x.conflicts.map((t) => <li key={t}>{t}</li>)}</ul></>)}
+            {x.definitions.length > 0 && (<><h3>Same figure, different definition (not a disagreement)</h3><ul className="plain">{x.definitions.map((t) => <li key={t}>{t}</li>)}</ul></>)}
           </div>
         </section>
       )}

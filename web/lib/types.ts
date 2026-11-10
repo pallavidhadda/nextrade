@@ -43,6 +43,7 @@ export type Summary = {
     verification?: { official_n: number; vendor_n: number; computed_n: number; label: string } | null;
     issues_total: number; stale_total: number;
     conflicts: { metric: string; period: string; chosen: { value: string | null; source: string; unit: string }; alternative: { value: string | null; source: string; unit: string } | null; reason: string }[];
+    definitions?: { metric: string; period: string; reason: string }[];
   };
   stamp?: null | { report_id: string; ticker: string; as_of: string; pool_size: number; params_hash: string; commit: string; llm_model: string | null };
   scenario_reason?: string;

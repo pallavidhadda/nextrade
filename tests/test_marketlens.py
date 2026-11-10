@@ -70,12 +70,12 @@ def test_source_rank():
     assert SOURCE_RANK.index("nse_shp") < SOURCE_RANK.index("nse_marketlens") < SOURCE_RANK.index("computed:selfvalue") < SOURCE_RANK.index("yahoo")
 
 
-def test_pe_conflict_is_shown_with_both_values():
+def test_pe_gap_is_shown_with_both_values_as_a_different_definition():
     fs = mkfs("RELIANCE.NS", {"pe_ttm": 21.8, "market_cap": 17.9e12})
     notices = []
     out = _marketlens_facts(fs, list(fs.facts), rows(), notices)
     chk = [f for f in out if f.metric == "pe_ttm_source_check"][0]
-    assert chk.status == Status.conflict and "18.68" in chk.reason and "21.8" in chk.reason
+    assert chk.status == Status.ok and chk.reason.startswith("different definition") and "18.68" in chk.reason and "21.8" in chk.reason
     assert not [f for f in out if f.metric == "market_cap_source_check" and f.status == Status.conflict]
     assert any(f.metric == "pe_ttm" and f.source == "nse_marketlens" for f in out)
 

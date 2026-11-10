@@ -141,7 +141,7 @@ export function execView(s: Summary) {
   const stampLine = sp ? `Report ${sp.report_id} · data as of ${sp.as_of} · rules ${sp.params_hash} · build ${sp.commit}${sp.llm_model ? ` · model ${sp.llm_model}` : ""}` : "";
   const scenarioReason = s.scenario_reason || (!directional ? "no scenario plan without a rating" : "");
   return {
-    label, directional, insufficient, evidenceNote: note, meaning, missing, monitor, tone, rows, sentence, rankNotes, stampLine, scenarioReason, comparison: comparisonView(sc), comp, items, stale, words, verification, conflicts,
+    label, directional, insufficient, evidenceNote: note, meaning, missing, monitor, tone, rows, sentence, rankNotes, stampLine, scenarioReason, comparison: comparisonView(sc), comp, items, stale, words, verification, conflicts, definitions: (comp?.definitions ?? []).map((d) => `${d.metric} (${d.period}): ${d.reason}`),
     total: rows.reduce((a, r) => a + r.contribution, 0),
   };
 }

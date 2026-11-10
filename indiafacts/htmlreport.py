@@ -661,6 +661,9 @@ def _exec_cards(x: dict) -> str:
         items = "".join(f"<li>{esc(n)}: {esc(st)}</li>" for n, st in c["items"])
         conf = ("<h3>Conflicting figures</h3><ul>" + "".join(f"<li>{esc(t)}</li>" for t in c["conflicts"]) + "</ul>") if c["conflicts"] else ""
         extra = "".join(f'<p class="sub">{esc(t)}</p>' for t in (c["stale"], c["verification"]) if t)
+        if c.get("definitions"):
+            conf += ("<h3>Same figure, different definition (not a disagreement)</h3><ul>"
+                     + "".join(f"<li>{esc(t)}</li>" for t in c["definitions"]) + "</ul>")
         block += (f'<section class="card" id="completeness"><h3>How complete is the data</h3>'
                   f'<p><span class="light {c["tone"]}">{esc(c["level"])}</span> {esc(c["words"])}</p>'
                   f'<ul style="columns:2">{items}</ul>{extra}{conf}</section>')
@@ -824,13 +827,13 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
     seg = _segment_cards(facts, ctx)
     extra = _extra_cards(debate, news, levels, panel, scenario)
 
-    from indiafacts.completeness import attention_items, data_notes
+    from indiafacts.completeness import attention_items, data_notes, definition_differences
 
     bad = attention_items(list(facts))
     dq_rows = [[f.metric, f.fiscal_label or f.period_end.isoformat(), f.status.value, f.reason] for f in bad[:60]]
     from indiafacts.render import YAHOO_DOWN_LINE
 
-    dq = _card("data-quality", data_notes(bad),
+    dq = _card("data-quality", data_notes(bad, definition_differences(list(facts))),
                "Gaps, unavailable values, conflicts and unverified figures are listed instead of hidden.",
                (f'<p class="banner">{esc(YAHOO_DOWN_LINE)}</p>' if fs.yahoo_unavailable else "")
                + (_table(["Metric", "Period", "Status", "Reason"], dq_rows) if dq_rows else '<p class="empty">None.</p>'))

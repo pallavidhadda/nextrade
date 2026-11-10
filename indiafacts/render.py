@@ -324,7 +324,8 @@ def exec_view(s: dict) -> dict:
     out["comp"] = {"level": level, "tone": {"High": "good", "Medium": "warn", "Low": "bad", "Insufficient": "bad"}.get(level, "warn"),
                    "words": LEVEL_WORDS.get(level, ""), "items": area_items(comp),
                    "stale": f"{stale} figure{' is' if stale == 1 else 's are'} out of date" if stale > 0 else "",
-                   "verification": ((comp.get("verification") or {}).get("label") or ""), "conflicts": conflicts} if level else None
+                   "verification": ((comp.get("verification") or {}).get("label") or ""), "conflicts": conflicts,
+                   "definitions": [f"{d['metric']} ({d['period']}): {d['reason']}" for d in comp.get("definitions") or []]} if level else None
     sc = s.get("score") or {}
     rows, sentence = [], ""
     for k, c in (sc.get("contributions") or {}).items():
@@ -362,6 +363,7 @@ def exec_lines(x: dict) -> list[str]:
         if c["verification"]:
             lines.append(f"  {c['verification']}")
         lines += [f"  conflict: {t}" for t in c["conflicts"]]
+        lines += [f"  same figure, different definition (not a disagreement): {t}" for t in c.get("definitions", [])]
     return lines
 
 
@@ -636,7 +638,7 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
 
     x = exec_view(exec_input(factset, as_of, scorecard, debate, explanation, scenario, levels, stamp))
     directional = debate is None or has_direction(debate.stance.label)
-    from indiafacts.completeness import attention_items, data_notes
+    from indiafacts.completeness import attention_items, data_notes, definition_differences
 
     bad = attention_items(list(facts))
     refs = _Refs()
@@ -655,7 +657,7 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
              *([f"SCENARIO PLAN: not shown: {x['scenario_reason']}"] if not directional else []),
              *(_levels_block(levels, panel, scenario, directional) if levels is not None else []),
              *(_news_block(news) if news else []),
-             "", data_notes(bad), *([YAHOO_DOWN_LINE] if factset.yahoo_unavailable else [])]
+             "", data_notes(bad, definition_differences(list(facts))), *([YAHOO_DOWN_LINE] if factset.yahoo_unavailable else [])]
 
     parts += ["", "QUARTERLY (Yahoo; availability dates are deadline estimates)", render_table([f for f in facts if view == "pro" or not (f.metric in PRO_ONLY or f.metric.startswith("segment_"))], refs)]
 

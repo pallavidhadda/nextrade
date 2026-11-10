@@ -346,6 +346,11 @@ def _row_change_fact(entity_key: str, rows: list[dict], now) -> list[Fact]:
                       available_from=end, availability_kind=AvailabilityKind.filed, status=Status.ok, evidence=cite)]
 
 
+ML_DEFINITIONS = {          # Market Lens states these on its own basis, so a gap against ours or Yahoo's is not a disagreement
+    "pe_ttm": "Market Lens computes P/E on its own earnings basis",
+    "pb": "Market Lens computes price to book on its own book value basis",
+    "debt_to_equity": "Market Lens counts borrowings its own way",
+}
 ML_CHECKED = ("market_cap", "pe_ttm", "pb", "debt_to_equity", "sh_promoter")
 
 
@@ -414,10 +419,11 @@ def _marketlens_facts(fs, facts, rows: dict | None, notices: list[str], live: bo
         if not others:
             continue
         best = min(others, key=lambda g: (analysis_rank(g), -g.period_end.toordinal()))
-        checks.append(cross_check(f, best))
+        defn = ML_DEFINITIONS.get(f.metric, "")
+        checks.append(cross_check(f, best, definition=defn))
         rest = [g for g in others if g.source not in (best.source,) and g.source in ("yahoo", "computed:selfvalue")]
         for g in rest:
-            c = cross_check(f, g)
+            c = cross_check(f, g, definition=defn)
             m = f"{f.metric}_source_check_{g.source.split(':')[-1]}"
             checks.append(c.with_(metric=m, fact_id=Fact.compute_id(c.entity_key, m, c.period_end, str(c.period_type), c.source)))
     return keep + checks

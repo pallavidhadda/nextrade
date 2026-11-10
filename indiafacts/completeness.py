@@ -42,17 +42,26 @@ def attention_items(facts: list[Fact]) -> list[Fact]:
     return out
 
 
-def data_notes(items: list[Fact]) -> str:
+def definition_differences(facts: list[Fact]) -> list[Fact]:
+    """Checks where two sources state the same figure on a different basis or definition: listed, never counted as disagreement."""
+    from indiafacts.analysis import DEFINITION_PREFIX
+
+    return [f for f in facts if f.metric.endswith("_source_check") and f.reason.startswith(DEFINITION_PREFIX)]
+
+
+def data_notes(items: list[Fact], definitions: list[Fact] | None = None) -> str:
     """'Data notes: X figures missing, Y figures where sources disagree, Z vendor figures not checked against filings'."""
     def n(pred) -> int:
         return len({(f.metric, f.period_end, f.period_type) for f in items if pred(f)})
 
+    nd = len({(f.metric, f.period_end, f.period_type) for f in definitions or []})
     missing = n(lambda f: f.status in (Status.gap, Status.unavailable))
     conflicts = n(lambda f: f.status == Status.conflict)
     vendor = n(lambda f: f.status == Status.unverified and f.source == "yahoo" and not f.metric.startswith("fy_"))
     parts = [p for p in (f"{missing} figures missing" if missing else "",
                          f"{conflicts} figures where sources disagree" if conflicts else "",
-                         f"{vendor} vendor figures not checked against filings" if vendor else "") if p]
+                         f"{vendor} vendor figures not checked against filings" if vendor else "",
+                         f"{nd} figures that sources define differently (not a disagreement)" if nd else "") if p]
     return "Data notes: " + ", ".join(parts) if parts else "Data notes: nothing flagged"
 
 
@@ -186,4 +195,6 @@ def completeness(fs: FactSet, as_of: date | None = None, news: list | None = Non
     return {"as_of": str(when), "level": level, "verification": verification, "reason": why, "overall_coverage_pct": overall, "pillars": pillars,
             "issues_total": sum(totals.values()), "issues_by_status": totals, "issues_unmapped": other,
             "stale_total": sum(v["stale_n"] for v in pillars.values()), "conflicts": _conflicts(fs),
+            "definitions": [{"metric": f.metric.removesuffix("_source_check"), "period": str(f.period_end), "reason": f.reason.removeprefix("different definition: ")}
+                            for f in definition_differences(fs.facts)],
             "params_reviewed_on": p["reviewed_on"], "params_overdue": p["overdue"]}
