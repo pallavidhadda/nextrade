@@ -42,7 +42,7 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
                   prices: bool = False, price_client=None, benchmark: str = "^NSEI",
                   tej: bool = False, tej_store: TejStore | None = None, skip_other_filings: bool = False,
                   shareholding_paths: list[Path] | None = None, shareholding_feed: bool = False,
-                  marketlens: bool = True, marketlens_rows: dict | None = None) -> FactSet:
+                  marketlens: bool = True, marketlens_rows: dict | None = None, marketlens_live: bool = True) -> FactSet:
     """Resolve identity, fetch, flag gaps, optionally merge an official NSE filing, then append computed facts."""
     notices: list[str] = []
     store = (tej_store or TejStore()) if tej else None
@@ -147,7 +147,7 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
 
     base_facts += self_valuation_facts(base_facts)
     if marketlens:
-        base_facts += _marketlens_facts(fs, base_facts, marketlens_rows, notices)
+        base_facts += _marketlens_facts(fs, base_facts, marketlens_rows, notices, marketlens_live)
     val_facts = valuation_facts(fs.model_copy(update={"facts": base_facts}), today=as_of or fs.retrieved_at.date(), now=fs.retrieved_at)
     return fs.model_copy(update={"facts": base_facts + val_facts, "not_yet_public": pending,
                                  "notices": notices, "price_notes": price_notes,
@@ -287,23 +287,35 @@ def _ownership_facts(fs, paths: list[Path], feed: bool, notices: list[str]):
 ML_CHECKED = ("market_cap", "pe_ttm", "pb", "debt_to_equity", "sh_promoter")
 
 
-def _marketlens_facts(fs, facts, rows: dict | None, notices: list[str]):
+def _marketlens_facts(fs, facts, rows: dict | None, notices: list[str], live: bool = True):
     """NSE Market Lens figures for the target when it is in the universe, plus checks against the other sources. Never raises."""
     from indiafacts import marketlens
 
+    origin = ""
     try:
+        sym = fs.entity.ticker.split(".")[0]
         if rows is None:
             if not marketlens.enabled():
                 return []
-            rows, why = marketlens.universe_with_reason()
-            if not rows:
-                notices.append(f"NSE Market Lens not used: {why}")
+            if live:
+                row, origin, why = marketlens.target_row(sym)
+            else:
+                rws, why = marketlens.universe_with_reason()
+                row = rws.get(sym)
+                origin = f"{marketlens.LAST['kind']}{marketlens._since(marketlens.LAST['at'])}" if row else ""
+            if row is None:
+                if why:
+                    notices.append(f"NSE Market Lens not used: {why}")
                 return []
-        sym = fs.entity.ticker.split(".")[0]
-        row = rows.get(sym)
-        if row is None:
-            return []
-        new = marketlens.facts_for(sym, row, now=fs.retrieved_at)
+            if why:
+                notices.append(f"NSE Market Lens: {why}")
+        else:
+            row = rows.get(sym)
+            if row is None:
+                return []
+        new = marketlens.facts_for(sym, row, now=fs.retrieved_at, origin=origin)
+        if origin:
+            notices.append(f"NSE Market Lens figures for {sym} fetched {origin}")
     except Exception as exc:
         notices.append(f"NSE Market Lens not used ({type(exc).__name__})")
         return []

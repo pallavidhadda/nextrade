@@ -48,4 +48,6 @@ Before precomputing, the job fetches the NSE Market Lens universe once (58 reque
 | `INDIAFACTS_MARKETLENS_CACHE` | local | Disk cache path, default `~/.indiafacts/marketlens.json`, valid for 1 day. |
 | `INDIAFACTS_MARKETLENS` | any | `0` switches Market Lens off (also `--no-marketlens`). |
 
+`INDIAFACTS_MARKETLENS_LIVE=0` disables the direct Market Lens request for the target on live analyses (the snapshot job sets it).
+
 Refresh by hand: `python -m indiafacts.marketlens`.

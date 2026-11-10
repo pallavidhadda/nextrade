@@ -154,3 +154,70 @@ def test_stale_cache_used_when_refresh_fails(monkeypatch, tmp_path):
 
 def test_disabled_by_env(monkeypatch):
     assert ml.universe_with_reason() == ({}, "Market Lens switched off")
+
+
+# ---- live target path ---------------------------------------------------------------------------------------------
+
+def _copy_file(tmp_path, at="2026-11-09T12:00:00+00:00"):
+    p = tmp_path / "daily.json"
+    p.write_text(json.dumps({"fetched_at": at, "problems": [], "rows": rows()}))
+    return p
+
+
+def _live_opener(pe, calls):
+    body = json.loads(FIX.read_text())
+    body["data"] = [{**r, "peRatio": pe} if r["id"] == "RELIANCE" else r for r in body["data"]]
+
+    def opener(req, timeout=None):
+        calls.append((req.full_url, timeout))
+        return Resp(json.dumps(body).encode())
+    return opener
+
+
+@pytest.fixture
+def fresh_state(monkeypatch):
+    monkeypatch.setenv("INDIAFACTS_MARKETLENS", "1")
+    ml._live.clear()
+    ml._mem.update(url=None, at=0.0, rows=None, fetched=None)
+
+
+def test_live_request_preferred_over_daily_copy(monkeypatch, tmp_path, fresh_state):
+    monkeypatch.setenv("INDIAFACTS_MARKETLENS_URL", _copy_file(tmp_path).as_uri())
+    calls = []
+    row, origin, why = ml.target_row("RELIANCE.NS", opener=_live_opener(19.5, calls), sleep=lambda s: None)
+    assert origin == "live" and row["peRatio"] == 19.5
+    assert len(calls) == 1 and calls[0][1] == 10 and "petroleum%20products" in calls[0][0]
+    again = ml.target_row("RELIANCE", opener=_live_opener(1, calls), sleep=lambda s: None)
+    assert again[0]["peRatio"] == 19.5 and len(calls) == 1                  # cached for an hour in this process
+    f = [x for x in ml.facts_for("RELIANCE", row, NOW, origin) if x.metric == "pe_ttm"][0]
+    assert f.evidence.endswith("lastUpdated 2026-11-09T16:00:27; fetched live")
+
+
+def test_falls_back_to_daily_copy_when_live_fails(monkeypatch, tmp_path, fresh_state):
+    monkeypatch.setenv("INDIAFACTS_MARKETLENS_URL", _copy_file(tmp_path).as_uri())
+
+    def boom(req, timeout=None):
+        raise TimeoutError("slow")
+    row, origin, why = ml.target_row("RELIANCE", opener=boom, sleep=lambda s: None)
+    assert origin == "daily copy as of 2026-11-09" and row["peRatio"] == 18.68 and "live request failed" in why
+
+
+def test_live_switch_off_and_local_cache_fallback(monkeypatch, tmp_path, fresh_state):
+    cache = tmp_path / "ml.json"
+    monkeypatch.setenv("INDIAFACTS_MARKETLENS_CACHE", str(cache))
+    monkeypatch.setenv("INDIAFACTS_MARKETLENS_LIVE", "0")
+    cache.write_text(json.dumps({"fetched_at": datetime.now(timezone.utc).isoformat(), "problems": [], "rows": rows()}))
+    calls = []
+    row, origin, _ = ml.target_row("RELIANCE", opener=_live_opener(19.5, calls), sleep=lambda s: None)
+    assert origin.startswith("local cache as of") and row["peRatio"] == 18.68 and not calls
+
+
+def test_pipeline_records_origin_in_evidence_and_notice(monkeypatch, tmp_path, fresh_state):
+    monkeypatch.setenv("INDIAFACTS_MARKETLENS_URL", _copy_file(tmp_path).as_uri())
+    real, opener = ml.urlopen, _live_opener(19.5, [])
+    monkeypatch.setattr(ml, "urlopen", lambda req, timeout=None: real(req, timeout=timeout) if req.full_url.startswith("file:") else opener(req, timeout))
+    fs = mkfs("RELIANCE.NS", {"pe_ttm": 21.8})
+    notices = []
+    out = _marketlens_facts(fs, list(fs.facts), None, notices)
+    assert any("fetched live" in n for n in notices)
+    assert all("fetched live" in f.evidence for f in out if f.source == "nse_marketlens")

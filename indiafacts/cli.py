@@ -291,7 +291,7 @@ def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -
             return fs
         return build_factset(t, as_of=args.as_of, client=client, sleep=sleep, symbol_changes=args.symbol_changes,
                              prices=prices, price_client=memo, tej=not args.no_tej, tej_store=tej_store,
-                             marketlens=not getattr(args, "no_marketlens", False))
+                             marketlens=not getattr(args, "no_marketlens", False), marketlens_live=False)
 
     universe, failed = build_universe(tickers, builder, labels=labels, fresh={target: fs})
     cfg = load_score_config(strict=False)
