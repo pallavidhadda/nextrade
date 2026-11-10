@@ -52,7 +52,7 @@ def test_exec_view_wording():
     assert x["decomp"]["sentence"] == "Quality (35%) and Value (25%) could not be scored: their weight moved to the remaining factors."
     assert "rank 3 of 6 in a comparison set of 6 (small: rank is unstable)" in x["rank_notes"]
     assert "4 of 10 comparison companies could not be loaded" in x["rank_notes"]
-    assert x["stamp_line"] == "Report abc123def0 · data as of 2026-11-09 · rules b828fb090c36 · build c24d2c8"
+    assert x["stamp_line"] == "" and x["report_id"] == "abc123def0"
 
 
 def test_level_formula_inline():
@@ -87,15 +87,16 @@ def test_text_and_html_reports_state_rating_with_insufficient_tag_completeness_a
     for needle in ("Rule-based rating: Overweight, low confidence. " + NOTE, "WHAT IS MISSING", "HOW COMPLETE IS THE DATA: ",
                    "EDUCATIONAL RATING: Overweight [Insufficient evidence] (confidence Low)",
                    "could not be scored: their weight moved",
-                   "rank 3 of 6 in a comparison set of 6 (small: rank is unstable)", "2 of 8 comparison companies could not be loaded",
-                   "Report abc123def0 · data as of 2026-11-09 · rules b828fb090c36 · build c24d2c8"):
+                   "rank 3 of 6 in a comparison set of 6 (small: rank is unstable)", "2 of 8 comparison companies could not be loaded"):
         assert needle in text, needle
+    assert "rules b828fb090c36" not in text and "Report abc123def0" not in text
     assert "Partial research snapshot" not in text and "stale figures" not in text
     html = build_html(fs, scorecard=_scorecard(), as_of=date(2026, 11, 9), debate=_debate(), stamp=STAMP)
     for needle in ("Rule-based rating: Overweight, low confidence.", 'id="completeness"', "How complete is the data", "Insufficient evidence</span>",
                    "could not be scored: their weight moved",
-                   "Report abc123def0 · data as of 2026-11-09 · rules b828fb090c36 · build c24d2c8", "Sum of contributions"):
+                   "Report ID abc123def0", "Sum of contributions"):
         assert needle in html, needle
+    assert "rules b828fb090c36" not in html and html.count("abc123def0") == 1
     assert "✕" not in html and "stale figures" not in html
 
 

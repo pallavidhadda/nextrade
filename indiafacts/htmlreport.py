@@ -857,6 +857,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
 {peer_note}<div class="grid two">{peers}</div>
 <div class="grid two">{seg}</div>
 <div class="grid">{dq}{sources}</div>
-<footer>{esc(x["stamp_line"])}<br>{esc(DISCLAIMER)} Price charts use Yahoo Finance data (unofficial) and, where enabled, TejHQ open data; results pages are
-NSE filings you supplied. No chart implies a forecast.</footer></main>
+<footer>{esc(DISCLAIMER)} Price charts use Yahoo Finance data (unofficial) and, where enabled, TejHQ open data; results pages are
+NSE filings you supplied. No chart implies a forecast.
+{('<small class="muted">Report ID ' + esc(x["report_id"]) + '</small>') if x.get("report_id") else ""}</footer></main>
 <div id="tip" role="status"></div><script>{JS}</script></body></html>"""

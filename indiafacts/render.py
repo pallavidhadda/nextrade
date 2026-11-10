@@ -293,11 +293,8 @@ def exec_view(s: dict) -> dict:
         notes.append(f"{failed} of {(n or 0) + failed} comparison companies could not be loaded")
     out["rank_notes"] = notes
     sp = s.get("stamp")
-    if sp:
-        line = f"Report {sp['report_id']} · data as of {sp['as_of']} · rules {sp['params_hash']} · build {sp['commit']}"
-        out["stamp_line"] = line + (f" · model {sp['llm_model']}" if sp.get("llm_model") else "")
-    else:
-        out["stamp_line"] = ""
+    out["stamp_line"] = ""                                         # no longer shown; the id alone sits in the HTML footer
+    out["report_id"] = sp["report_id"] if sp else ""
     out["scenario_reason"] = s.get("scenario_reason") or ("no scenario plan without a rating" if not directional else "")
     return out
 
@@ -656,6 +653,4 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
     if refs.index():
         parts += ["", "SOURCES", refs.index()]
     parts += ["", DISCLAIMER]
-    if x["stamp_line"]:
-        parts.append(x["stamp_line"])
     return "\n".join(parts)
