@@ -100,3 +100,60 @@ def summarize(results: list[CheckResult]) -> str:
     passed = sum(1 for r in known if r.result == "pass")
     na = len(results) - len(known)
     return f"{passed}/{len(known)} passed" + (f", {na} unavailable" if na else "")
+
+
+# ---------------------------------------------------------------------------------------------------------------------------
+# Plain-English phrasing of a checklist result, for the bull/bear points and the "what to monitor" list.
+# Keys (check ids) are unchanged; text falls back to the check's label when an id has no phrasing.
+# ---------------------------------------------------------------------------------------------------------------------------
+def _pp(v: float) -> str:
+    return f"{abs(v) * 100:.1f}"
+
+
+def _span(r: CheckResult) -> str:
+    return " in the last financial year" if "last financial year" in (r.display or "") else " compared with a year earlier"
+
+
+def point_text(r: CheckResult) -> str:
+    """One plain sentence saying what a passed or failed check means; direction-aware."""
+    v, ok = r.value, r.result == "pass"
+    if v is None:
+        return r.label
+    if r.id in ("earnings_growing", "revenue_growing"):
+        what = "Profit" if r.id == "earnings_growing" else "Sales"
+        return f"{what} grew {v:.0%}{_span(r)}." if ok else f"{what} fell {abs(v):.0%}{_span(r)}." if v < 0 else f"{what} did not grow{_span(r)}."
+    if r.id == "interest_cover":
+        return f"Profit covers interest costs {v:.1f} times over." if ok else f"Profit covers interest costs only {v:.1f} times; 3 or more is more comfortable."
+    if r.id == "debt_moderate":
+        return (f"Debt is lower than shareholders' equity (debt-to-equity {v:.2f})." if ok
+                else f"Debt is as large as or larger than shareholders' equity (debt-to-equity {v:.2f}).")
+    if r.id == "positive_1y_return":
+        return f"The share price is {v:.1%} higher than a year ago." if ok else f"The share price is {abs(v):.1%} lower than a year ago." if v < 0 else "The share price is unchanged from a year ago."
+    if r.id == "beats_nifty_1y":
+        return (f"Over the past year the share did {_pp(v)} percentage points better than the Nifty 50." if ok
+                else f"Over the past year the share did {_pp(v)} percentage points worse than the Nifty 50.")
+    if r.id == "near_52w_high":
+        return "The share price is close to its 52-week high." if ok else f"The share price is {abs(v):.0%} below its 52-week high."
+    return r.label
+
+
+def watch_text(r: CheckResult) -> str:
+    """A forward-looking item for a failed check: what to watch for, with where it stands now."""
+    v = r.value
+    if v is None:
+        return r.label
+    if r.id in ("earnings_growing", "revenue_growing"):
+        what, verb = ("profit", "is") if r.id == "earnings_growing" else ("sales", "are")
+        return (f"Whether {what} rise{'s' if verb == 'is' else ''} above the level of a year earlier ({what} {verb} {abs(v):.0%} lower now)." if v < 0
+                else f"Whether {what} start{'s' if verb == 'is' else ''} to grow compared with a year earlier.")
+    if r.id == "interest_cover":
+        return f"Whether profit covers interest costs at least 3 times (it is {v:.1f} times now)."
+    if r.id == "debt_moderate":
+        return f"Whether debt comes down below shareholders' equity (debt-to-equity is {v:.2f} now)."
+    if r.id == "positive_1y_return":
+        return f"Whether the price climbs back above where it was a year ago (it is {abs(v):.1%} lower now)."
+    if r.id == "beats_nifty_1y":
+        return f"Whether the share starts doing better than the Nifty 50 (it is {_pp(v)} percentage points behind over a year)."
+    if r.id == "near_52w_high":
+        return f"Whether the price gets back within 25% of its 52-week high (it is {abs(v):.0%} below it now)."
+    return f"{r.label} (now {r.display})."

@@ -12,6 +12,7 @@ from pathlib import Path
 from indiafacts.fundamentals import LENDER_REASON
 from indiafacts.models import Fact, FactSet, Status
 
+PRESENT_STATUSES = (Status.ok, Status.unverified, Status.conflict)     # a figure with a value in one of these counts as present
 PARAMS_PATH = Path(__file__).parent / "data" / "completeness_params.json"
 ISSUE_STATUSES = (Status.gap, Status.unavailable, Status.conflict, Status.unverified)
 LEVELS = ("High", "Medium", "Low", "Insufficient")
@@ -77,7 +78,9 @@ def completeness(fs: FactSet, as_of: date | None = None, news: list | None = Non
     stale and does not count toward coverage. `news` is optional: None leaves the news pillar out as not assessed."""
     p = params or load_completeness_params()
     when = as_of or fs.retrieved_at.date()
-    ok = [f for f in fs.facts if f.status == Status.ok and f.value is not None]
+    ok = [f for f in fs.facts if f.status in PRESENT_STATUSES and f.value is not None]
+    official = set(p.get("official_sources", []))
+    counted: list[Fact] = []                                     # the latest figure behind every covered or stale entry
     pillars: dict[str, dict] = {}
     totals: dict[str, int] = {}
     attributed: dict[str, list[Fact]] = {k: [] for k in p["pillars"]}
@@ -95,6 +98,7 @@ def completeness(fs: FactSet, as_of: date | None = None, news: list | None = Non
         srcs = pp.get("sources")
         pool = [f for f in ok if not srcs or f.source in srcs]
         expected, present, stale, missing, n_a = [], [], [], [], []
+        verified_n, vendor_est = 0, []
         for entry in pp["expected"]:
             names = entry.split("|")
             stated = [f for f in fs.facts if f.metric in names and (not srcs or f.source in srcs)]
@@ -106,7 +110,12 @@ def completeness(fs: FactSet, as_of: date | None = None, news: list | None = Non
             if not have:
                 missing.append(entry)
                 continue
-            latest = max(have, key=lambda f: (f.period_end, f.retrieved_at))
+            latest = max(have, key=lambda f: (f.period_end, f.status == Status.ok, f.source in official, f.retrieved_at))
+            counted.append(latest)
+            if latest.status == Status.ok:
+                verified_n += 1
+            elif latest.status == Status.unverified:
+                vendor_est.append(entry)
             age, limit = (when - latest.period_end).days, _limit(pp, latest)
             if age > limit:
                 stale.append({"metric": latest.metric, "period": str(latest.period_end), "age_days": age, "max_age_days": limit,
@@ -118,13 +127,15 @@ def completeness(fs: FactSet, as_of: date | None = None, news: list | None = Non
             by_status[f.status.value] = by_status.get(f.status.value, 0) + 1
         n_present = len(present) + len(stale)
         pillars[key] = {"label": pp["label"], "expected": expected, "expected_n": len(expected), "not_applicable": n_a,
-                        "present_ok": n_present, "fresh_ok": len(present), "stale_n": len(stale), "stale": stale, "missing": missing,
+                        "present_ok": n_present, "fresh_ok": len(present), "verified_n": verified_n,
+                        "vendor_only": n_present > 0 and verified_n == 0 and len(vendor_est) == n_present, "vendor_estimate": vendor_est, "stale_n": len(stale), "stale": stale, "missing": missing,
                         "coverage_pct": round(100 * len(present) / len(expected), 1) if expected else None,
                         "issues": by_status, "issues_n": sum(by_status.values())}
     if news is not None:
         need = p["news"]["min_items"]
         pillars["news"] = {"label": p["news"]["label"], "expected": [f"{need} recent item(s)"], "expected_n": 1, "not_applicable": [],
-                           "present_ok": int(len(news) >= need), "fresh_ok": int(len(news) >= need), "stale_n": 0, "stale": [],
+                           "present_ok": int(len(news) >= need), "fresh_ok": int(len(news) >= need), "verified_n": int(len(news) >= need),
+                           "vendor_only": False, "vendor_estimate": [], "stale_n": 0, "stale": [],
                            "missing": [] if len(news) >= need else ["news"], "coverage_pct": 100.0 if len(news) >= need else 0.0,
                            "issues": {}, "issues_n": 0}
     scored = [v["coverage_pct"] for v in pillars.values() if v["coverage_pct"] is not None]
@@ -140,7 +151,11 @@ def completeness(fs: FactSet, as_of: date | None = None, news: list | None = Non
         level, why = "Medium", f"average pillar coverage {overall:.0f}%"
     else:
         level, why = "Low", f"average pillar coverage {overall:.0f}%"
-    return {"as_of": str(when), "level": level, "reason": why, "overall_coverage_pct": overall, "pillars": pillars,
+    n_off = sum(1 for f in counted if f.source in official)
+    n_comp = sum(1 for f in counted if f.source not in official and f.source.startswith("computed"))
+    verification = {"official_n": n_off, "vendor_n": len(counted) - n_off - n_comp, "computed_n": n_comp,
+                    "label": "Not checked against official filings" if n_off == 0 else "Partly checked against official filings"}
+    return {"as_of": str(when), "level": level, "verification": verification, "reason": why, "overall_coverage_pct": overall, "pillars": pillars,
             "issues_total": sum(totals.values()), "issues_by_status": totals, "issues_unmapped": other,
             "stale_total": sum(v["stale_n"] for v in pillars.values()), "conflicts": _conflicts(fs),
             "params_reviewed_on": p["reviewed_on"], "params_overdue": p["overdue"]}

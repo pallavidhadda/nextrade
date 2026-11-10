@@ -1,5 +1,5 @@
 name: snapshots
-# Precomputes analyses for the Nifty 50 and the web app's example tickers once per weekday and publishes them to the
+# Precomputes analyses for the Nifty 50, the web app's example tickers and the top 500 by traded value (TejHQ open data) once per weekday and publishes them to the
 # orphan `snapshots` branch (never main). The API serves them instantly; live analysis stays as "Refresh now". Education only.
 on:
   schedule:
@@ -11,7 +11,7 @@ on:
         type: boolean
         default: false
       tickers:
-        description: "Optional comma-separated tickers (default: Nifty 50 plus example tickers)"
+        description: "Optional comma-separated tickers (default: Nifty 50, examples and the TejHQ top 500)"
         type: string
         default: ""
   pull_request:                  # probe only: checks Yahoo from GitHub's runners before the workflow reaches main
@@ -37,7 +37,7 @@ jobs:
   snapshots:
     if: ${{ github.event_name != 'pull_request' && !inputs.probe }}
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 300
     permissions:
       contents: write
     concurrency: snapshots-branch
@@ -55,11 +55,22 @@ jobs:
           else
             mkdir snapshots
           fi
+      - name: fetch official shareholding history (data branch, if it exists)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          if git ls-remote --exit-code --heads origin data >/dev/null 2>&1; then
+            git clone --depth 1 --branch data "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" databranch
+          else
+            mkdir databranch
+          fi
       - name: precompute
         env:
+          INDIAFACTS_SHP_REPO: ${{ github.workspace }}/databranch/shareholding.csv
           INDIAFACTS_POOL_SIZE: "30"
           TICKERS: ${{ inputs.tickers }}
-        run: uv run python -m indiafacts.snapshots --out snapshots ${TICKERS:+--tickers "$TICKERS"}
+        run: uv run python -m indiafacts.snapshots --out snapshots --universe tej500 ${TICKERS:+--tickers "$TICKERS"}
       - name: publish to the snapshots branch
         if: ${{ always() && hashFiles('snapshots/index.json') != '' }}
         working-directory: snapshots

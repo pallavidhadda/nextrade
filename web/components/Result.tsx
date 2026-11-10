@@ -29,33 +29,36 @@ export function CompBadge({ s }: { s: Summary }) {
   const x = execView(s);
   const c = x.comp;
   if (!c) return null;
-  const mark = ({ good: "✓", warn: "!", bad: "✕" } as Record<string, string>)[x.tone];
-  return <p className="comp-badge"><span className={`light ${x.tone}`}><span aria-hidden="true">{mark}</span> Data completeness: {c.level}</span> overall coverage {Math.round(c.overall_coverage_pct)}% · stale figures: {c.stale_total}</p>;
+  return <p className="comp-badge"><span className={`light ${x.tone}`}>Data: {c.level}</span> {x.words}</p>;
+}
+
+function RatingTag({ x }: { x: ReturnType<typeof execView> }) {
+  return <><span className={`tag stance-tag${x.directional ? "" : " neutral"}`}>{x.label}</span>{x.insufficient && <span className="light warn">Insufficient evidence</span>}</>;
 }
 
 export function Executive({ s }: { s: Summary }) {
   const x = execView(s);
   const c = x.comp;
-  const mark = ({ good: "✓", warn: "!", bad: "✕" } as Record<string, string>)[x.tone];
   const list = (items: string[], empty: string) => <ul className="plain">{(items.length ? items : [empty]).map((i) => <li key={i}>{i}</li>)}</ul>;
   return (
     <>
       <section className="entry" data-r aria-labelledby="exec-h">
-        <header><h2 id="exec-h">At a glance, in plain English</h2><span className="note">read this first</span></header>
+        <header><h2 id="exec-h">In plain English</h2><span className="note">read this first</span></header>
         <div className="body">
           <h3>What this means</h3>
-          <p><span className={`tag stance-tag${x.directional ? "" : " neutral"}`}>{x.label}</span> {x.meaning}</p>
+          <p><RatingTag x={x} /> {x.meaning}</p>
           <h3>What is missing</h3>{list(x.missing, "nothing flagged")}
-          <h3>What to monitor</h3>{list(x.monitor, "nothing specific flagged")}
+          <h3>What to monitor</h3>{list(x.monitor, "nothing specific to watch")}
         </div>
       </section>
       {c && (
         <section className="entry" data-r aria-labelledby="comp-h">
-          <header><h2 id="comp-h">Data completeness</h2><span className="note">{c.level}</span></header>
+          <header><h2 id="comp-h">How complete is the data</h2><span className="note">{c.level}</span></header>
           <div className="body">
-            <p><span className={`light ${x.tone}`}><span aria-hidden="true">{mark}</span> {c.level}</span> overall coverage {Math.round(c.overall_coverage_pct)}% · stale figures: {c.stale_total}</p>
-            <p className="helper">{c.reason}</p>
-            <ul className="plain pillars">{x.pills.map((p) => <li key={p.label}>{p.label}: {Math.round(p.pct)}%</li>)}</ul>
+            <p>{x.words}</p>
+            <ul className="plain pillars">{x.items.map(([n, st]) => <li key={n}>{n}: {st}</li>)}</ul>
+            {x.stale && <p className="helper">{x.stale}</p>}
+            {x.verification && <p className="helper">{x.verification}</p>}
             {x.conflicts.length > 0 && (<><h3>Conflicting figures</h3><ul className="plain">{x.conflicts.map((t) => <li key={t}>{t}</li>)}</ul></>)}
           </div>
         </section>
@@ -141,7 +144,7 @@ export function PeerSpread({ s }: { s: Summary }) {
     <section className="entry" data-r aria-labelledby="peer-h">
       <header><h2 id="peer-h">Peer comparison</h2><span className="note">{p.n_peers} peers used</span></header>
       <div className="body">
-        {p.unavailable_reason ? <p>No peer comparison: {p.unavailable_reason}.</p> : (
+        {p.unavailable_reason || p.n_peers === 0 ? <p>No comparison companies could be matched for this report.</p> : (
           <>
             {p.approximate && <p className="helper"><strong>Approximate peers:</strong> a diversified group compared with single-business companies.</p>}
             {p.few_peers && <p className="helper"><strong>Only {p.n_peers} peer(s) used</strong>, fewer than 5. Treat this as rough.</p>}
@@ -288,7 +291,7 @@ export function Debate({ s }: { s: Summary }) {
           </div>
         )}
         <div className="debate">{col("Bull case", d.bull)}{col("Bear case", d.bear)}</div>
-        <p className="stance"><span className={`tag stance-tag${hasDir ? "" : " neutral"}`}>{d.stance.label}</span> {hasDir ? `Confidence ${d.stance.confidence}. ` : "Partial research snapshot; no rating is given. "}{d.stance.reason}.</p>
+        <p className="stance"><RatingTag x={execView(s)} /> {hasDir ? `Confidence ${d.stance.confidence}. ` : ""}{d.stance.reason.replace(/\.$/, "")}.</p>
         <p className="helper">Educational rating from a transparent rule applied to the evidence on this page. It ignores your own situation, is not a prediction, and is not a recommendation.</p>
       </div>
     </section>
@@ -332,6 +335,7 @@ export function Levels({ s }: { s: Summary }) {
     <section className="entry" data-r aria-labelledby="lev-h">
       <header><h2 id="lev-h">Reference levels (not targets) and risk lenses</h2><span className="note">arithmetic</span></header>
       <div className="body">
+        {x.evidenceNote && <p className="helper">{x.evidenceNote}</p>}
         <table>
           <thead><tr><th>Level</th><th className="num">Price</th></tr></thead>
           <tbody>
@@ -393,28 +397,39 @@ export function Health({ s }: { s: Summary }) {
   );
 }
 
-const REASONS = 3;
-export function AtAGlance({ s, onTab }: { s: Summary; onTab: (t: string) => void }) {
+const pctS = (v: number) => `${v >= 0 ? "+" : "-"}${Math.abs(v * 100).toFixed(1)}%`;
+const rupee = (v: number) => `₹${v.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const crore = (v: number) => (v >= 1e12 ? `₹${(v / 1e12).toFixed(2)} lakh crore` : `₹${Math.round(v / 1e7).toLocaleString("en-IN")} crore`);
+export function AtAGlance({ s }: { s: Summary; onTab?: (t: string) => void }) {
+  const x = execView(s);
   const st = s.debate?.stance;
-  const pass = s.checklist.filter((c) => c.result === "pass").length;
-  const known = s.checklist.filter((c) => c.result !== "unavailable").length;
-  const bull = s.debate?.bull.slice(0, REASONS) ?? [];
-  const bear = s.debate?.bear.slice(0, REASONS) ?? [];
+  const kf = (m: string) => s.key_facts.find((k) => k.metric === m && k.value !== null);
+  const fact = (m: string) => {
+    const f = (s.facts ?? []).filter((q) => q.metric === m && q.status === "ok" && q.value !== null).sort((a, b) => a.period_end.localeCompare(b.period_end)).pop();
+    return f ? Number(f.value) : null;
+  };
+  const price = kf("price"), cap = kf("market_cap"), pe = kf("pe_ttm");
+  const r1 = fact("return_1y"), rel = fact("relative_return_1y");
+  const rated = !!st && x.label !== "No rating";
+  const tiles: { k: string; v: string | null; sub: string; extra?: boolean }[] = [
+    { k: "Last price", v: price ? rupee(price.value as number) : null, sub: price ? `as of ${price.period}` : "" },
+    { k: "Price over 1 year", v: r1 === null ? null : pctS(r1), sub: rel === null ? "" : `${pctS(rel)} against the Nifty 50` },
+    { k: "P/E", v: pe ? (pe.value as number).toFixed(1) : null, sub: pe ? "price relative to yearly earnings" : "" },
+    { k: "Market value", v: cap ? crore(cap.value as number) : null, sub: "" },
+    { k: "Rating", v: rated ? x.label : null, sub: rated ? `${st!.confidence} confidence` : "", extra: x.insufficient },
+  ];
   return (
     <section className="glance" data-r aria-labelledby="glance-h">
       <h2 id="glance-h" className="sr">At a glance</h2>
       <div className="glance-row">
-        <div><span className="glance-k">Educational rating</span><strong className="glance-v">{st ? st.label : "No rating"}</strong><span className="glance-s">{st ? (execView(s).directional ? `${st.confidence} confidence. A rule-based reading, not advice.` : "Partial snapshot: no rating given.") : "Not enough data."}</span></div>
-        <div><span className="glance-k">Score in pool</span><strong className="glance-v">{s.score?.overall != null ? `${s.score.overall.toFixed(0)}/100` : "n/a"}</strong><span className="glance-s">{s.score?.rank ? `rank ${s.score.rank} of ${s.score.n}${(s.score.n ?? 99) < 12 ? " (small set: unstable)" : ""}` : "not scored"}</span></div>
-        <div><span className="glance-k">Checks passed</span><strong className="glance-v">{known ? `${pass}/${known}` : "n/a"}</strong><span className="glance-s">{s.checklist.length - known > 0 ? `${s.checklist.length - known} unavailable` : "all measurable"}</span></div>
-        <div><span className="glance-k">Gaps to know about</span><strong className="glance-v">{s.gaps.length}</strong><span className="glance-s"><button type="button" className="linkish" onClick={() => onTab("gaps")}>see what is missing</button></span></div>
+        {tiles.map((t) => (
+          <div key={t.k} title={t.v === null ? "not available" : undefined}>
+            <span className="glance-k">{t.k}</span>
+            <strong className="glance-v">{t.v ?? "—"}</strong>
+            <span className="glance-s">{t.sub}{t.extra && <span className="light warn">Insufficient evidence</span>}</span>
+          </div>
+        ))}
       </div>
-      {(bull.length > 0 || bear.length > 0) && (
-        <div className="glance-why">
-          <div><h3>Working in its favour</h3><ul>{bull.map((p) => <li key={p.text}>{p.text}</li>)}{bull.length === 0 && <li>Nothing stands out.</li>}</ul></div>
-          <div><h3>Worth being careful about</h3><ul>{bear.map((p) => <li key={p.text}>{p.text}</li>)}{bear.length === 0 && <li>Nothing stands out.</li>}</ul></div>
-        </div>
-      )}
     </section>
   );
 }
@@ -426,7 +441,7 @@ export function Ownership({ s }: { s: Summary }) {
     <section className="entry" data-r aria-labelledby="own-h">
       <header><h2 id="own-h">Who owns it</h2><span className="note">{o.source === "official" ? `NSE filing, as on ${o.as_on}` : "vendor estimate"}</span></header>
       <div className="body">
-        {o.rows.length === 0 ? <p>No ownership data this run.</p> : (
+        {o.rows.length === 0 ? <p>Ownership data is not available for this report.</p> : (
           <table>
             <thead><tr><th>Holder</th><th>Share</th></tr></thead>
             <tbody>
@@ -439,7 +454,7 @@ export function Ownership({ s }: { s: Summary }) {
             </tbody>
           </table>
         )}
-        {o.source !== "official" && <p className="helper" style={{ marginTop: "var(--space-sm)" }}>{o.how_to}</p>}
+        {o.source === "proxy" && <p className="helper" style={{ marginTop: "var(--space-sm)" }}>Official shareholding not available yet; showing a data vendor&apos;s estimate.</p>}
       </div>
     </section>
   );
@@ -526,6 +541,7 @@ export function ScenarioPlan({ s }: { s: Summary }) {
     <section className="entry" data-r aria-labelledby="scn-h">
       <header><h2 id="scn-h">Scenario plan</h2><span className="note">{sc.tone}, educational</span></header>
       <div className="body">
+        {sc.evidence_note && <p className="helper">{sc.evidence_note}</p>}
         <p><strong>{sc.headline}</strong></p>
         <p>{sc.summary}</p>
         <table style={{ marginTop: "var(--space-sm)" }}>

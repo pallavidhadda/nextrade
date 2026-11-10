@@ -59,17 +59,16 @@ def _example(d: Digest) -> str:
     return ""
 
 
-def triggers(sc: dict | None, d: Digest) -> list[Trigger]:
+def triggers(sc: dict | None, d: Digest, limit: int = 4) -> list[Trigger]:
+    """Forward-looking things to watch, in plain words: one per failed check. A check without data is a gap, not a trigger."""
+    from indiafacts.checklist import watch_text
+
     out: list[Trigger] = []
     for c in (sc or {}).get("checklist", []):
         ids = _ids(d, f"check:{c.id}")
-        if not ids:
-            continue
-        if c.result == "fail":
-            out.append(Trigger(text=f"{c.label}: now {c.display}; this test would pass at {c.threshold}", ids=ids))
-        elif c.result == "unavailable":
-            out.append(Trigger(text=f"Needs data: {c.label} ({c.reason})", ids=ids))
-    return out
+        if ids and c.result == "fail":
+            out.append(Trigger(text=watch_text(c), ids=ids))
+    return out[:limit]
 
 
 def template_explanation(d: Digest, sc: dict | None, fs=None) -> Explanation:

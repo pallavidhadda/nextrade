@@ -35,7 +35,7 @@ def test_full_data_is_high_with_every_pillar_covered():
     c = completeness(fsof(full()), AS_OF)
     assert c["level"] == "High" and c["overall_coverage_pct"] == 100.0
     assert all(v["coverage_pct"] == 100.0 and v["stale_n"] == 0 for v in c["pillars"].values())
-    assert set(c["pillars"]) == {"price_history", "fundamentals", "valuation", "balance_sheet", "ownership", "filings"}
+    assert set(c["pillars"]) == {"price_history", "fundamentals", "valuation", "balance_sheet", "ownership"}
 
 
 def test_missing_valuation_makes_it_insufficient_and_lists_what_is_missing():
@@ -109,3 +109,40 @@ def test_json_summary_carries_completeness(tmp_path, capsys):
     d = json.loads(out.read_text())
     assert code == 0 and d["completeness"]["level"] in ("High", "Medium", "Low", "Insufficient")
     assert {"pillars", "issues_total", "conflicts", "stale_total"} <= set(d["completeness"])
+
+
+def test_unverified_vendor_figure_counts_as_present_but_not_verified():
+    facts = [f for f in full() if not f.metric.startswith("sh_")] + [
+        pt("insider_holding", status="unverified", reason="vendor estimate", value="0.5"),
+        pt("institutional_holding", status="unverified", reason="vendor estimate", value="0.3")]
+    o = completeness(fsof(facts), AS_OF)["pillars"]["ownership"]
+    # Yahoo's insider and institutional estimates stand in for promoter and institutional holdings (2 of 4 entries)
+    assert o["present_ok"] == 2 and o["verified_n"] == 0 and o["vendor_only"] is True
+    assert o["coverage_pct"] == 50.0
+    full_o = completeness(fsof(full()), AS_OF)["pillars"]["ownership"]
+    assert full_o["verified_n"] == 4 and full_o["vendor_only"] is False and full_o["coverage_pct"] == 100.0
+
+
+def test_conflict_with_value_is_present_gap_and_unavailable_are_missing():
+    base = [f for f in full() if f.metric not in ("pe_ttm", "pb")]
+    c = completeness(fsof(base + [pt("pe_ttm", status="conflict", reason="differ"),
+                                  pt("pb", status="unavailable", value=None, reason="n/a")]), AS_OF)["pillars"]["valuation"]
+    assert "pe_ttm" not in c["missing"] and "pb" in c["missing"] and c["verified_n"] == 4
+
+
+def test_verification_counts_sources_and_labels_unchecked_data():
+    vendor = [f for f in full() if f.source != "nse_xbrl"]
+    c = completeness(fsof(vendor), AS_OF)["verification"]
+    assert c["official_n"] == 0 and c["label"] == "Not checked against official filings" and c["vendor_n"] > 0
+    facts = [f for f in vendor if f.metric not in ("sh_promoter", "roe")] + [pt("sh_promoter", source="nse_shp"),
+                                                                             pt("roe", source="computed:selfvalue")]
+    v = completeness(fsof(facts), AS_OF)["verification"]
+    assert v["official_n"] == 1 and v["computed_n"] == 1 and v["label"] == "Partly checked against official filings"
+
+
+def test_insufficient_only_when_valuation_or_fundamentals_are_thin():
+    no_fund = [f for f in full() if f.metric not in ("revenue", "net_income", "eps_diluted", "ebitda", "revenue_yoy", "net_income_yoy",
+                                                    "net_margin_q", "net_income_ttm", "eps_diluted_ttm", "fy_revenue", "fy_net_income", "roe")]
+    assert completeness(fsof(no_fund), AS_OF)["level"] == "Insufficient"
+    no_own = [f for f in full() if not f.metric.startswith("sh_")]
+    assert completeness(fsof(no_own), AS_OF)["level"] in ("High", "Medium")

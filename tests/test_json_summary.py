@@ -16,6 +16,9 @@ def test_json_flag_writes_summary(tmp_path, capsys):
     assert d["gaps"] and all("metric" in g and "reason" in g for g in d["gaps"])
     assert d["explanation"]["summary"] and d["explanation"]["claims"]
     assert isinstance(d["notices"], list) and "factors" in d["score"]
+    assert {"partial", "evidence_note"} <= set(d["debate"]["stance"])
+    assert not any(t["text"].startswith("Needs data") or "Check failed" in t["text"] for t in d["explanation"]["triggers"])
+    assert not any(p["text"].startswith("Check ") for p in d["debate"]["bull"] + d["debate"]["bear"])
 
 
 def test_json_without_score_has_null_score(tmp_path, capsys):

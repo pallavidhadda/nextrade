@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from indiafacts.models import FactSet, Status
 
 PARAMS_PATH = Path(__file__).parent / "data" / "peer_params.json"
+NO_SIZE_NOTE = "peers chosen by industry only; company size could not be matched"
 APPROX_NOTE = "approximate peers: a diversified group compared with single-business companies"
 METRICS = ("pe_ttm", "pb", "ev_ebitda", "roe", "fy_roce", "net_margin_q", "net_income_yoy")
 
@@ -19,7 +20,7 @@ METRICS = ("pe_ttm", "pb", "ev_ebitda", "roe", "fy_roce", "net_margin_q", "net_i
 class PeerPick(BaseModel):
     ticker: str
     tier: int
-    size_ratio: float
+    size_ratio: float | None = None
     reason: str
     fact_ids: list[str]
 
@@ -38,6 +39,7 @@ class PeerGroup(BaseModel):
     unavailable_reason: str = ""
     approximate: bool = False        # a diversified group is compared with single-business companies
     few_peers: bool = False          # fewer peers than the warn threshold
+    size_matched: bool = True        # False when the target's market cap was missing and peers were chosen by industry only
 
 
 class MetricComparison(BaseModel):
@@ -84,13 +86,13 @@ def select_peers(target: FactSet, pool: dict[str, FactSet], k: int | None = None
     t = target.entity.ticker
     g = PeerGroup(target=t)
     t_cap, _ = _val(target, "market_cap")
-    if t_cap is None:
-        g.unavailable_reason = "target market cap unavailable; cannot size-match peers"
-        return g
     t_ind, t_sec = target.entity.industry, target.entity.sector
     if not t_ind and not t_sec:
         g.unavailable_reason = "target industry or sector unknown; cannot choose peers"
         return g
+    if t_cap is None:
+        g.size_matched = False
+        g.notes.append(NO_SIZE_NOTE)
     if t in set(p.get("conglomerates", {}).get("tickers", [])):
         g.approximate = True
         g.notes.append(APPROX_NOTE)
@@ -112,7 +114,7 @@ def select_peers(target: FactSet, pool: dict[str, FactSet], k: int | None = None
             tier = 2
         else:
             continue
-        if cap is None:
+        if cap is None and t_cap is not None:
             g.excluded.append(Exclusion(ticker=tk, reason="no market cap"))
             continue
         if pe is None:
@@ -120,6 +122,9 @@ def select_peers(target: FactSet, pool: dict[str, FactSet], k: int | None = None
             continue
         if pe <= 0:
             g.excluded.append(Exclusion(ticker=tk, reason="P/E not positive (loss-maker)"))
+            continue
+        if t_cap is None:
+            eligible.append((tier, 0.0, tk, None, [cap_id, pe_id]))
             continue
         ratio = cap / t_cap
         floor = p["size_floor_tier1"] if tier == 1 else p["size_floor_tier2"]
@@ -133,8 +138,9 @@ def select_peers(target: FactSet, pool: dict[str, FactSet], k: int | None = None
     eligible.sort(key=lambda e: (e[0], e[1], e[2]))
     for tier, _, tk, ratio, ids in eligible[:k]:
         label = "same industry" if tier == 1 else "same sector"
-        g.picks.append(PeerPick(ticker=tk, tier=tier, size_ratio=round(ratio, 4),
-                                reason=f"{label}; market cap {ratio:.2f}x target", fact_ids=ids))
+        g.picks.append(PeerPick(ticker=tk, tier=tier, size_ratio=None if ratio is None else round(ratio, 4),
+                                reason=f"{label}; market cap {ratio:.2f}x target" if ratio is not None else f"{label}; size not matched",
+                                fact_ids=[i for i in ids if i]))
     if g.picks and not any(pk.tier == 1 for pk in g.picks):
         g.notes.append("no same-industry peers in the loaded pool; sector-level peers are a coarse comparison")
     for tier, _, tk, ratio, _ in eligible[k:]:
@@ -188,7 +194,7 @@ def peer_summary(sc: dict | None) -> dict | None:
     g = (sc or {}).get("peers")
     if g is None:
         return None
-    return {"n_peers": len(g.picks), "candidates": g.candidates, "approximate": g.approximate, "few_peers": g.few_peers,
+    return {"n_peers": len(g.picks), "candidates": g.candidates, "approximate": g.approximate, "size_matched": g.size_matched, "few_peers": g.few_peers,
             "unavailable_reason": g.unavailable_reason or None, "notes": list(g.notes),
             "picks": [{"ticker": p.ticker, "tier": p.tier, "size_ratio": p.size_ratio} for p in g.picks],
             "metrics": [{"metric": c.metric, "status": c.status, "target": c.target_value, "median": c.peer_median,

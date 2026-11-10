@@ -174,8 +174,10 @@ def build_digest(fs: FactSet, sc: dict | None, profile=None, budget_tokens: int 
         for c in sc.get("peer_comparisons", []):
             if c.status == "ok" and c.metric in ("pe_ttm", "pb"):
                 prem = f"{c.premium:+.1%}" if c.premium is not None else "n/a"
+                tv = f"{c.target_value:.3g}" if c.target_value is not None else "n/a"
+                pm = f"{c.peer_median:.3g}" if c.peer_median is not None else "n/a"
                 G("peers", f"peer:{c.metric}", f"peer:{c.metric}",
-                  f"PEER {c.metric} {c.target_value:.3g} vs median {c.peer_median:.3g} ({prem}, n={c.n})")
+                  f"PEER {c.metric} {tv} vs median {pm} ({prem}, n={c.n})")
     vok = [f for f in facts if f.source == "computed:valuation" and f.status == Status.ok]
     ig = {}
     for f in vok:

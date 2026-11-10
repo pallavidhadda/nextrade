@@ -157,13 +157,89 @@ def exec_input(fs: FactSet, as_of: date | None, scorecard: dict | None, debate, 
                  "contributions": {k: c.model_dump() for k, c in r.contributions.items()},
                  "missing_factors": [m.model_dump() for m in r.missing_factors], "pool_failed": len((scorecard or {}).get("failed") or {})}
     deb = None if debate is None else {"stance": {"label": debate.stance.label, "confidence": debate.stance.confidence,
-                                                    "reason": debate.stance.reason, "partial": debate.stance.partial}}
+                                                    "reason": debate.stance.reason, "partial": debate.stance.partial,
+                                                    "evidence_note": debate.stance.evidence_note}}
     lev = None if levels is None else {"applies": levels.applies, "last_close": levels.last_close, "stop": levels.stop,
                                        "targets": [{"r": a, "price": b} for a, b in zip(levels.reward_risk, levels.targets)], "notes": levels.notes}
     ex = None if explanation is None else {"triggers": [{"text": t.text} for t in explanation.triggers]}
     st = stamp or report_stamp(fs.entity.ticker, when, (scorecard or {}).get("members") or [])
+    scn = None if scenario is None or not getattr(scenario, "applies", False) else {
+        "watch": list(scenario.watch), "levels": [{"label": l, "price": v, "meaning": m} for l, v, m in scenario.levels]}
     return {"completeness": completeness(fs, when), "score": score, "debate": deb, "levels": lev, "explanation": ex, "stamp": st,
-            "scenario_reason": getattr(scenario, "reason", "") if scenario is not None else ""}
+            "scenario": scn, "scenario_reason": getattr(scenario, "reason", "") if scenario is not None else ""}
+
+
+LEVEL_WORDS = {"High": "Nearly all the figures we look for were found",
+               "Medium": "Most figures were found; some are missing",
+               "Low": "About half the figures are missing",
+               "Insufficient": "Key figures are missing, so read the rating with care"}
+# plain area name, and what a gap in it means for the reader
+AREAS = {"price_history": ("Price history (returns, 52-week range, volatility)", "the trend and risk readings are limited"),
+         "fundamentals": ("Company results (sales, profit, earnings per share)", "growth and profitability are hard to judge"),
+         "valuation": ("Valuation (P/E, price-to-book, market value)", "we can't say whether the price is high or low for what the company earns"),
+         "balance_sheet": ("Balance sheet (debt, cash, assets)", "we can't judge how much debt the company carries"),
+         "ownership": ("Ownership (who holds the shares)", ""),
+         "news": ("News", "")}
+AREA_SHORT = {"price_history": "Price history", "fundamentals": "Company results", "valuation": "Valuation", "balance_sheet": "Balance sheet",
+              "ownership": "Ownership", "news": "News"}
+SKIP_AREAS = ("filings",)                      # official-vs-vendor is shown once, as the verification line, not as a missing area
+REAL_GAP_PCT = 60                             # an area covered at or below this is a real gap
+
+
+def _area_status(p: dict) -> str:
+    """Status word for one area of the completeness JSON; tolerates old and new shapes."""
+    pct = p.get("coverage_pct")
+    if p.get("vendor_only"):
+        return "Vendor estimate only"
+    if pct is None:
+        return ""
+    if pct >= 99.95:
+        return "Complete"
+    n = p.get("expected_n") or 0
+    got = p.get("fresh_ok")
+    if got is None:
+        got = round(pct / 100 * n)
+    return "Not found" if pct <= 0 else f"Partly found ({got} of {n})" if n else "Partly found"
+
+
+def area_items(comp: dict) -> list[tuple[str, str]]:
+    return [(AREA_SHORT.get(k, v.get("label", k)), st) for k, v in (comp.get("pillars") or {}).items()
+            if k not in SKIP_AREAS and (st := _area_status(v))]
+
+
+def missing_items(comp: dict) -> list[str]:
+    """Plain lines for areas with a real gap, worst first. Nothing is listed for an area that is mostly there."""
+    rows = []
+    for k, p in (comp.get("pillars") or {}).items():
+        if k in SKIP_AREAS or p.get("coverage_pct") is None:
+            continue
+        name, effect = AREAS.get(k, (p.get("label", k), ""))
+        pct = p["coverage_pct"]
+        if p.get("vendor_only"):
+            rows.append((pct - 0.5, "Ownership: only a data vendor's estimate, not the official exchange filing." if k == "ownership"
+                         else f"{name}: only a data vendor's estimate."))
+        elif pct <= REAL_GAP_PCT:
+            status = "not available" if pct <= 0 else "only partly found"
+            rows.append((pct, f"{name}: {status}" + (f", so {effect}." if effect else ".")))
+    return [t for _, t in sorted(rows, key=lambda r: r[0])][:4]
+
+
+def monitor_items(s: dict, limit: int = 4) -> list[str]:
+    """Forward-looking things to watch: check boundaries first, then the next results date, then the scenario's
+    upside and downside trigger prices. Never 'needs data' items (those belong under what is missing)."""
+    out: list[str] = [t["text"] for t in ((s.get("explanation") or {}).get("triggers") or []) if not t["text"].startswith("Needs data")]
+    sc = s.get("scenario") or {}
+    out += [w for w in (sc.get("watch") or []) if "results are due" in w]
+    for lv in sc.get("levels") or []:
+        if "trigger" in str(lv.get("label", "")).lower() and lv.get("price") is not None:
+            m = str(lv.get("meaning") or "").strip().rstrip(".")
+            out.append(f"{lv['label']} at ₹{float(lv['price']):,.2f}" + (f": {m}" if m else ""))
+    seen, uniq = set(), []
+    for x in out:
+        if x not in seen:
+            seen.add(x)
+            uniq.append(x)
+    return uniq[:limit]
 
 
 def exec_view(s: dict) -> dict:
@@ -175,16 +251,19 @@ def exec_view(s: dict) -> dict:
     label = st["label"] if st else "No rating"
     directional = has_direction(label)
     out["label"], out["directional"] = label, directional
+    note = (st or {}).get("evidence_note") or ""
+    out["evidence_note"] = note if directional else ""
+    out["insufficient"] = bool(directional and st and (st.get("partial") or note))
     if directional:
-        out["meaning"] = f"{label} (confidence {st['confidence']}). {st['reason'].rstrip('.')}. A rule-based reading of the evidence, not advice."
+        out["meaning"] = f"Rule-based rating: {label}, {str(st['confidence']).lower()} confidence." + (f" {note}" if note else "")
+    elif st and label == "No rating":
+        why = (st.get("reason") or "").strip().rstrip(".")
+        out["meaning"] = (why[:1].upper() + why[1:] if why else "No rating: the score could not be computed") + "."
     else:
-        why = st["reason"].rstrip(".") if st else "no score could be computed"
-        out["meaning"] = f"Partial research snapshot — no rating: {why}."
+        out["meaning"] = "No rating: the score could not be computed."
     comp = s.get("completeness") or {}
-    pills = [(v["label"], v["coverage_pct"]) for v in (comp.get("pillars") or {}).values() if v.get("coverage_pct") is not None]
-    pills_sorted = sorted(pills, key=lambda x: x[1])
-    out["missing"] = [f"{n}: {p:.0f}% covered" for n, p in pills_sorted[:3]]
-    out["monitor"] = [t["text"] for t in ((s.get("explanation") or {}).get("triggers") or [])[:3]]
+    out["missing"] = missing_items(comp)
+    out["monitor"] = monitor_items(s)
     level = comp.get("level")
     conflicts = []
     for c in comp.get("conflicts") or []:
@@ -192,9 +271,11 @@ def exec_view(s: dict) -> dict:
         txt = f"{c['metric']} ({c['period']}): used {ch['value']} from {ch['source']}"
         txt += (f"; other source {alt['source']} says {alt['value']}" if alt else "; no second value to compare")
         conflicts.append(txt + f". {c['reason']}" if c.get("reason") else txt)
+    stale = comp.get("stale_total", 0) or 0
     out["comp"] = {"level": level, "tone": {"High": "good", "Medium": "warn", "Low": "bad", "Insufficient": "bad"}.get(level, "warn"),
-                   "reason": comp.get("reason", ""), "overall": comp.get("overall_coverage_pct"), "pillars": pills,
-                   "stale": comp.get("stale_total", 0), "conflicts": conflicts} if level else None
+                   "words": LEVEL_WORDS.get(level, ""), "items": area_items(comp),
+                   "stale": f"{stale} figure{' is' if stale == 1 else 's are'} out of date" if stale > 0 else "",
+                   "verification": ((comp.get("verification") or {}).get("label") or ""), "conflicts": conflicts} if level else None
     sc = s.get("score") or {}
     rows, sentence = [], ""
     for k, c in (sc.get("contributions") or {}).items():
@@ -217,7 +298,7 @@ def exec_view(s: dict) -> dict:
         out["stamp_line"] = line + (f" · model {sp['llm_model']}" if sp.get("llm_model") else "")
     else:
         out["stamp_line"] = ""
-    out["scenario_reason"] = s.get("scenario_reason") or ("no scenario plan: the evidence is not enough for a rating" if not directional else "")
+    out["scenario_reason"] = s.get("scenario_reason") or ("no scenario plan without a rating" if not directional else "")
     return out
 
 
@@ -227,8 +308,12 @@ def exec_lines(x: dict) -> list[str]:
     lines += ["WHAT TO MONITOR"] + (["  " + m for m in x["monitor"]] or ["  nothing specific flagged"])
     c = x["comp"]
     if c:
-        lines += ["", f"DATA COMPLETENESS: {c['level']} ({c['reason']})"]
-        lines.append(f"  overall coverage {c['overall']:.0f}% | " + " | ".join(f"{n} {p:.0f}%" for n, p in c["pillars"]) + f" | stale figures: {c['stale']}")
+        lines += ["", f"HOW COMPLETE IS THE DATA: {c['words']}"]
+        lines += [f"  {n}: {st}" for n, st in c["items"]]
+        if c["stale"]:
+            lines.append(f"  {c['stale']}")
+        if c["verification"]:
+            lines.append(f"  {c['verification']}")
         lines += [f"  conflict: {t}" for t in c["conflicts"]]
     return lines
 
@@ -302,6 +387,12 @@ def flows_lines(flows):
     return flows_lines_raw(flows) if flows is not None else []
 
 
+def peer_pick_text(p) -> str:
+    """'same industry, 1.20x size'; the size part is left out when the size ratio is unknown."""
+    base = "same industry" if p.tier == 1 else "same sector"
+    return base if p.size_ratio is None else f"{base}, {p.size_ratio:.2f}x size"
+
+
 def _peers_block(sc: dict, ticker: str) -> list[str]:
     g = sc.get("peers")
     if g is None:
@@ -311,8 +402,7 @@ def _peers_block(sc: dict, ticker: str) -> list[str]:
         return lines[:1] + [f"no peer comparison: {g.unavailable_reason}"] + [f"note: {n}" for n in g.notes]
     lines.append(f"peers used: {len(g.picks)}" + (f" (of {g.candidates} candidates in the pool)" if g.candidates else "")
                  + (f"; WARNING: fewer than 5 peers, treat as rough" if g.few_peers else ""))
-    lines.append("picks: " + "; ".join(f"{p.ticker} (tier {p.tier}, {'same industry' if p.tier == 1 else 'same sector'}, "
-                                         f"{p.size_ratio:.2f}x size)" for p in g.picks))
+    lines.append("picks: " + "; ".join(f"{p.ticker} (tier {p.tier}, {peer_pick_text(p)})" for p in g.picks))
     if g.excluded:
         lines.append("left out: " + "; ".join(f"{e.ticker} ({e.reason})" for e in g.excluded))
     lines += [f"note: {n}" for n in g.notes]
@@ -393,17 +483,20 @@ def _debate_block(d) -> list[str]:
     out = ["", "BULL CASE VERSUS BEAR CASE (educational; rule-based from the evidence above)"]
     out += ["bull:"] + ([f"  + {p.text}" for p in d.bull] or ["  (none found)"])
     out += ["bear:"] + ([f"  - {p.text}" for p in d.bear] or ["  (none found)"])
-    if d.stance.partial or d.stance.label in ("Insufficient evidence", "No rating"):
-        out.append(f"EDUCATIONAL RATING: {d.stance.label} (partial research snapshot; no rating is given). {d.stance.reason}.")
+    if d.stance.label == "No rating":
+        out.append(f"EDUCATIONAL RATING: No rating. {d.stance.reason}.")
     else:
-        out.append(f"EDUCATIONAL RATING: {d.stance.label} (confidence {d.stance.confidence}). {d.stance.reason}.")
+        tag = " [Insufficient evidence]" if d.stance.partial else ""
+        out.append(f"EDUCATIONAL RATING: {d.stance.label}{tag} (confidence {d.stance.confidence}). {d.stance.reason}.")
     return out
 
 
 def _levels_block(lv, panel, scenario=None, directional: bool = True) -> list[str]:
     out = ["", "REFERENCE LEVELS (NOT TARGETS) AND RISK LENSES (arithmetic on past closes; not predictions, not price targets, not personal advice)"]
     if not directional:
-        return out + [f"not shown: {getattr(scenario, 'reason', '') or 'the evidence is not enough for a rating'}"]
+        return out + [f"not shown: {getattr(scenario, 'reason', '') or 'there is no rating'}"]
+    if getattr(scenario, "evidence_note", ""):
+        out.append(scenario.evidence_note)
     if lv.last_close is None:
         return out + [f"unavailable: {lv.reason}"]
     inr = lambda v: f"₹{v:,.2f}"

@@ -8,7 +8,7 @@ import OwnModelPanel from "@/components/OwnModel";
 import { AnalystPanel, AtAGlance, CompBadge, Executive, ScenarioPlan, Checklist, Debate, Health, MarketFlows, Ownership, Explanation, Gaps, KeyFacts, Levels, News, PeerSpread, Valuation } from "@/components/Result";
 import { Scrub, ScoreFactors, ScoreNumber, SplitWords } from "@/components/Reveal";
 import companies from "@/lib/companies.json";
-import { ApiError, factsCsvUrl, poll, reportDownloadUrl, reportUrl, submit } from "@/lib/api";
+import { ApiError, poll, reportDownloadUrl, reportUrl, submit } from "@/lib/api";
 import { execView } from "@/lib/exec";
 import type { Job, PanelResult, Profile, Summary } from "@/lib/types";
 
@@ -312,9 +312,7 @@ function ResultView({ s: base, served, servedAsOf, jobId, tab, onTab }: { s: Sum
               <p className="sub">{[s.name ? s.ticker : null, s.industry ?? s.sector, s.isin].filter(Boolean).join(", ")}. Profile: {s.profile.horizon}, {s.profile.risk} risk, {s.profile.experience}.</p>
             </div>
             <div className="actions">
-              <a className="key primary" href={reportDownloadUrl(jobId)} download><span>Download report</span></a>
-              {s.facts_total ? <a className="key" href={factsCsvUrl(jobId)} download><span>Download facts (CSV)</span></a> : null}
-            </div>
+              <a className="key primary" href={reportDownloadUrl(jobId)} download><span>Download report</span></a>            </div>
           </div>
           {served === "snapshot" && servedAsOf && <p className="snap-label">Precomputed as of close on {servedAsOf}</p>}
           <CompBadge s={s} />

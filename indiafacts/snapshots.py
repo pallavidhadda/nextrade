@@ -33,12 +33,32 @@ def safe_name(ticker: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]", "_", norm(ticker))
 
 
-def load_tickers(extra: list[str] | None = None) -> list[str]:
+UNIVERSES = ("nifty50", "tej500")
+
+
+def tej500_tickers(store=None, today: date | None = None) -> list[str]:
+    """Top 500 by 63-day average traded value (NSE liquidity rank, not market value) from TejHQ's open parquet; no key needed.
+    Raises on any download or parse failure; the caller decides the fallback."""
+    from indiafacts.tej import TejStore, universe_members
+
+    df = (store or TejStore()).load("universe/nse_liquid.parquet")
+    fund = re.compile(r"\b(ETF|BEES|FUND|NIFTY|SENSEX|LIQUID|GOLD|SILVER)\b|BEES$|ETF$|AML-", re.I)          # exchange-traded funds are not companies
+    return [norm(m.symbol) for m in universe_members(df, today or date.today(), 500) if not (fund.search(m.name) or fund.search(m.symbol))]
+
+
+def load_tickers(extra: list[str] | None = None, universe: str = "nifty50", tej_loader: Callable[[], list[str]] | None = None,
+                 log=print) -> list[str]:
+    """Nifty 50 and the example chips first (so they finish first), then the optional wider universe, then extras."""
     out: list[str] = []
     for line in (DATA / "nifty50.txt").read_text(encoding="utf-8").splitlines():
         if line.strip() and not line.startswith("#"):
             out.append(norm(line))
     out += [norm(t) for t in EXAMPLES]
+    if universe == "tej500":
+        try:
+            out += (tej_loader or tej500_tickers)()
+        except Exception as exc:                                                     # the Nifty 50 run still goes ahead
+            log(f"tej500 universe unavailable ({type(exc).__name__}: {str(exc)[:120]}); using Nifty 50 plus examples only")
     out += [norm(t) for t in (extra or [])]
     return list(dict.fromkeys(out))
 
@@ -83,7 +103,8 @@ def snapshot_one(ticker: str, out_dir: Path, runner: Callable, commit: str, now:
         (out_dir / f"{safe_name(ticker)}.html").write_text(res["html"], encoding="utf-8")
         entry["ok"] = True
     except Exception as exc:                                                         # one bad ticker must not stop the run
-        entry["error"] = (str(exc)[:300] or type(exc).__name__)
+        detail = getattr(exc, "detail", None)
+        entry["error"] = (str(detail or exc)[:300] or type(exc).__name__)
     return entry
 
 
@@ -186,6 +207,7 @@ def main(argv: list[str] | None = None, runner: Callable | None = None, sleep=ti
     p.add_argument("--probe", action="store_true", help="fetch 1-2 tickers and say whether Yahoo works from this machine")
     p.add_argument("--delay", type=float, default=5.0, help="seconds between tickers")
     p.add_argument("--max-fail-pct", type=float, default=float(os.environ.get("SNAPSHOT_MAX_FAIL_PCT", "30")), help="exit 1 when more than this percent failed")
+    p.add_argument("--universe", choices=UNIVERSES, default="nifty50", help="nifty50 (default) or tej500: also the top 500 by traded value from TejHQ's open data")
     p.add_argument("--limit", type=int, default=0, help="only the first N tickers (testing)")
     a = p.parse_args(argv)
     if runner is None:
@@ -193,7 +215,7 @@ def main(argv: list[str] | None = None, runner: Callable | None = None, sleep=ti
     given = [norm(t) for t in a.tickers.split(",") if t.strip()]
     if a.probe:
         return 0 if probe(runner, given[:2] or None) else 1
-    tickers = given or load_tickers()
+    tickers = given or load_tickers(universe=a.universe)
     if a.limit:
         tickers = tickers[:a.limit]
     index = run_snapshots(tickers, Path(a.out), runner, a.delay, sleep)
