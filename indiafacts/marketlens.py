@@ -327,6 +327,55 @@ def facts_for(symbol: str, row: dict, now: datetime | None = None, origin: str =
 # netProfit/revenue/opRevenue/totalEquity/totalAssets/borrowings (mixed or unproven units).
 
 
+def score_metrics_for(row: dict, nifty_1y: float | None = None) -> dict[str, float]:
+    """The score metrics (scoring metric ids, ratio units) Market Lens can state honestly for one row. 0 and null are placeholders,
+    not values; return on equity, growth, beta and drawdown are never taken from Market Lens. relative_return_1y needs the Nifty 50's
+    1-year return (a ratio) and is left out without it."""
+    out: dict[str, float] = {}
+    v = _num(row, "peRatio")
+    if v and v > 0:
+        out["pe_ttm"] = v
+    v = _num(row, "pbRatio")
+    if v and v > 0:
+        out["pb"] = v
+    v = _num(row, "debtToEquity")
+    if v is not None and (v > 0 or (v == 0 and _num(row, "totalBorrowings") == 0)):
+        out["debt_to_equity"] = v
+    v = _num(row, "oneYearReturn")
+    if v:
+        out["return_1y"] = v / 100.0
+        if nifty_1y is not None:
+            out["relative_return_1y"] = v / 100.0 - nifty_1y
+    v = _num(row, "annVolatility")
+    if v and v > 0:
+        out["volatility_1y"] = v / 100.0
+    close, hi = _num(row, "closePrice"), _num(row, "week52High")
+    if close and hi and close > 0 and hi > 0:
+        out["pct_from_52w_high"] = close / hi - 1.0
+    return out
+
+
+def row_as_of(row: dict, now: datetime | None = None) -> date:
+    return _stamp(row, now or datetime.now(timezone.utc))[0]
+
+
+def sector_members(sym: str, rows: dict, min_sector: int = 8) -> tuple[list[str], str, str] | None:
+    """Symbols in the target's Market Lens sector; if fewer than min_sector, its sub-sector. Returns (symbols, kind, name)
+    with kind 'sector' or 'subSector', or None when the target has no row. The target is always included."""
+    row = (rows or {}).get(sym)
+    if not row:
+        return None
+    sector, sub = row.get("sector") or None, row.get("subSector") or None
+    if sector:
+        got = sorted(s for s, r in rows.items() if r.get("sector") == sector)
+        if len(got) >= min_sector or not sub:
+            return (got if sym in got else sorted(got + [sym])), "sector", sector
+    if sub:
+        got = sorted(s for s, r in rows.items() if r.get("subSector") == sub)
+        return (got if sym in got else sorted(got + [sym])), "subSector", sub
+    return None
+
+
 def peer_factset(symbol: str, row: dict, now: datetime | None = None):
     """A minimal FactSet for one Market Lens row, so peers.py can treat it like any pool member.
     Entity industry = Market Lens sector (fine), sector = Market Lens subSector (broad)."""
