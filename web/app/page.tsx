@@ -344,7 +344,6 @@ function ResultView({ s: base, served, servedAsOf, jobId, tab, onTab }: { s: Sum
           </div>
         )}
       </div>
-      {execView(s).stampLine && <div className="container"><p className="helper stamp-line">{execView(s).stampLine}</p></div>}
       <div className="container body-pad" hidden={tab !== "ai"}>
         <div className="stack">
           <OwnModelPanel jobId={jobId} summary={base} onExplanation={setOwn} onPanel={setPanel} />
