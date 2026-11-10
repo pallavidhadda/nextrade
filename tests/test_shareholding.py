@@ -149,3 +149,10 @@ def test_stored_official_history_is_used_by_default_from_the_repo_store(tmp_path
     assert by["sh_promoter"].source == "nse_shp" and float(by["sh_promoter"].value) == pytest.approx(0.52)
     assert float(by["sh_promoter_change"].value) == pytest.approx(-0.03)
     assert _ownership_facts(mkfs("ZZZ.NS", {"market_cap": 1e9}), [], False, notices) == []
+
+
+def test_filed_no_pledge_flag_reads_as_zero_pledged():
+    raw = xml(pledged=10).decode()
+    raw = raw.replace('<in-bse-shp:NumberOfSharesEncumberedUnderPledged contextRef="p">10</in-bse-shp:NumberOfSharesEncumberedUnderPledged>',
+                      '<in-bse-shp:WhetherAnySharesHeldByPromotersAreEncumberedUnderPledged contextRef="p">false</in-bse-shp:WhetherAnySharesHeldByPromotersAreEncumberedUnderPledged>')
+    assert parse_shp(raw).pledged_of_promoter == 0.0

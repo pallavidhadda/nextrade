@@ -29,6 +29,12 @@ _PL = {
     "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations": ("eps_diluted", "per_share"),
     "DebtEquityRatio": ("debt_equity_ratio", "ratio"), "DebtServiceCoverageRatio": ("debt_service_coverage_ratio", "ratio"),
     "InterestServiceCoverageRatio": ("interest_service_coverage_ratio", "ratio"),
+    # bank filings (INTEGRATED_FILING_BANKING) use their own names; revenue is left out because a bank's "revenue" is defined
+    # differently by each source, so it is not guessed here
+    "InterestExpended": ("interest_expense", "money"), "ProfitLossFromOrdinaryActivitiesBeforeTax": ("profit_before_tax", "money"),
+    "ProfitLossForThePeriod": ("net_income_total", "money"),
+    "BasicEarningsPerShareAfterExtraordinaryItems": ("eps_basic", "per_share"),
+    "DilutedEarningsPerShareAfterExtraordinaryItems": ("eps_diluted", "per_share"),
 }
 _CASH = {
     "CashFlowsFromUsedInOperatingActivities": "operating_cash_flow",
@@ -134,8 +140,9 @@ def facts_from_nse_xbrl(path: Path, retrieved_at: datetime | None = None) -> Fac
         add(metric, concept, "OneD", PeriodType.Q, q["start"], end, kind_unit[kind])
         add(metric, concept, "FourD", PeriodType.FY, fy_start, end, kind_unit[kind], Status.unverified, year_note)
     if not have_owner:                                                                      # standalone filings have no owners' split
-        add("net_income", "ProfitLossForPeriod", "OneD", PeriodType.Q, q["start"], end, "INR")
-        add("net_income", "ProfitLossForPeriod", "FourD", PeriodType.FY, fy_start, end, "INR", Status.unverified, year_note)
+        for concept in ("ProfitLossForPeriod", "ProfitLossForThePeriod"):
+            add("net_income", concept, "OneD", PeriodType.Q, q["start"], end, "INR")
+            add("net_income", concept, "FourD", PeriodType.FY, fy_start, end, "INR", Status.unverified, year_note)
     for concept, metric in _CASH.items():
         add(metric, concept, "FourD", PeriodType.FY, fy_start, end, "INR", Status.unverified, year_note)
     inst = contexts.get("OneI")

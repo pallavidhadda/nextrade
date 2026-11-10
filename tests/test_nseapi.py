@@ -201,7 +201,11 @@ def test_pipeline_official_filings_give_yoy_and_ownership(tmp_path):
     fs = build_factset("RELIANCE.NS", client=FakeClient(), sleep=lambda s: None, nse_client=api(op, tmp_path))
     rev = [f for f in fs.facts if f.metric == "revenue_yoy"]
     assert rev and rev[0].status == "ok", [(f.status, f.reason) for f in rev]
-    assert any(f.source == "nse_xbrl" and f.metric == "revenue" for f in fs.facts)
+    by_id = {f.fact_id: f for f in fs.facts}
+    assert {by_id[i].source for i in rev[0].related_fact_ids} == {"nse_xbrl"}       # both quarters come from filings
+    assert {by_id[i].basis.value for i in rev[0].related_fact_ids} == {"consolidated"}
+    assert {str(f.period_end) for f in fs.facts if f.source == "nse_xbrl" and f.metric == "revenue" and f.period_type == "Q"} == {"2026-09-30", "2025-09-30"}
+    assert not any("conflict" == f.status and f.source == "computed" and "nse_xbrl" in f.reason and f.metric.startswith("revenue_source") for f in fs.facts)
     own = {f.metric: f for f in fs.facts if f.source == "nse_shp"}
     assert float(own["sh_promoter"].value) == pytest.approx(0.5044) and "sh_foreign_inst" in own and "sh_promoter_pledged" in own
     assert "sh_promoter_change" in own

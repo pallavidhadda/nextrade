@@ -139,7 +139,7 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
                  if f.source == "yahoo" and f.period_type == PeriodType.Q and f.status == Status.ok}
         for f in facts:
             y = yahoo.get((f.metric, f.period_end))
-            if f.source in ("nse_filing", "nse_xbrl") and y is not None and y.unit == f.unit:
+            if f.source in ("nse_filing", "nse_xbrl") and f.period_type == PeriodType.Q and y is not None and y.unit == f.unit:
                 extra.append(cross_check(f, y))
     price_facts, price_notes, charts = _price_facts(fs.entity.ticker, as_of, prices, price_client, benchmark, notices,
                                             _tej_action_dates(store, tej_hist, fs.entity.ticker, as_of, prices, notices))
