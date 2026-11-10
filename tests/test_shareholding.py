@@ -132,3 +132,20 @@ def test_pledge_and_promoter_fall_become_bear_points_only_when_official(tmp_path
     d = Debate()
     _ownership_points(fs, d, {})
     assert len(d.bear) == 2 and not d.bull
+
+
+def test_stored_official_history_is_used_by_default_from_the_repo_store(tmp_path, monkeypatch):
+    """The scheduled snapshot job points INDIAFACTS_SHP_REPO at the data branch's csv; no flags are needed."""
+    from indiafacts.pipeline import _ownership_facts
+    from tests.test_scoring import mkfs
+    repo = tmp_path / "databranch" / "shareholding.csv"
+    save_snapshot(parse_shp(xml("2026-06-30", prom=0.55), source="SHP_ABC.xml"), repo)
+    save_snapshot(parse_shp(xml("2026-09-30", prom=0.52), source="SHP_ABC.xml"), repo)
+    monkeypatch.setenv("INDIAFACTS_SHP_REPO", str(repo))
+    monkeypatch.setenv("INDIAFACTS_SHP_STORE", str(tmp_path / "empty_home.csv"))
+    notices = []
+    facts = _ownership_facts(mkfs("ABC.NS", {"market_cap": 1e9}), [], False, notices)
+    by = {f.metric: f for f in facts}
+    assert by["sh_promoter"].source == "nse_shp" and float(by["sh_promoter"].value) == pytest.approx(0.52)
+    assert float(by["sh_promoter_change"].value) == pytest.approx(-0.03)
+    assert _ownership_facts(mkfs("ZZZ.NS", {"market_cap": 1e9}), [], False, notices) == []
