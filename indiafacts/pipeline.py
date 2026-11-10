@@ -183,11 +183,10 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
 
     base_facts += self_valuation_facts(base_facts)
     if marketlens:
+        if ml_pre is None:
+            ml_pre = _ml_lookup(fs.entity.ticker.split(".")[0], marketlens_rows, marketlens_live, notices)
         base_facts += _marketlens_facts(fs, base_facts, marketlens_rows, notices, marketlens_live, pre=ml_pre)
-        if yahoo_down:
-            from indiafacts import marketlens
-
-            base_facts += marketlens.fallback_facts(fs.entity.ticker, ml_pre[0], now=fs.retrieved_at, origin=ml_pre[1])
+        base_facts += _price_fallback(fs, base_facts, ml_pre, notices, yahoo_down)
     base_facts = _refresh_market_value(fs, base_facts)
     _payout_check(base_facts, notices)
     val_facts = valuation_facts(fs.model_copy(update={"facts": base_facts}), today=as_of or fs.retrieved_at.date(), now=fs.retrieved_at)
@@ -215,7 +214,44 @@ def _refresh_market_value(fs, facts: list) -> list:
         return facts
 
 
-PAYOUT_GAP = 0.5           # relative difference that earns a notice
+PRICE_FALLBACK_NOTICE = ("Yahoo's price history was unusable this run, so the last price, 1/3/5-year returns, volatility and the "
+                         "52-week position come from NSE Market Lens; drawdown, beta and the price chart are not available")
+
+
+def _price_fallback(fs, facts: list, ml_pre, notices: list[str], yahoo_down: bool) -> list:
+    """NSE Market Lens price-side figures for every measure that has no usable value yet (Yahoo down, or only its price history
+    failing), plus the 1-year return relative to the Nifty 50 from the published comparison data. Never raises."""
+    from decimal import Decimal
+
+    from indiafacts import marketlens
+
+    if ml_pre is None or ml_pre[0] is None:
+        return []
+    try:
+        have = {f.metric for f in facts if f.status == Status.ok and f.value is not None}
+        new = [f for f in marketlens.fallback_facts(fs.entity.ticker, ml_pre[0], now=fs.retrieved_at, origin=ml_pre[1])
+               if f.metric not in have]
+        if not new:
+            return []
+        r1 = next((f for f in new if f.metric == "return_1y"), None)
+        if r1 is not None and "relative_return_1y" not in have:
+            from indiafacts import poolstore
+
+            store = poolstore.load() or {}
+            nifty = (((store.get("metrics") or {}).get(poolstore.NIFTY) or {}).get("return_1y") or {}).get("value")
+            if nifty is not None:
+                new.append(Fact.make(entity_key=r1.entity_key, metric="relative_return_1y", value=r1.value - Decimal(str(nifty)),
+                                     unit="ratio", period_end=r1.period_end, period_type=PeriodType.point, source="computed:marketlens",
+                                     source_field="NSE Market Lens 1-year return minus the Nifty 50 1-year return (published comparison data)",
+                                     retrieved_at=r1.retrieved_at, status=Status.ok, related_fact_ids=[r1.fact_id]))
+        if not yahoo_down and any(f.metric in ("return_1y", "price") for f in new):
+            notices.append(PRICE_FALLBACK_NOTICE)
+        return new
+    except Exception:
+        return []
+
+
+PAYOUT_GAP = 0.5          # relative difference that earns a notice
 
 
 def _payout_check(facts: list, notices: list[str]) -> None:

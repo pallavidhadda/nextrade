@@ -169,3 +169,37 @@ def test_nse_keeps_eight_quarters():
     assert nseapi.RESULT_QUARTERS == 8
     for fn in (nseapi.NseApi._live_results, nseapi.NseApi.quarterly_filings, nseapi.NseApi.quarterly_xbrl):
         assert inspect.signature(fn).parameters["n"].default == 8
+
+
+# ---- Yahoo price history fails: Market Lens price figures; sector narrowed to members with full data ------------
+
+def test_price_fallback_fills_only_missing_measures(monkeypatch):
+    from indiafacts import poolstore
+    from indiafacts.pipeline import PRICE_FALLBACK_NOTICE, _price_fallback
+
+    monkeypatch.setattr(poolstore, "load", lambda: {"metrics": {poolstore.NIFTY: {"return_1y": {"value": -0.02}}}})
+    row = {"closePrice": 4185, "oneYearReturn": 6.8, "threeYearReturn": 40, "annVolatility": 22, "week52High": 4500,
+           "lastUpdated": "2026-11-09T16:00:27", "sector": "Construction"}
+    fs = FactSet(entity=Entity.from_ticker("LT.NS"), facts=[], retrieved_at=NOW)
+    have = [point("volatility_1y", 0.2, "computed")]
+    notes: list[str] = []
+    new = {f.metric: f for f in _price_fallback(fs, have, (row, "daily copy"), notes, yahoo_down=False)}
+    assert float(new["price"].value) == 4185 and float(new["return_1y"].value) == 0.068
+    assert "volatility_1y" not in new                            # ours is kept
+    assert abs(float(new["relative_return_1y"].value) - 0.088) < 1e-9 and new["relative_return_1y"].source == "computed:marketlens"
+    assert notes == [PRICE_FALLBACK_NOTICE]
+    assert _price_fallback(fs, have, (None, ""), notes, False) == []
+
+
+def test_sector_narrowed_to_members_with_full_data():
+    from indiafacts.cli import _full_data_members
+
+    policy = {"min_coverage": 0.6}
+    sector = [f"S{i}" for i in range(73)] + ["LT"]
+    store = {"metrics": {f"S{i}.NS": {} for i in range(8)}}
+    members, narrowed = _full_data_members(sector, "LT", store, policy)
+    assert narrowed and len(members) == 9 and "LT" in members
+    few = {"metrics": {f"S{i}.NS": {} for i in range(3)}}
+    assert _full_data_members(sector, "LT", few, policy) == (sector, False)         # too few: keep the whole sector
+    most = {"metrics": {f"S{i}.NS": {} for i in range(60)}}
+    assert _full_data_members(sector, "LT", most, policy) == (sector, False)        # coverage already enough
