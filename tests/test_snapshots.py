@@ -180,3 +180,16 @@ def test_busy_message():
     assert c.post("/api/analyze", json={"ticker": "TCS.NS"}).status_code == 202
     r = c.post("/api/analyze", json={"ticker": "ITC.NS"})
     assert r.status_code == 429 and r.json()["detail"] == BUSY_MESSAGE
+
+
+def test_failed_entry_carries_runner_error_detail_without_home_paths(tmp_path):
+    from indiafacts.runner import error_detail
+
+    def runner(opts, progress):
+        e = ValueError("analysis failed")
+        e.detail = error_detail(['File "/Users/bob/x/y.py", line 3', "TypeError: bad format"], 1)
+        raise e
+    idx = run_snapshots(["TMPV.NS"], tmp_path, runner, delay=0, sleep=lambda s: None, log=lambda m: None)
+    err = idx["TMPV.NS"]["error"]
+    assert "TypeError: bad format" in err and "/Users/bob" not in err and len(err) <= 300
+    assert error_detail([], 2) == "no output (exit 2)"

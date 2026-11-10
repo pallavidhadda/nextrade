@@ -83,7 +83,8 @@ def snapshot_one(ticker: str, out_dir: Path, runner: Callable, commit: str, now:
         (out_dir / f"{safe_name(ticker)}.html").write_text(res["html"], encoding="utf-8")
         entry["ok"] = True
     except Exception as exc:                                                         # one bad ticker must not stop the run
-        entry["error"] = (str(exc)[:300] or type(exc).__name__)
+        detail = getattr(exc, "detail", None)
+        entry["error"] = (str(detail or exc)[:300] or type(exc).__name__)
     return entry
 
 

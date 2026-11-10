@@ -19,6 +19,14 @@ TIMEOUT_SECONDS = 600
 _SECRET_NAME = re.compile(r"KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL", re.I)
 
 
+def error_detail(tail: list[str], code: int | None = None, limit: int = 300) -> str:
+    """The child's last stderr lines, home paths stripped and trimmed, for the snapshot index (not shown to web users)."""
+    text = " | ".join(tail) or f"no output (exit {code})"
+    text = re.sub(r"(/Users|/home)/[^/\s]+", "~", text)
+    text = re.sub(r"[A-Za-z]:\\Users\\[^\\\s]+", "~", text)
+    return text[-limit:]
+
+
 def subprocess_runner(opts: dict, progress: Callable[[str], None]) -> dict:
     """Run the CLI in its own process (own stdout, own timeout); read its JSON and HTML outputs."""
     with tempfile.TemporaryDirectory() as d:
@@ -72,7 +80,9 @@ def subprocess_runner(opts: dict, progress: Callable[[str], None]) -> dict:
             pass
         if code != 0 or not out_json.exists():
             print(f"analysis child failed: exit={code} last_lines={tail!r}", file=sys.stderr, flush=True)      # the web page shows only the error line; keep the evidence in the server log
-            raise ValueError(next((t[7:] for t in reversed(tail) if t.startswith("error: ")), "analysis failed"))
+            err = ValueError(next((t[7:] for t in reversed(tail) if t.startswith("error: ")), "analysis failed"))
+            err.detail = error_detail(tail, code)                                           # type: ignore[attr-defined]
+            raise err
         return {"summary": json.loads(out_json.read_text(encoding="utf-8")), "html": out_html.read_text(encoding="utf-8")}
 
 
