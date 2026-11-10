@@ -15,7 +15,7 @@ Why a branch, not a Release asset: the branch needs no extra API, `raw.githubuse
 
 | Variable | Where | Meaning |
 | --- | --- | --- |
-| `INDIAFACTS_SNAPSHOT_BASE` | Render | `https://raw.githubusercontent.com/<owner>/<repo>/snapshots`. Unset disables snapshots (live only). |
+| `INDIAFACTS_SNAPSHOT_BASE` | Render | `https://raw.githubusercontent.com/<owner>/<repo>/snapshots`. Unset disables snapshots (live only). It is also the default base for the other published files: `INDIAFACTS_MARKETLENS_URL` (`marketlens.json`), `INDIAFACTS_POOL_METRICS_URL` (`pool_metrics.json`, the sector comparison) and `INDIAFACTS_NSE_COPY_BASE` (`nse/`) need setting only to point elsewhere; set one to an empty string to switch that file off (`indiafacts/published.py`). |
 | `INDIAFACTS_SNAPSHOT_MAX_AGE_DAYS` | Render | Freshness limit in calendar days, default 4 (covers a weekend plus a holiday). |
 | `SNAPSHOT_MAX_FAIL_PCT` | job | Failure share that turns the run red, default 30. |
 | `INDIAFACTS_POOL_SIZE` | job, Render | Comparison pool size; the workflow sets 30. |

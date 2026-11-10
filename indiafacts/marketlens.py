@@ -21,6 +21,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from indiafacts.models import Fact, PeriodType, Status
+from indiafacts import published
 
 SOURCE = "nse_marketlens"
 BASE = "https://marketlens.nseindia.com"
@@ -168,7 +169,7 @@ def universe_with_reason(client: Client | None = None, now: datetime | None = No
     if not enabled():
         return {}, "Market Lens switched off"
     now = now or datetime.now(timezone.utc)
-    url = os.environ.get("INDIAFACTS_MARKETLENS_URL", "").strip()
+    url = published.url("INDIAFACTS_MARKETLENS_URL", "marketlens.json")
     why_url = ""
     if url:
         if _mem["rows"] is not None and _mem["url"] == url and mono() - _mem["at"] < URL_TTL:

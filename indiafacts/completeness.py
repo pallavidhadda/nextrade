@@ -10,7 +10,7 @@ from datetime import date
 from pathlib import Path
 
 from indiafacts.fundamentals import LENDER_REASON
-from indiafacts.models import Fact, FactSet, Status
+from indiafacts.models import Fact, FactSet, PeriodType, Status
 
 PRESENT_STATUSES = (Status.ok, Status.unverified, Status.conflict)     # a figure with a value in one of these counts as present
 PARAMS_PATH = Path(__file__).parent / "data" / "completeness_params.json"
@@ -28,18 +28,44 @@ def is_issue(f: Fact) -> bool:
     return f.status in ISSUE_STATUSES and f.reason != LENDER_REASON
 
 
+# A vendor figure that is missing is not a gap when the same measure exists under another name from another source: the
+# exchange shareholding for Yahoo's holding percentages, trailing sums of reported quarters for Yahoo's TTM figures, and
+# last-full-year ratios from the annual statements for Yahoo's current ROE / ROA.
+GAP_ALIASES: dict[str, tuple[str, ...]] = {
+    "insider_holding": ("sh_promoter",),
+    "institutional_holding": ("sh_foreign_inst", "sh_domestic_inst"),
+    "revenue_ttm_vendor": ("revenue_ttm",),
+    "net_income_ttm_vendor": ("net_income_ttm",),
+    "eps_ttm": ("eps_diluted_ttm",),
+    "roe": ("fy_roe",),
+    "roa": ("fy_roa",),
+    "payout_ratio": ("fy_payout_ratio",),
+}
+POINT_FILL_DAYS = 10          # a current figure (price, P/E, market value) from another source dated within this many days
+
+
 def attention_items(facts: list[Fact]) -> list[Fact]:
-    """Issue facts, minus gaps/unavailable/unverified figures that another source fills with an ok value for the same period."""
-    filled = {(f.metric, f.period_end, f.period_type): f.source for f in facts if f.status == Status.ok and f.value is not None}
-    out = []
-    for f in facts:
-        if not is_issue(f):
-            continue
-        if f.status != Status.conflict and (f.metric, f.period_end, f.period_type) in filled \
-                and filled[(f.metric, f.period_end, f.period_type)] != f.source:
-            continue
-        out.append(f)
-    return out
+    """Issue facts, minus gaps/unavailable/unverified figures that another source fills with an ok value: for the same period,
+    for a current (point) figure dated within POINT_FILL_DAYS, or (gaps only) under a GAP_ALIASES name."""
+    ok = [f for f in facts if f.status == Status.ok and f.value is not None]
+    filled = {(f.metric, f.period_end, f.period_type): f.source for f in ok}
+    points: dict[str, list[Fact]] = {}
+    for f in ok:
+        points.setdefault(f.metric, []).append(f)
+
+    def covered(f: Fact) -> bool:
+        if f.status == Status.conflict:
+            return False
+        k = (f.metric, f.period_end, f.period_type)
+        if k in filled and filled[k] != f.source:
+            return True
+        if f.period_type == PeriodType.point and any(
+                g.source != f.source and g.period_type == PeriodType.point and abs((g.period_end - f.period_end).days) <= POINT_FILL_DAYS
+                for g in points.get(f.metric, [])):
+            return True
+        return f.status in (Status.gap, Status.unavailable) and any(points.get(a) for a in GAP_ALIASES.get(f.metric, ()))
+
+    return [f for f in facts if is_issue(f) and not covered(f)]
 
 
 def definition_differences(facts: list[Fact]) -> list[Fact]:

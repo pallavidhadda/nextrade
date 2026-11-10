@@ -74,6 +74,8 @@ class ValidateRequest(BaseModel):
 
 
 BUSY_MESSAGE = "The server is busy with another analysis; try again in a minute."
+REFRESH_WORSE = "The live refresh found less data than this report, so this report is shown."
+REFRESH_FAILED = "The live refresh did not complete, so this report is shown."
 
 
 def create_app(runner: Runner = subprocess_runner, max_running: int | None = None, per_minute: int = 6, claim_runner=None, snapshots="env") -> FastAPI:
@@ -140,14 +142,43 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
         try:
             res = runner(opts, lambda p: j.__setitem__("progress", p))
             res["summary"]["served_from"] = "live"
+            snap = snapshot_for(opts)
+            if snap is not None and len(res["summary"].get("gaps") or []) > len(snap["summary"].get("gaps") or []):
+                keep_snapshot(j, snap, REFRESH_WORSE)        # a refresh must never replace a fuller report with a thinner one
+                log(f"job {job_id} live run had {len(res['summary'].get('gaps') or [])} gaps, the snapshot "
+                    f"{len(snap['summary'].get('gaps') or [])}; kept the snapshot")
+                return
             j.update(status="done", summary=res["summary"], html=res["html"], served_from="live")
-            log(f"job {job_id} done in {time.time() - t0:.0f}s")
+            log(f"job {job_id} done in {time.time() - t0:.0f}s, {len(res['summary'].get('gaps') or [])} gaps")
         except (ValueError, TimeoutError) as exc:
+            if keep_snapshot(j, snapshot_for(opts), REFRESH_FAILED):
+                log(f"job {job_id} live run failed ({type(exc).__name__}); kept the snapshot")
+                return
             j.update(status="error", error=str(exc)[:300].replace(os.path.expanduser("~"), "~") or "analysis failed")
             log(f"job {job_id} failed after {time.time() - t0:.0f}s: {type(exc).__name__}: {str(exc)[:200]}")
         except Exception as exc:
+            if keep_snapshot(j, snapshot_for(opts), REFRESH_FAILED):
+                log(f"job {job_id} live run crashed ({type(exc).__name__}); kept the snapshot")
+                return
             j.update(status="error", error=f"analysis failed ({type(exc).__name__})")
             log(f"job {job_id} crashed after {time.time() - t0:.0f}s: {type(exc).__name__}")
+
+    def snapshot_for(opts: dict) -> dict | None:
+        """The fresh snapshot this request could have been served from (default profile only), or None. Never raises."""
+        if snapshots is None or any(v is not None for k, v in opts.items() if k not in ("ticker", "refresh")):
+            return None
+        try:
+            return snapshots.lookup(opts["ticker"])
+        except Exception:
+            return None
+
+    def keep_snapshot(j: dict, snap: dict | None, note: str) -> bool:
+        if snap is None:
+            return False
+        summary = dict(snap["summary"], served_from="snapshot", snapshot_as_of=snap["as_of"], refresh_note=note)
+        j.update(status="done", summary=summary, html=snap["html"], served_from="snapshot", snapshot_as_of=snap["as_of"],
+                 refresh_note=note)
+        return True
 
     @app.get("/api/health")
     def health():
@@ -219,7 +250,7 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
         j = jobs.get(job_id)
         if not j:
             raise HTTPException(404, "unknown job")
-        out = {k: j[k] for k in ("status", "progress", "summary", "error", "served_from", "snapshot_as_of") if k in j}
+        out = {k: j[k] for k in ("status", "progress", "summary", "error", "served_from", "snapshot_as_of", "refresh_note") if k in j}
         if out.get("summary"):
             out["summary"] = {k: v for k, v in out["summary"].items() if k != "facts"}      # the web page does not need them; the CSV route does
         return out

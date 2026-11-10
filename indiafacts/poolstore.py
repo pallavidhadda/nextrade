@@ -15,6 +15,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Callable
 from urllib.request import Request, urlopen
+from indiafacts import published
 
 NIFTY = "^NSEI"
 URL_TTL = 3600
@@ -109,7 +110,7 @@ def load(mono: Callable[[], float] = time.monotonic) -> dict | None:
     """The published store (env INDIAFACTS_POOL_METRICS_URL, http(s) or file://, cached 1 h in memory), else the local copy
     ~/.indiafacts/pool_metrics.json, else None. Never raises."""
     try:
-        url = os.environ.get("INDIAFACTS_POOL_METRICS_URL", "").strip()
+        url = published.url("INDIAFACTS_POOL_METRICS_URL", "pool_metrics.json")
         with _lock:
             if _mem["store"] is not None and _mem["key"] == url and mono() - _mem["at"] < URL_TTL:
                 return _mem["store"]

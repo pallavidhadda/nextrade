@@ -50,6 +50,7 @@ export type Summary = {
   yahoo_unavailable?: boolean;
   served_from?: "snapshot" | "live";
   snapshot_as_of?: string;
+  refresh_note?: string;
   peers?: null | Peers;
   checklist_groups?: { group: string; passed: number; total: number; unavailable: number; text: string }[];
   checklist: Check[]; gaps: Gap[]; notices: string[]; changes: string[];

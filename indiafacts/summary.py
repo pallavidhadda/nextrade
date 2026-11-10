@@ -11,6 +11,7 @@ FACTS_CAP = 800                 # size guard for the JSON summary (and so the sn
 EVIDENCE_CAP = 200
 KEY_METRICS = ("price", "market_cap", "revenue", "net_income", "eps_diluted", "pe_ttm", "pb", "roe", "debt_to_equity",
                "return_1y", "relative_return_1y")   # the 1-year returns feed the web "At a glance" tile (the full facts list is not sent to the page)
+KEY_FALLBACKS = {"roe": "fy_roe"}
 
 
 def _val(f):
@@ -63,6 +64,8 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
     key = []
     for m in KEY_METRICS:
         latest = sorted((f for f in fs.by_metric(m) if f.status == Status.ok), key=lambda f: f.period_end)
+        if not latest and m in KEY_FALLBACKS:              # e.g. ROE from the last full year when Yahoo's current ROE is missing
+            latest = sorted((f for f in fs.by_metric(KEY_FALLBACKS[m]) if f.status == Status.ok), key=lambda f: f.period_end)
         if latest:
             f = latest[-1]
             key.append({"metric": m, "value": _val(f), "unit": f.unit, "period": f.fiscal_label or str(f.period_end),
