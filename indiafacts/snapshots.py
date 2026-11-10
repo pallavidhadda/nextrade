@@ -218,6 +218,38 @@ def _prepare_marketlens(out: Path, log=print) -> None:
         os.environ["INDIAFACTS_MARKETLENS"] = "0"
 
 
+def _default_pool_builder() -> Callable[[str], object]:
+    """The same member build the live pool path used: Yahoo facts and prices, no per-member NSE filings."""
+    from indiafacts.cli import _MemoPrices
+    from indiafacts.pipeline import build_factset
+    from indiafacts.prices import YfinancePriceClient
+
+    memo = _MemoPrices(YfinancePriceClient())
+    return lambda t: build_factset(t, prices=True, price_client=memo, tej=True, marketlens=True, marketlens_live=False, nse_api=False)
+
+
+def _prepare_pool_metrics(out: Path, tickers: list[str], builder: Callable[[str], object] | None = None, log=print) -> Path | None:
+    """Stage 1: every score metric for the whole universe, from the cached per-ticker fetch, into <out>/pool_metrics.json (published with
+    the reports). Stage 2 (the reports) reads it through INDIAFACTS_POOL_METRICS_URL, so no report fetches pool members. If nothing
+    could be built, yesterday's file (if any) is kept. Never raises."""
+    from indiafacts import poolstore
+
+    try:
+        out.mkdir(parents=True, exist_ok=True)
+        path = out / "pool_metrics.json"
+        store = poolstore.build(tickers, builder or _default_pool_builder(), log=log)
+        n = store["meta"]["n"]
+        log(f"pool_metrics: {n} companies")
+        if n:
+            poolstore.write(store, path)
+        if path.exists():
+            os.environ["INDIAFACTS_POOL_METRICS_URL"] = path.resolve().as_uri()
+            return path
+    except Exception as exc:
+        log(f"pool_metrics: failed ({type(exc).__name__}: {str(exc)[:160]})")
+    return None
+
+
 def main(argv: list[str] | None = None, runner: Callable | None = None, sleep=time.sleep) -> int:
     p = argparse.ArgumentParser(prog="python -m indiafacts.snapshots", description="Precompute analysis snapshots (education only).")
     p.add_argument("--out", default="snapshots", help="output directory")
@@ -239,6 +271,7 @@ def main(argv: list[str] | None = None, runner: Callable | None = None, sleep=ti
         tickers = tickers[:a.limit]
     if real_runner:
         _prepare_marketlens(Path(a.out))
+        _prepare_pool_metrics(Path(a.out), tickers)
     index = run_snapshots(tickers, Path(a.out), runner, a.delay, sleep)
     rate = failure_rate(index, tickers) * 100
     print(f"{len(tickers)} tickers, {rate:.0f}% failed (limit {a.max_fail_pct:.0f}%)", file=sys.stderr)

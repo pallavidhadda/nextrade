@@ -66,6 +66,8 @@ jobs:
             mkdir databranch
           fi
       - name: precompute
+        # stage 1 builds snapshots/pool_metrics.json for the whole universe (shared comparison data, published with marketlens.json);
+        # stage 2 builds each report against it and against its Market Lens sector, so no report fetches pool members.
         env:
           INDIAFACTS_SHP_REPO: ${{ github.workspace }}/databranch/shareholding.csv
           INDIAFACTS_POOL_SIZE: "30"
