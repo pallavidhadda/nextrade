@@ -348,6 +348,43 @@ def facts_for(symbol: str, row: dict, now: datetime | None = None, origin: str =
 # netProfit/revenue/opRevenue/totalEquity/totalAssets/borrowings (mixed or unproven units).
 
 
+def fallback_facts(symbol: str, row: dict, now: datetime | None = None, origin: str = "") -> list[Fact]:
+    """The price-side figures Market Lens states, used only when Yahoo is unavailable for the target: last price, 1/3/5-year
+    price returns, 1-year volatility, distance from the 52-week high and the 50/200-day averages. Returns and volatility are
+    stated as percents (divided by 100). Placeholder zeros and nulls produce nothing."""
+    now = now or datetime.now(timezone.utc)
+    key = symbol.upper().removesuffix(".NS") + ".NS"
+    end, ts = _stamp(row, now)
+    sid = row.get("_sectorId") or str(row.get("sector") or "").lower()
+    out: list[Fact] = []
+
+    def add(metric: str, field: str, value: float, unit: str, scale: float = 1.0) -> None:
+        out.append(Fact.make(
+            entity_key=key, metric=metric, value=Decimal(str(round(value / scale, 8))), unit=unit, period_end=end,
+            period_type=PeriodType.point, source=SOURCE, source_field=field, retrieved_at=now, available_from=end,
+            status=Status.ok,
+            evidence=f"NSE Market Lens /api/sectors/{sid}/stocks field {field}, lastUpdated {ts}" + (f"; fetched {origin}" if origin else "")))
+
+    v = _num(row, "closePrice")
+    if v and v > 0:
+        add("price", "closePrice", v, "INR")
+    for n, field in ((1, "oneYearReturn"), (3, "threeYearReturn"), (5, "fiveYearReturn")):
+        v = _num(row, field)
+        if v:
+            add(f"return_{n}y", field, v, "ratio", scale=100.0)
+    v = _num(row, "annVolatility")
+    if v and v > 0:
+        add("volatility_1y", "annVolatility", v, "ratio", scale=100.0)
+    close, hi = _num(row, "closePrice"), _num(row, "week52High")
+    if close and hi and close > 0 and hi > 0:
+        add("pct_from_52w_high", "closePrice/week52High", close / hi - 1.0, "ratio")
+    for k in (50, 200):
+        v = _num(row, f"dma{k}")
+        if v and v > 0:
+            add(f"sma_{k}", f"dma{k}", v, "INR")
+    return out
+
+
 def score_metrics_for(row: dict, nifty_1y: float | None = None) -> dict[str, float]:
     """The score metrics (scoring metric ids, ratio units) Market Lens can state honestly for one row. 0 and null are placeholders,
     not values; return on equity, growth, beta and drawdown are never taken from Market Lens. relative_return_1y needs the Nifty 50's

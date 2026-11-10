@@ -90,6 +90,16 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
         if fs.entity.resolution_reason:
             reason += f" [{fs.entity.resolution_reason}]"                       # keep the vendor's own error for the server log
         fs = fs.model_copy(update={"entity": fs.entity.unresolved(reason)})
+    yahoo_down, ml_pre = False, None
+    if fs.entity.resolution != "resolved" and marketlens:
+        ml_pre = _ml_lookup(fs.entity.ticker.split(".")[0], marketlens_rows, marketlens_live, notices)
+        if ml_pre[0] is not None:
+            yahoo_down = True
+            row = ml_pre[0]
+            ent = fs.entity.model_copy(update={"name": row.get("name") or fs.entity.name, "resolution": "resolved", "resolution_reason": "",
+                                               "sector": row.get("subSector") or None, "industry": row.get("sector") or None})
+            fs = fs.model_copy(update={"entity": ent, "yahoo_unavailable": True})
+            notices.append(YAHOO_DOWN_NOTICE)
     if fs.entity.resolution != "resolved" and not filing:
         return fs.model_copy(update={"notices": notices})
 
@@ -98,7 +108,10 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
         public, later = (filter_as_of(filing.facts, as_of) if as_of else (filing.facts, []))
         facts += public
         pending += later
-        fs = fs.model_copy(update={"entity": _merge_entity(fs.entity, filing.entity), "filings": filing.filings})
+        merged = _merge_entity(fs.entity, filing.entity)
+        if yahoo_down and fs.entity.name:
+            merged = merged.model_copy(update={"sector": fs.entity.sector, "industry": fs.entity.industry})
+        fs = fs.model_copy(update={"entity": merged, "filings": filing.filings})
     if tej_hist is not None and fs.entity.resolution == "resolved" and fs.entity.isin.value is None:
         isin = isin_for(tej_hist, normalize_symbol(fs.entity.ticker), as_of)
         if isin:
@@ -141,8 +154,11 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
             y = yahoo.get((f.metric, f.period_end))
             if f.source in ("nse_filing", "nse_xbrl") and f.period_type == PeriodType.Q and y is not None and y.unit == f.unit:
                 extra.append(cross_check(f, y))
-    price_facts, price_notes, charts = _price_facts(fs.entity.ticker, as_of, prices, price_client, benchmark, notices,
-                                            _tej_action_dates(store, tej_hist, fs.entity.ticker, as_of, prices, notices))
+    if yahoo_down:                                      # Yahoo is the source of price history and annual statements; do not retry it
+        price_facts, price_notes, charts = [], [], {}
+    else:
+        price_facts, price_notes, charts = _price_facts(fs.entity.ticker, as_of, prices, price_client, benchmark, notices,
+                                                _tej_action_dates(store, tej_hist, fs.entity.ticker, as_of, prices, notices))
     from indiafacts.valuation import valuation_facts
 
     lc = next((f for f in price_facts if f.metric == "last_close" and f.status == Status.ok), None)
@@ -153,7 +169,8 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
         notices.append("Yahoo's company overview returned no price, so the price is the last close from the price history; "
                        "ratios that need the overview (P/E, P/B, ROE, market value) may be unavailable")
     base_facts = facts + extra + price_facts
-    base_facts += _fundamental_facts(fs, base_facts, client, notices)
+    if not yahoo_down:
+        base_facts += _fundamental_facts(fs, base_facts, client, notices)
     base_facts += _ownership_facts(fs, shareholding_paths or [], shareholding_feed, notices, nse)
     if nse is not None and nse.ok == 0 and nse.reasons:
         notices.append("official NSE filings not reachable this run (" + nse.reasons[0] + "); figures come from the other sources")
@@ -161,11 +178,15 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
 
     base_facts += self_valuation_facts(base_facts)
     if marketlens:
-        base_facts += _marketlens_facts(fs, base_facts, marketlens_rows, notices, marketlens_live)
+        base_facts += _marketlens_facts(fs, base_facts, marketlens_rows, notices, marketlens_live, pre=ml_pre)
+        if yahoo_down:
+            from indiafacts import marketlens
+
+            base_facts += marketlens.fallback_facts(fs.entity.ticker, ml_pre[0], now=fs.retrieved_at, origin=ml_pre[1])
     val_facts = valuation_facts(fs.model_copy(update={"facts": base_facts}), today=as_of or fs.retrieved_at.date(), now=fs.retrieved_at)
     return fs.model_copy(update={"facts": base_facts + val_facts, "not_yet_public": pending,
                                  "notices": notices, "price_notes": price_notes,
-                                 "charts": ({"price": charts} if charts else {})})
+                                 "charts": ({"price": charts} if charts else {}), "yahoo_unavailable": yahoo_down})
 
 
 def _tej_action_dates(store, hist, ticker: str, as_of: date | None, enabled: bool, notices: list[str]) -> list[date]:
@@ -328,16 +349,20 @@ def _row_change_fact(entity_key: str, rows: list[dict], now) -> list[Fact]:
 ML_CHECKED = ("market_cap", "pe_ttm", "pb", "debt_to_equity", "sh_promoter")
 
 
-def _marketlens_facts(fs, facts, rows: dict | None, notices: list[str], live: bool = True):
-    """NSE Market Lens figures for the target when it is in the universe, plus checks against the other sources. Never raises."""
+YAHOO_DOWN_NOTICE = ("Yahoo Finance was unavailable: current figures come from NSE Market Lens; "
+                     "the price chart, drawdown and technical indicators are not shown.")
+
+
+def _ml_lookup(sym: str, rows: dict | None, live: bool, notices: list[str]):
+    """(row or None, origin) for the target from NSE Market Lens: injected rows, a live request, the daily copy or the local cache.
+    Never raises; reasons go to notices."""
     from indiafacts import marketlens
 
     origin = ""
     try:
-        sym = fs.entity.ticker.split(".")[0]
         if rows is None:
             if not marketlens.enabled():
-                return []
+                return None, ""
             if live:
                 row, origin, why = marketlens.target_row(sym)
             else:
@@ -347,13 +372,25 @@ def _marketlens_facts(fs, facts, rows: dict | None, notices: list[str], live: bo
             if row is None:
                 if why:
                     notices.append(f"NSE Market Lens not used: {why}")
-                return []
+                return None, ""
             if why:
                 notices.append(f"NSE Market Lens: {why}")
-        else:
-            row = rows.get(sym)
-            if row is None:
-                return []
+            return row, origin
+        return rows.get(sym), ""
+    except Exception as exc:
+        notices.append(f"NSE Market Lens not used ({type(exc).__name__})")
+        return None, ""
+
+
+def _marketlens_facts(fs, facts, rows: dict | None, notices: list[str], live: bool = True, pre=None):
+    """NSE Market Lens figures for the target when it is in the universe, plus checks against the other sources. Never raises."""
+    from indiafacts import marketlens
+
+    sym = fs.entity.ticker.split(".")[0]
+    row, origin = pre if pre is not None else _ml_lookup(sym, rows, live, notices)
+    if row is None:
+        return []
+    try:
         new = marketlens.facts_for(sym, row, now=fs.retrieved_at, origin=origin)
         if origin:
             notices.append(f"NSE Market Lens figures for {sym} fetched {origin}")
