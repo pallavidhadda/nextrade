@@ -51,17 +51,18 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
     paths = [] if not filing_path else (list(filing_path) if isinstance(filing_path, (list, tuple)) else [filing_path])
     entity = Entity.from_ticker(ticker)
     nse = None
-    if nse_api and as_of is None:                       # an as-of run must not read today's filings
+    pre_parsed: list = []
+    if nse_api and as_of is None:                      # an as-of run must not read today's filings
         from indiafacts import nseapi
 
         if nseapi.enabled():
             nse = nse_client or nseapi.NseApi()
             if not paths:                               # files the user supplied are an explicit choice; do not mix sources
-                api_paths, api_notes = nse.quarterly_xbrl(entity.ticker.split(".")[0])
-                notices.extend(api_notes if api_paths else [])
-                paths = list(api_paths)
+                api_parsed, api_notes = nse.quarterly_filings(entity.ticker.split(".")[0])
+                notices.extend(api_notes if api_parsed else [])
+                pre_parsed = list(api_parsed)
                 skip_other_filings = True
-    parsed = []
+    parsed = list(pre_parsed)
     for p in paths:
         try:
             pf = facts_from_nse_xbrl(p) if Path(p).suffix.lower() == ".xml" else facts_from_nse_filing(p)
@@ -172,6 +173,10 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
     if not yahoo_down:
         base_facts += _fundamental_facts(fs, base_facts, client, notices)
     base_facts += _ownership_facts(fs, shareholding_paths or [], shareholding_feed, notices, nse)
+    if nse is not None:
+        nse.save_copy(fs.entity.ticker.split(".")[0])                  # only does anything in the snapshot job (INDIAFACTS_NSE_COPY_OUT)
+        if nse.copy_notice():
+            notices.append(nse.copy_notice())
     if nse is not None and nse.ok == 0 and nse.reasons:
         notices.append("official NSE filings not reachable this run (" + nse.reasons[0] + "); figures come from the other sources")
     from indiafacts.selfvalue import self_valuation_facts

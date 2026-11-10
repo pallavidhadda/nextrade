@@ -188,3 +188,6 @@ See docs/DATA_PERMISSIONS.md: `indiafacts/marketlens.py` reads the exchange scre
 
 ## NSE website data API (added 2026-11-10)
 See docs/DATA_PERMISSIONS.md: `indiafacts/nseapi.py` fetches the target's filed shareholding XBRL and newest five consolidated quarterly results XBRL (integrated-filing list; the older results list stops at Q3 FY25). Next: owner adds the permission reference; bank revenue definition (left to Yahoo); use `results-comparision` only if units are proven; fix the ownership as-of label when Market Lens supplies the figures for banks with no promoter group.
+
+## NSE filings daily copy (added 2026-11-10)
+See docs/SNAPSHOTS.md: the snapshot job publishes `nse/<SYMBOL>.json` (parsed shareholding and results facts); `nseapi.py` reads it when NSE answers 403 (set INDIAFACTS_NSE_COPY_BASE on Render, optionally INDIAFACTS_NSE_COPY_FIRST=1). Next: check the real size after the first run; add a staleness limit on copies older than a few days; drop copies of delisted tickers.
