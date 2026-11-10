@@ -39,6 +39,7 @@ GAP_ALIASES: dict[str, tuple[str, ...]] = {
     "eps_ttm": ("eps_diluted_ttm",),
     "roe": ("fy_roe",),
     "roa": ("fy_roa",),
+    "payout_ratio": ("fy_payout_ratio",),
 }
 POINT_FILL_DAYS = 10          # a current figure (price, P/E, market value) from another source dated within this many days
 

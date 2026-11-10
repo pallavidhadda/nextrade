@@ -327,7 +327,8 @@ function ResultView({ s: base, served, servedAsOf, jobId, tab, onTab, onRefresh,
           {served === "snapshot" && servedAsOf && (
             <p className="snap-label">
               Precomputed as of close on {servedAsOf}.{" "}
-              {onRefresh && <button type="button" className="link-button" onClick={onRefresh} disabled={refreshing}>{refreshing ? "Starting…" : "Refresh now"}</button>}
+              {s.refresh_note && <>{s.refresh_note}{" "}</>}
+              {onRefresh && !s.refresh_note &&<button type="button" className="link-button" onClick={onRefresh} disabled={refreshing}>{refreshing ? "Starting…" : "Refresh now"}</button>}
             </p>
           )}
           <CompBadge s={s} />

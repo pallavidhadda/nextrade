@@ -36,6 +36,10 @@ ROWS = {
     "fy_capex": ("cashflow", ("Capital Expenditure",)),
     "fy_free_cash_flow": ("cashflow", ("Free Cash Flow",)),
 }
+# Read only when Yahoo has the row: a company that pays no dividend has none, and that is not a missing figure.
+OPTIONAL_ROWS = {
+    "fy_dividends_paid": ("cashflow", ("Cash Dividends Paid", "Common Stock Dividend Paid")),
+}
 LENDER_WORDS = ("bank", "financial", "nbfc", "credit", "insurance", "lending", "capital markets")
 LENDER_NOT_APPLICABLE = ("fy_ebitda", "fy_ebit", "fy_current_liabilities", "fy_free_cash_flow",
                          "fy_operating_cash_flow", "fy_capex")
@@ -127,6 +131,17 @@ def annual_facts(ticker: str, statements: dict[str, pd.DataFrame | None], sector
                 out.append(Fact.make(value=v, status=Status.ok, source_field=row,
                                      evidence=f"yfinance Ticker.{ {'income': 'income_stmt', 'balance': 'balance_sheet', 'cashflow': 'cashflow'}[st_name] } row '{row}', column {end}",
                                      **common))
+        for metric, (st_name, names) in OPTIONAL_ROWS.items():
+            stmt = statements.get(st_name)
+            if stmt is None or col not in stmt.columns:
+                continue
+            v, row = _pick(stmt, names, col)
+            if v is not None:
+                out.append(Fact.make(entity_key=ticker, metric=metric, unit="INR", period_end=end, period_type=PeriodType.FY,
+                                     fiscal_label=fiscal_label(end, "FY"), source=SOURCE, retrieved_at=now,
+                                     available_from=available_from(end, "FY"), availability_kind=AvailabilityKind.deadline_estimate,
+                                     value=abs(v), status=Status.ok, source_field=row,
+                                     evidence=f"yfinance Ticker.cashflow row '{row}', column {end} (paid out, shown as a positive amount)"))
     return out
 
 
@@ -217,6 +232,12 @@ def ratio_facts(fs: FactSet, now: datetime | None = None) -> list[Fact]:
     out.append(_make(key, "fy_roa", float(ni.value) / float(assets.value) if ni and assets and float(assets.value) > 0 else None,
                      "ratio", latest, [f.fact_id for f in (ni, assets) if f], now, "net profit or total assets unavailable",
                      field="last full year's net profit / year-end total assets"))
+    div = at("fy_dividends_paid")
+    if div is not None:                     # no dividend row means no figure, not a gap (see OPTIONAL_ROWS)
+        out.append(_make(key, "fy_payout_ratio", float(div.value) / float(ni.value) if ni and float(ni.value) > 0 else None, "ratio",
+                         latest, [f.fact_id for f in (div, ni) if f], now,
+                         "net profit was not positive in the last full year, so a payout ratio is not meaningful",
+                         field="last full year's dividends paid (cash-flow statement) / net profit"))
     if lender:
         out.append(_make(key, "fy_equity_multiplier",
                          float(assets.value) / float(eq.value) if assets and eq and float(eq.value) > 0 else None,

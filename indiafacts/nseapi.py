@@ -31,6 +31,7 @@ from urllib.request import HTTPCookieProcessor, Request, build_opener, urlopen
 from indiafacts import published
 
 BASE = "https://www.nseindia.com/api"
+RESULT_QUARTERS = 8      # year-on-year needs 5 quarters and TTM 4; 8 leaves room for a late, restated or unreadable filing
 HOME = "https://www.nseindia.com/"
 ARCHIVE_HOST = "nsearchives.nseindia.com"
 USER_AGENT = "NexTrade-research/0.1 (education; permitted use of NSE data)"
@@ -318,7 +319,7 @@ class NseApi:
         out = sorted(found.values(), key=lambda e: (e["end"], e["basis"] == "consolidated"), reverse=True)
         return out, ("; ".join(dict.fromkeys(reasons)) if not out else "")
 
-    def _live_results(self, symbol: str, n: int = 5):
+    def _live_results(self, symbol: str, n: int = RESULT_QUARTERS):
         """([(entry, path)], notes): the newest n quarters' XBRL files. Consolidated when the company has any, else standalone (noted).
         One basis only, so year-on-year compares like with like."""
         entries, why = self.result_filings(symbol)
@@ -338,12 +339,12 @@ class NseApi:
             notes.append(f"{failed} of {min(n, len(chosen))} results files could not be downloaded")
         return pairs, notes
 
-    def quarterly_xbrl(self, symbol: str, n: int = 5):
+    def quarterly_xbrl(self, symbol: str, n: int = RESULT_QUARTERS):
         """(paths, notes) of the newest n quarters' XBRL files, live from NSE."""
         pairs, notes = self._live_results(symbol, n)
         return [p for _, p in pairs], notes
 
-    def quarterly_filings(self, symbol: str, n: int = 5):
+    def quarterly_filings(self, symbol: str, n: int = RESULT_QUARTERS):
         """(list of parsed FactSets, notes): the quarterly results as Facts, live or from the daily copy (same order as latest_shareholding)."""
         if copy_first():
             got = self._copy_results(symbol)

@@ -252,19 +252,69 @@ def disabled_marketlens_fields(report_path: str | Path | None) -> frozenset[str]
 
 # ---- issues and summary ---------------------------------------------------------------------------------------------
 
+# ---- gaps per report ------------------------------------------------------------------------------------------------
+GAPS_MANY = 5                 # a report with more gaps than this counts as thin
+GAPS_MEDIAN_RISE = 2          # median gaps per report up by this much since yesterday: breaking (opens an issue)
+GAPS_SHARE_RISE = 0.10        # share of thin reports up by this much since yesterday: breaking
+
+
+def gap_stats(summaries: dict[str, dict]) -> dict:
+    """{reports, median, p90, max, share_over, over, worst: [[ticker, n]], top_metrics: [[metric, reports]]} from report summaries."""
+    counts = {t: len(s.get("gaps") or []) for t, s in summaries.items()}
+    vals = sorted(counts.values())
+    if not vals:
+        return {"reports": 0}
+    by_metric: dict[str, int] = {}
+    for s in summaries.values():
+        for m in {g.get("metric") for g in s.get("gaps") or [] if isinstance(g, dict)}:
+            by_metric[m] = by_metric.get(m, 0) + 1
+    over = sum(1 for v in vals if v > GAPS_MANY)
+    return {"reports": len(vals), "median": float(statistics.median(vals)), "p90": float(vals[min(len(vals) - 1, int(0.9 * len(vals)))]),
+            "max": vals[-1], "over": GAPS_MANY, "share_over": round(over / len(vals), 4),
+            "worst": [[t, n] for t, n in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:5]],
+            "top_metrics": [[m, n] for m, n in sorted(by_metric.items(), key=lambda kv: (-kv[1], kv[0] or ""))[:8]]}
+
+
+def gap_checks(today: dict, yesterday: dict | None) -> list[dict]:
+    """Breaking when the median gaps per report or the share of thin reports rose sharply since yesterday; info otherwise."""
+    if not today.get("reports"):
+        return []
+    line = f"median {today['median']:g} gaps per report, {today['share_over']:.0%} of {today['reports']} reports have more than {GAPS_MANY}"
+    if not yesterday or not yesterday.get("reports"):
+        return [_chk("reports", "gaps_per_report", None, "info", line + " (no earlier figure)")]
+    dm, ds = today["median"] - yesterday["median"], today["share_over"] - yesterday["share_over"]
+    was = f"; yesterday median {yesterday['median']:g}, {yesterday['share_over']:.0%} thin"
+    if dm >= GAPS_MEDIAN_RISE or ds >= GAPS_SHARE_RISE:
+        return [_chk("reports", "gaps_per_report", None, "breaking", line + was)]
+    return [_chk("reports", "gaps_per_report", None, "info", line + was)]
+
+
+def add_gap_stats(report: dict, summaries: dict[str, dict], yesterday: dict | None) -> dict:
+    """The drift report with `gaps` (today's stats) and a gaps_per_report check; status recomputed."""
+    stats = gap_stats(summaries)
+    checks = [c for c in report.get("checks", []) if c.get("check") != "gaps_per_report"] + gap_checks(stats, yesterday)
+    worst = max((RANK[c["severity"]] for c in checks), default=0)
+    return {**report, "checks": checks, "gaps": stats, "status": "breaking" if worst == 2 else "warning" if worst == 1 else "ok"}
+
+
 def issue_title(source: str) -> str:
     return f"Source drift: {source}"
 
 
 def issue_body(source: str, report: dict, run_url: str = "") -> str:
     rows = [c for c in report.get("checks", []) if c["source"] == source and c["severity"] in ("breaking", "warning")]
-    lines = [f"The daily drift check found a breaking change in `{source}` ({report.get('generated_at', '')}).",
-             "Yesterday's published file was kept; scores keep using it until this is fixed.", "",
+    kept = ("The reports were published; look at which figures went missing (top metrics below) and which source stopped supplying them."
+            if source == "reports" else "Yesterday's published file was kept; scores keep using it until this is fixed.")
+    lines = [f"The daily drift check found a breaking change in `{source}` ({report.get('generated_at', '')}).", kept, "",
              "| severity | check | field | detail |", "| --- | --- | --- | --- |"]
     for c in sorted(rows, key=lambda c: -RANK[c["severity"]]):
         lines.append(f"| {c['severity']} | {c['check']} | {c.get('field') or ''} | {str(c['detail']).replace('|', '/')} |")
     if report.get("disabled_fields"):
         lines += ["", "Fields not scored today: " + ", ".join(report["disabled_fields"])]
+    if source == "reports" and (report.get("gaps") or {}).get("reports"):
+        g = report["gaps"]
+        lines += ["", "Most-missing figures: " + ", ".join(f"{m} ({n})" for m, n in g.get("top_metrics", [])),
+                  "Thinnest reports: " + ", ".join(f"{t} ({n})" for t, n in g.get("worst", []))]
     if run_url:
         lines += ["", f"Run: {run_url}"]
     return "\n".join(lines)
@@ -301,6 +351,11 @@ def summary_markdown(report: dict) -> str:
         lines.append(f"- **{c['severity']}** {c['source']} / {c['check']}" + (f" / {c['field']}" if c.get("field") else "") + f": {c['detail']}")
     if report.get("disabled_fields"):
         lines.append("\nNot scored today: " + ", ".join(report["disabled_fields"]))
+    g = report.get("gaps") or {}
+    if g.get("reports"):
+        lines += ["", f"### Gaps per report: median {g['median']:g}, 90th percentile {g['p90']:g}, max {g['max']}, "
+                      f"{g['share_over']:.0%} of {g['reports']} reports have more than {g['over']}",
+                  "Most-missing figures: " + ", ".join(f"{m} ({n})" for m, n in g.get("top_metrics", []))]
     return "\n".join(lines) + "\n"
 
 

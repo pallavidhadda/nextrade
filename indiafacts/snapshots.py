@@ -331,6 +331,32 @@ def drift_gate(out: Path, prev_dir: Path, anchors: dict | None = None, log=print
     return report
 
 
+def record_gaps(out: Path, tickers: list[str], index: dict, yesterday: dict | None, log=print) -> dict | None:
+    """Gaps per published report into drift_report.json (`gaps`, plus a gaps_per_report check that is breaking on a sharp rise
+    since yesterday, which opens a "Source drift: reports" issue). Never raises."""
+    from indiafacts import drift
+
+    try:
+        summaries = {}
+        for t in tickers:
+            if (index.get(t) or {}).get("ok"):
+                s = _json_or_none(out / f"{safe_name(t)}.json")
+                if isinstance(s, dict):
+                    summaries[t] = s
+        report = _json_or_none(out / "drift_report.json") or {
+            "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "status": "ok", "checks": [], "disabled_fields": []}
+        report = drift.add_gap_stats(report, summaries, yesterday)
+        (out / "drift_report.json").write_text(json.dumps(report, indent=1), encoding="utf-8")
+        mark_index(out, report)
+        g = report["gaps"]
+        if g.get("reports"):
+            log(f"gaps: median {g['median']:g} per report, {g['share_over']:.0%} of {g['reports']} reports have more than {g['over']}")
+        return report
+    except Exception as exc:
+        log(f"gaps: not recorded ({type(exc).__name__})")
+        return None
+
+
 def mark_index(out: Path, report: dict) -> None:
     """index.json gets a `_meta` entry (not a ticker) so readers can see today's drift status."""
     from indiafacts import drift
@@ -361,6 +387,7 @@ def main(argv: list[str] | None = None, runner: Callable | None = None, sleep=ti
     tickers = given or load_tickers(universe=a.universe)
     if a.limit:
         tickers = tickers[:a.limit]
+    prev_gaps = (_json_or_none(Path(a.out) / "drift_report.json") or {}).get("gaps")      # yesterday's, before it is overwritten
     if real_runner:
         import tempfile
 
@@ -371,6 +398,8 @@ def main(argv: list[str] | None = None, runner: Callable | None = None, sleep=ti
             drift_gate(Path(a.out), prev)
         _prepare_nse_copy(Path(a.out))
     index = run_snapshots(tickers, Path(a.out), runner, a.delay, sleep)
+    if real_runner:
+        record_gaps(Path(a.out), tickers, index, prev_gaps)
     rate = failure_rate(index, tickers) * 100
     print(f"{len(tickers)} tickers, {rate:.0f}% failed (limit {a.max_fail_pct:.0f}%)", file=sys.stderr)
     return 1 if rate > a.max_fail_pct else 0
