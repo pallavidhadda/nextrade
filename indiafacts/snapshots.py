@@ -190,7 +190,12 @@ class SnapshotClient:
             entry = self._get("index.json", True).get(t)
             if not is_fresh(entry, today, max_age_days):
                 return None
-            return {"summary": self._get(f"{safe_name(t)}.json", True), "html": self._get(f"{safe_name(t)}.html", False), "as_of": entry["as_of"]}
+            from indiafacts.summary import REPORT_VERSION
+
+            summary = self._get(f"{safe_name(t)}.json", True)
+            if int((summary or {}).get("report_version") or 0) < REPORT_VERSION:
+                return None                    # built by older code: run a fresh analysis rather than show outdated content
+            return {"summary": summary, "html": self._get(f"{safe_name(t)}.html", False), "as_of": entry["as_of"]}
         except Exception:
             return None
 

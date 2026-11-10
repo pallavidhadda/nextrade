@@ -15,8 +15,13 @@ def good_runner(opts, progress):
             "html": "<html>live</html>"}
 
 
-def make_fetch(entry, ticker="TCS.NS"):
-    files = {"index.json": {ticker: entry}, f"{safe_name(ticker)}.json": {"ticker": ticker, "snap": True}}
+def make_fetch(entry, ticker="TCS.NS", version=None):
+    from indiafacts.summary import REPORT_VERSION
+
+    summary = {"ticker": ticker, "snap": True, "report_version": REPORT_VERSION if version is None else version}
+    if version == "absent":
+        summary.pop("report_version")
+    files = {"index.json": {ticker: entry}, f"{safe_name(ticker)}.json": summary}
 
     def fetch(url):
         name = url.rsplit("/", 1)[1]
@@ -106,6 +111,16 @@ def test_client_ttl_cache():
     now[0] += 101
     c.lookup("TCS.NS", TODAY)
     assert len(calls) > n
+
+
+def test_snapshot_from_older_code_is_not_served():
+    """A snapshot built before the current report version (or with no version) falls through to a fresh analysis."""
+    from indiafacts.summary import REPORT_VERSION
+
+    today = date.today().isoformat()
+    assert SnapshotClient("http://x", make_fetch(entry(today))).lookup("TCS.NS") is not None
+    assert SnapshotClient("http://x", make_fetch(entry(today), version=REPORT_VERSION - 1)).lookup("TCS.NS") is None
+    assert SnapshotClient("http://x", make_fetch(entry(today), version="absent")).lookup("TCS.NS") is None
 
 
 def test_client_never_raises():
