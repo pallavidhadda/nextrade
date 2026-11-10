@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-10T16:11:20+00:00",
+ "generated_at": "2026-11-10T20:05:34+00:00",
  "status": "warning",
  "checks": [
   {
@@ -36,11 +36,82 @@
    "field": null,
    "severity": "info",
    "detail": "anchor check skipped: no reference market caps supplied"
+  },
+  {
+   "source": "reports",
+   "check": "gaps_per_report",
+   "field": null,
+   "severity": "info",
+   "detail": "median 3 gaps per report, 33% of 486 reports have more than 5 (no earlier figure)"
   }
  ],
  "disabled_fields": [
   "marketlens.beta",
   "marketlens.returnOnEquity",
   "marketlens.revenueGrowth"
- ]
+ ],
+ "gaps": {
+  "reports": 486,
+  "median": 3.0,
+  "p90": 17.0,
+  "max": 58,
+  "over": 5,
+  "share_over": 0.3313,
+  "worst": [
+   [
+    "KWIL.NS",
+    58
+   ],
+   [
+    "VISL.NS",
+    49
+   ],
+   [
+    "VAML.NS",
+    46
+   ],
+   [
+    "VEDPOWER.NS",
+    45
+   ],
+   [
+    "LIQUID1.NS",
+    43
+   ]
+  ],
+  "top_metrics": [
+   [
+    "benchmark_return_5y",
+    114
+   ],
+   [
+    "max_drawdown_5y",
+    114
+   ],
+   [
+    "relative_return_5y",
+    114
+   ],
+   [
+    "return_5y",
+    114
+   ],
+   [
+    "net_income_source_check",
+    105
+   ],
+   [
+    "net_income_yoy",
+    87
+   ],
+   [
+    "implied_growth_r14_n5",
+    86
+   ],
+   [
+    "gross_npa_ratio",
+    82
+   ]
+  ]
+ }
 }
