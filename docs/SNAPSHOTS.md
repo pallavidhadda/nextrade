@@ -37,3 +37,17 @@ Fundamentals change about quarterly, so a snapshot is fine for them. Price-linke
 
 - Busy server: `INDIAFACTS_MAX_RUNNING=1` answers a second live analysis with 429 and the message "The server is busy with another analysis; try again in a minute." Snapshot hits never count toward that limit.
 - Keep-warm: Render's free tier sleeps after about 15 minutes idle. Point any external pinger (for example UptimeRobot or cron-job.org, every 10 minutes) at `GET /api/health`. Nothing in this repo pings it.
+
+## NSE Market Lens file
+
+Before precomputing, the job fetches the NSE Market Lens universe once (58 requests, 1 s apart; see `docs/DATA_PERMISSIONS.md`) into `snapshots/marketlens.json`, which is published on the `snapshots` branch next to the reports. Each analysis in the run reads that file (the job points `INDIAFACTS_MARKETLENS_URL` at it), so NSE is not called per ticker. If the fetch fails, the previous file on the branch is kept.
+
+| Variable | Where | Meaning |
+| --- | --- | --- |
+| `INDIAFACTS_MARKETLENS_URL` | Render | `https://raw.githubusercontent.com/<owner>/<repo>/snapshots/marketlens.json`. Read with a 1 h memory cache; when set, NSE is never called directly. |
+| `INDIAFACTS_MARKETLENS_CACHE` | local | Disk cache path, default `~/.indiafacts/marketlens.json`, valid for 1 day. |
+| `INDIAFACTS_MARKETLENS` | any | `0` switches Market Lens off (also `--no-marketlens`). |
+
+`INDIAFACTS_MARKETLENS_LIVE=0` disables the direct Market Lens request for the target on live analyses (the snapshot job sets it).
+
+Refresh by hand: `python -m indiafacts.marketlens`.

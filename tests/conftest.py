@@ -1,5 +1,9 @@
+import os
+
 import pandas as pd
 import pytest
+
+os.environ["INDIAFACTS_MARKETLENS"] = "0"        # set at import so module-scoped fixtures are offline too
 
 
 class _NoNetworkPrices:
@@ -34,6 +38,14 @@ def _offline_tej(monkeypatch, request):
         raise ConnectionError("offline in tests")
 
     monkeypatch.setattr(tej, "_http_fetch", offline)
+
+
+@pytest.fixture(autouse=True)
+def _offline_marketlens(monkeypatch):
+    """NSE Market Lens is off in ordinary tests; marketlens tests switch it on with an injected opener or rows."""
+    monkeypatch.setenv("INDIAFACTS_MARKETLENS", "0")
+    monkeypatch.delenv("INDIAFACTS_MARKETLENS_URL", raising=False)
+    monkeypatch.delenv("INDIAFACTS_MARKETLENS_CACHE", raising=False)
 
 
 @pytest.fixture(autouse=True)

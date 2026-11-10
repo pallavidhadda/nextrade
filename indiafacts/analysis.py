@@ -199,7 +199,7 @@ def cross_check(a: Fact, b: Fact, tol: float = 0.05) -> Fact:
     )
 
 
-SOURCE_RANK = ("nse_filing", "nse_shp", "computed:selfvalue", "yahoo")   # official filing, then our own arithmetic on it, then the vendor
+SOURCE_RANK = ("nse_filing", "nse_shp", "nse_marketlens", "computed:selfvalue", "yahoo")   # official filing, exchange screener, our own arithmetic, then the vendor
 
 
 def prefer_sources(facts: list[Fact]) -> list[Fact]:

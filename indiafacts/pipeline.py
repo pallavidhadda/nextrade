@@ -41,7 +41,8 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
                   filing_path: Path | list[Path] | None = None, symbol_changes: Path | None = None,
                   prices: bool = False, price_client=None, benchmark: str = "^NSEI",
                   tej: bool = False, tej_store: TejStore | None = None, skip_other_filings: bool = False,
-                  shareholding_paths: list[Path] | None = None, shareholding_feed: bool = False) -> FactSet:
+                  shareholding_paths: list[Path] | None = None, shareholding_feed: bool = False,
+                  marketlens: bool = True, marketlens_rows: dict | None = None, marketlens_live: bool = True) -> FactSet:
     """Resolve identity, fetch, flag gaps, optionally merge an official NSE filing, then append computed facts."""
     notices: list[str] = []
     store = (tej_store or TejStore()) if tej else None
@@ -145,6 +146,8 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
     from indiafacts.selfvalue import self_valuation_facts
 
     base_facts += self_valuation_facts(base_facts)
+    if marketlens:
+        base_facts += _marketlens_facts(fs, base_facts, marketlens_rows, notices, marketlens_live)
     val_facts = valuation_facts(fs.model_copy(update={"facts": base_facts}), today=as_of or fs.retrieved_at.date(), now=fs.retrieved_at)
     return fs.model_copy(update={"facts": base_facts + val_facts, "not_yet_public": pending,
                                  "notices": notices, "price_notes": price_notes,
@@ -279,3 +282,70 @@ def _ownership_facts(fs, paths: list[Path], feed: bool, notices: list[str]):
     if not snaps:
         return []
     return shareholding_facts(fs.entity.ticker, snaps, now=fs.retrieved_at)
+
+
+ML_CHECKED = ("market_cap", "pe_ttm", "pb", "debt_to_equity", "sh_promoter")
+
+
+def _marketlens_facts(fs, facts, rows: dict | None, notices: list[str], live: bool = True):
+    """NSE Market Lens figures for the target when it is in the universe, plus checks against the other sources. Never raises."""
+    from indiafacts import marketlens
+
+    origin = ""
+    try:
+        sym = fs.entity.ticker.split(".")[0]
+        if rows is None:
+            if not marketlens.enabled():
+                return []
+            if live:
+                row, origin, why = marketlens.target_row(sym)
+            else:
+                rws, why = marketlens.universe_with_reason()
+                row = rws.get(sym)
+                origin = f"{marketlens.LAST['kind']}{marketlens._since(marketlens.LAST['at'])}" if row else ""
+            if row is None:
+                if why:
+                    notices.append(f"NSE Market Lens not used: {why}")
+                return []
+            if why:
+                notices.append(f"NSE Market Lens: {why}")
+        else:
+            row = rows.get(sym)
+            if row is None:
+                return []
+        new = marketlens.facts_for(sym, row, now=fs.retrieved_at, origin=origin)
+        if origin:
+            notices.append(f"NSE Market Lens figures for {sym} fetched {origin}")
+    except Exception as exc:
+        notices.append(f"NSE Market Lens not used ({type(exc).__name__})")
+        return []
+    have_ok = {f.metric for f in facts if f.status == Status.ok and f.value is not None}
+    keep = []
+    for f in new:
+        if f.metric in ("sh_promoter", "sh_public") and f.metric in have_ok:
+            continue              # an official shareholding file with its own quarter-end date stays the reference
+        if f.metric in ("high_52w", "low_52w") and f.metric in have_ok:
+            continue
+        keep.append(f)
+    checks = []
+    for f in new:
+        if f.metric not in ML_CHECKED or f.status != Status.ok:
+            continue
+        others = [g for g in facts if g.metric == f.metric and g.status == Status.ok and g.value is not None and g.unit == f.unit
+                  and g.period_type == PeriodType.point and g.source != marketlens.SOURCE]
+        if not others:
+            continue
+        best = min(others, key=lambda g: (analysis_rank(g), -g.period_end.toordinal()))
+        checks.append(cross_check(f, best))
+        rest = [g for g in others if g.source not in (best.source,) and g.source in ("yahoo", "computed:selfvalue")]
+        for g in rest:
+            c = cross_check(f, g)
+            m = f"{f.metric}_source_check_{g.source.split(':')[-1]}"
+            checks.append(c.with_(metric=m, fact_id=Fact.compute_id(c.entity_key, m, c.period_end, str(c.period_type), c.source)))
+    return keep + checks
+
+
+def analysis_rank(f):
+    from indiafacts.analysis import SOURCE_RANK
+
+    return SOURCE_RANK.index(f.source) if f.source in SOURCE_RANK else len(SOURCE_RANK)
