@@ -1,63 +1,168 @@
 {
-  "note": "Which metrics each report pillar expects, how old a figure may be before it counts as stale, and where the High/Medium/Low/Insufficient lines sit. Reviewed by the project author, not evidence-based. An expected entry 'a|b' is met by either metric. Ages are calendar days from the figure's period end (for vendor snapshots, the day it was fetched) to the as-of date. Quarterly figures: 90 days to the quarter's filing deadline plus 60 days allowance = 150. Annual figures: 365 + 90 + 60 = 515.",
+  "note": "Which metrics each report pillar expects, how old a figure may be before it counts as stale, and where the High/Medium/Low/Insufficient lines sit. Reviewed by the project author, not evidence-based. An expected entry 'a|b' is met by either metric. Ages are calendar days from the figure's period end (for vendor snapshots, the day it was fetched) to the as-of date. Quarterly figures: 90 days to the quarter's filing deadline plus 60 days allowance = 150. Annual figures: 365 + 90 + 60 = 515. A figure with a value counts as present when its status is ok, unverified (vendor estimate) or conflict; gap, unavailable and stale figures count as missing. Where figures came from (official, vendor, computed) is reported separately as `verification`, not as a coverage pillar.",
   "reviewed_on": "2026-11-10",
   "review_by": "2027-05-10",
   "thresholds": {
     "high": 0.8,
     "medium": 0.6,
     "insufficient_below": 0.34,
-    "insufficient_pillars": ["valuation", "fundamentals"]
+    "insufficient_pillars": [
+      "valuation",
+      "fundamentals"
+    ]
   },
   "pillars": {
     "price_history": {
       "label": "Price history",
-      "expected": ["last_close", "return_1y", "relative_return_1y", "high_52w", "low_52w", "pct_from_52w_high", "volatility_1y", "beta_1y", "max_drawdown_1y", "rsi_14", "sma_50", "sma_200"],
-      "prefixes": ["return_", "relative_return_", "benchmark_return_", "max_drawdown_", "beta_", "sma_", "bollinger_", "macd_", "avg_move_", "rsi_"],
-      "also": ["price", "high_52w", "low_52w"],
+      "expected": [
+        "last_close",
+        "return_1y",
+        "relative_return_1y",
+        "high_52w",
+        "low_52w",
+        "pct_from_52w_high",
+        "volatility_1y",
+        "beta_1y",
+        "max_drawdown_1y",
+        "rsi_14",
+        "sma_50",
+        "sma_200"
+      ],
+      "prefixes": [
+        "return_",
+        "relative_return_",
+        "benchmark_return_",
+        "max_drawdown_",
+        "beta_",
+        "sma_",
+        "bollinger_",
+        "macd_",
+        "avg_move_",
+        "rsi_"
+      ],
+      "also": [
+        "price",
+        "high_52w",
+        "low_52w"
+      ],
       "max_age_days": 4
     },
     "fundamentals": {
       "label": "Fundamentals",
-      "expected": ["revenue", "net_income", "eps_diluted", "ebitda", "revenue_yoy", "net_income_yoy", "net_margin_q", "net_income_ttm", "eps_diluted_ttm", "fy_revenue", "fy_net_income", "roe"],
-      "prefixes": ["revenue_", "net_income_", "ebitda_", "eps_diluted_", "interest_expense", "fy_"],
-      "also": ["roa", "payout_ratio", "profit_before_tax", "total_income", "total_expenses", "other_income", "depreciation", "total_tax", "eps_basic",
-               "operating_cash_flow", "capex_ppe", "investing_cash_flow", "financing_cash_flow"],
+      "expected": [
+        "revenue",
+        "net_income",
+        "eps_diluted",
+        "ebitda",
+        "revenue_yoy",
+        "net_income_yoy",
+        "net_margin_q",
+        "net_income_ttm",
+        "eps_diluted_ttm",
+        "fy_revenue",
+        "fy_net_income",
+        "roe"
+      ],
+      "prefixes": [
+        "revenue_",
+        "net_income_",
+        "ebitda_",
+        "eps_diluted_",
+        "interest_expense",
+        "fy_"
+      ],
+      "also": [
+        "roa",
+        "payout_ratio",
+        "profit_before_tax",
+        "total_income",
+        "total_expenses",
+        "other_income",
+        "depreciation",
+        "total_tax",
+        "eps_basic",
+        "operating_cash_flow",
+        "capex_ppe",
+        "investing_cash_flow",
+        "financing_cash_flow"
+      ],
       "max_age_days": 150,
       "max_age_days_fy": 515
     },
     "valuation": {
       "label": "Valuation",
-      "expected": ["pe_ttm", "pb", "eps_ttm", "market_cap", "shares_outstanding", "ev_ebitda"],
-      "prefixes": ["implied_growth_", "justified_pb_", "pe_ttm_", "pb_", "market_cap_", "eps_ttm_", "shares_outstanding_", "price_pe_eps_check"],
-      "also": ["fy_fcf_yield"],
+      "expected": [
+        "pe_ttm",
+        "pb",
+        "eps_ttm",
+        "market_cap",
+        "shares_outstanding",
+        "ev_ebitda"
+      ],
+      "prefixes": [
+        "implied_growth_",
+        "justified_pb_",
+        "pe_ttm_",
+        "pb_",
+        "market_cap_",
+        "eps_ttm_",
+        "shares_outstanding_",
+        "price_pe_eps_check"
+      ],
+      "also": [
+        "fy_fcf_yield"
+      ],
       "max_age_days": 4
     },
     "balance_sheet": {
       "label": "Balance sheet",
-      "expected": ["debt_to_equity", "fy_total_debt", "fy_equity|equity_owners", "fy_cash|cash_and_equivalents", "fy_total_assets|total_assets", "fy_current_liabilities"],
+      "expected": [
+        "debt_to_equity",
+        "fy_total_debt",
+        "fy_equity|equity_owners",
+        "fy_cash|cash_and_equivalents",
+        "fy_total_assets|total_assets",
+        "fy_current_liabilities"
+      ],
       "prefixes": [],
-      "also": ["total_liabilities", "total_equity", "fy_roce", "fy_net_debt_to_ebitda", "debt_equity_ratio", "debt_service_coverage_ratio", "interest_service_coverage_ratio"],
+      "also": [
+        "total_liabilities",
+        "total_equity",
+        "fy_roce",
+        "fy_net_debt_to_ebitda",
+        "debt_equity_ratio",
+        "debt_service_coverage_ratio",
+        "interest_service_coverage_ratio"
+      ],
       "max_age_days": 150,
       "max_age_days_fy": 515
     },
     "ownership": {
       "label": "Ownership",
-      "expected": ["sh_promoter", "sh_foreign_inst", "sh_domestic_inst", "sh_public", "sh_promoter_pledged"],
-      "prefixes": ["sh_"],
-      "also": ["insider_holding", "institutional_holding"],
+      "expected": [
+        "sh_promoter",
+        "sh_foreign_inst",
+        "sh_domestic_inst",
+        "sh_public",
+        "sh_promoter_pledged"
+      ],
+      "prefixes": [
+        "sh_"
+      ],
+      "also": [
+        "insider_holding",
+        "institutional_holding"
+      ],
       "max_age_days": 120
-    },
-    "filings": {
-      "label": "Official filings",
-      "expected": ["revenue", "net_income", "profit_before_tax", "eps_diluted"],
-      "prefixes": [],
-      "also": [],
-      "sources": ["nse_filing", "nse_xbrl"],
-      "max_age_days": 150
     }
   },
   "news": {
     "label": "News",
     "min_items": 1
-  }
+  },
+  "official_sources": [
+    "nse_filing",
+    "nse_xbrl",
+    "nse_shp"
+  ]
 }
