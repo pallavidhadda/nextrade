@@ -201,3 +201,36 @@ def peer_summary(sc: dict | None) -> dict | None:
                          "q1": c.q1, "q3": c.q3, "position": POSITION_TEXT.get(c.position or ""), "n": c.n,
                          "premium": c.premium, "diff": c.diff, "reason": c.reason}
                         for c in (sc.get("peer_comparisons") or [])]}
+
+
+def marketlens_peers(target: FactSet, rows: dict, params: dict | None = None, k: int | None = None):
+    """Peers from NSE Market Lens: same Market Lens sector first (tier 1), then the same sub-sector (tier 2), nearest market cap.
+    Peer figures (market cap, P/E, P/B) are Market Lens's own. Returns (PeerGroup, comparisons) or None when the target is not
+    in Market Lens or no peer is eligible, so the caller can keep the Yahoo-based group."""
+    from indiafacts.marketlens import peer_factset
+
+    sym = target.entity.ticker.split(".")[0]
+    row = (rows or {}).get(sym)
+    if not row:
+        return None
+    sector, sub = row.get("sector") or None, row.get("subSector") or None
+    if not sector and not sub:
+        return None
+    now = target.retrieved_at
+    pool = {}
+    for s, r in rows.items():
+        if r.get("sector") == sector or (sub and r.get("subSector") == sub):
+            fs = peer_factset(s, r, now)
+            pool[fs.entity.ticker] = fs
+    me = peer_factset(sym, row, now)
+    tgt = target.model_copy(update={"entity": target.entity.model_copy(update={"industry": sector, "sector": sub})})
+    if not any(f.metric == "market_cap" and f.status == Status.ok for f in tgt.facts):
+        tgt = tgt.model_copy(update={"facts": list(tgt.facts) + [f for f in me.facts if f.metric == "market_cap"]})
+    pool[tgt.entity.ticker] = tgt
+    p = params or load_peer_params(strict=False)
+    g = select_peers(tgt, pool, k=k, params=p)
+    if not g.picks:
+        return None
+    g.notes.insert(0, f"peer group: NSE Market Lens sector '{sector}'" + (f" (sub-sector '{sub}')" if sub else "")
+                   + "; peer market cap, P/E and P/B are Market Lens figures")
+    return g, compare_peers(tgt, g, pool, p)

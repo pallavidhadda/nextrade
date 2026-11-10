@@ -54,6 +54,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--shareholding", type=Path, action="append", default=None,
                    help="shareholding-pattern XBRL file saved from NSE (Corporate Filings > Shareholding Pattern); repeat for earlier quarters")
     p.add_argument("--no-feed", action="store_true", help="do not look in the exchange's latest shareholding feed")
+    p.add_argument("--no-marketlens", action="store_true", help="do not use NSE Market Lens (the exchange's screener) for figures and peers")
     p.add_argument("--flows", action="store_true", help="also show market-wide FII/DII/Pro/Client index-futures positioning from the exchange's daily file")
     p.add_argument("--announcements", action="store_true", help="also list this company's latest filings from the exchange's public RSS feed (links to the filings)")
     p.add_argument("--json", type=Path, default=None, help="also write a compact JSON summary (used by the web app)")
@@ -74,7 +75,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
                            filing_path=_filing_paths(args), skip_other_filings=bool(args.filings_dir), symbol_changes=args.symbol_changes,
                            prices=not args.no_prices, price_client=price_client,
                            tej=not args.no_tej, tej_store=tej_store,
-                           shareholding_paths=_shp_paths(args), shareholding_feed=(client is None and not args.no_feed))
+                           shareholding_paths=_shp_paths(args), shareholding_feed=(client is None and not args.no_feed), marketlens=not getattr(args, "no_marketlens", False))
     except AmbiguousSymbol as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 3
@@ -289,7 +290,8 @@ def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -
         if t == target:
             return fs
         return build_factset(t, as_of=args.as_of, client=client, sleep=sleep, symbol_changes=args.symbol_changes,
-                             prices=prices, price_client=memo, tej=not args.no_tej, tej_store=tej_store)
+                             prices=prices, price_client=memo, tej=not args.no_tej, tej_store=tej_store,
+                             marketlens=not getattr(args, "no_marketlens", False))
 
     universe, failed = build_universe(tickers, builder, labels=labels, fresh={target: fs})
     cfg = load_score_config(strict=False)
@@ -297,6 +299,17 @@ def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -
     tgt = universe.get(target, fs)
     group = select_peers(tgt, universe)
     comparisons = compare_peers(tgt, group, universe) if group.picks else []
+    if not getattr(args, "no_marketlens", False):
+        from indiafacts import marketlens
+        from indiafacts.peers import marketlens_peers
+
+        try:
+            ml_rows, _ = marketlens.universe_with_reason()
+            got = marketlens_peers(tgt, ml_rows) if ml_rows else None
+        except Exception:
+            got = None
+        if got is not None:
+            group, comparisons = got
     return {"peers": group, "peer_comparisons": comparisons,
             "result": results.get(target), "n": len(universe), "failed": failed, "pool": label,
             "checklist": checklist(fs), "checklist_summary": summarize(checklist(fs)), "target_fs": tgt,
