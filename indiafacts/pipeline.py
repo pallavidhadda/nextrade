@@ -42,13 +42,25 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
                   prices: bool = False, price_client=None, benchmark: str = "^NSEI",
                   tej: bool = False, tej_store: TejStore | None = None, skip_other_filings: bool = False,
                   shareholding_paths: list[Path] | None = None, shareholding_feed: bool = False,
-                  marketlens: bool = True, marketlens_rows: dict | None = None, marketlens_live: bool = True) -> FactSet:
+                  marketlens: bool = True, marketlens_rows: dict | None = None, marketlens_live: bool = True,
+                  nse_api: bool = True, nse_client=None) -> FactSet:
     """Resolve identity, fetch, flag gaps, optionally merge an official NSE filing, then append computed facts."""
     notices: list[str] = []
     store = (tej_store or TejStore()) if tej else None
     ticker, loaded, tej_hist = _resolve_identity(ticker, symbol_changes, notices, store)
     paths = [] if not filing_path else (list(filing_path) if isinstance(filing_path, (list, tuple)) else [filing_path])
     entity = Entity.from_ticker(ticker)
+    nse = None
+    if nse_api and as_of is None:                       # an as-of run must not read today's filings
+        from indiafacts import nseapi
+
+        if nseapi.enabled():
+            nse = nse_client or nseapi.NseApi()
+            if not paths:                               # files the user supplied are an explicit choice; do not mix sources
+                api_paths, api_notes = nse.quarterly_xbrl(entity.ticker.split(".")[0])
+                notices.extend(api_notes if api_paths else [])
+                paths = list(api_paths)
+                skip_other_filings = True
     parsed = []
     for p in paths:
         try:
@@ -69,7 +81,7 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
         filing, merge_notes = merge_filings(parsed)
         notices.extend(merge_notes)
     filing_dates = {f.period_end: f.available_from for f in filing.facts
-                    if f.source == "nse_filing" and f.availability_kind == AvailabilityKind.filed and f.available_from} if filing else None
+                    if f.source in ("nse_filing", "nse_xbrl") and f.availability_kind == AvailabilityKind.filed and f.available_from} if filing else None
 
     fs = add_gaps(fetch_facts(ticker, as_of=as_of, client=client, sleep=sleep, filing_dates=filing_dates))
     if fs.entity.resolution != "resolved":
@@ -94,7 +106,7 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
 
     extra = []
     if filing:
-        new, demote = check_ebitda([f for f in facts if f.source == "nse_filing"],
+        new, demote = check_ebitda([f for f in facts if f.source in ("nse_filing", "nse_xbrl")],
                                    [f for f in facts if f.source == "yahoo"])
         facts = [demote.get(f.fact_id, f) for f in facts]
         extra += new
@@ -127,7 +139,7 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
                  if f.source == "yahoo" and f.period_type == PeriodType.Q and f.status == Status.ok}
         for f in facts:
             y = yahoo.get((f.metric, f.period_end))
-            if f.source == "nse_filing" and y is not None and y.unit == f.unit:
+            if f.source in ("nse_filing", "nse_xbrl") and f.period_type == PeriodType.Q and y is not None and y.unit == f.unit:
                 extra.append(cross_check(f, y))
     price_facts, price_notes, charts = _price_facts(fs.entity.ticker, as_of, prices, price_client, benchmark, notices,
                                             _tej_action_dates(store, tej_hist, fs.entity.ticker, as_of, prices, notices))
@@ -142,7 +154,9 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
                        "ratios that need the overview (P/E, P/B, ROE, market value) may be unavailable")
     base_facts = facts + extra + price_facts
     base_facts += _fundamental_facts(fs, base_facts, client, notices)
-    base_facts += _ownership_facts(fs, shareholding_paths or [], shareholding_feed, notices)
+    base_facts += _ownership_facts(fs, shareholding_paths or [], shareholding_feed, notices, nse)
+    if nse is not None and nse.ok == 0 and nse.reasons:
+        notices.append("official NSE filings not reachable this run (" + nse.reasons[0] + "); figures come from the other sources")
     from indiafacts.selfvalue import self_valuation_facts
 
     base_facts += self_valuation_facts(base_facts)
@@ -257,7 +271,7 @@ def _fundamental_facts(fs, facts, client, notices: list[str]):
     return new + ratio_facts(probe, now=fs.retrieved_at) + checks
 
 
-def _ownership_facts(fs, paths: list[Path], feed: bool, notices: list[str]):
+def _ownership_facts(fs, paths: list[Path], feed: bool, notices: list[str], nse=None):
     """Official shareholding pattern: saved files, the exchange's latest feed, and the snapshots stored on earlier runs."""
     from indiafacts.shareholding import fetch_latest, history, parse_shp, save_snapshot, shareholding_facts
 
@@ -278,10 +292,36 @@ def _ownership_facts(fs, paths: list[Path], feed: bool, notices: list[str]):
         if sh is not None:
             sh.symbol = sh.symbol or sym
             save_snapshot(sh)
+    rows = []
+    if nse is not None:
+        sh, rows, why = nse.latest_shareholding(sym)
+        if sh is not None:
+            save_snapshot(sh)
     snaps = history(sym)
-    if not snaps:
+    out = shareholding_facts(fs.entity.ticker, snaps, now=fs.retrieved_at) if snaps else []
+    if rows and not any(f.metric == "sh_promoter_change" for f in out):
+        out += _row_change_fact(fs.entity.ticker, rows, fs.retrieved_at)
+    return out
+
+
+def _row_change_fact(entity_key: str, rows: list[dict], now) -> list[Fact]:
+    """Quarter-on-quarter promoter change from two consecutive rows of NSE's shareholding list (newest first)."""
+    from decimal import Decimal
+    from indiafacts.nseapi import _date
+    from indiafacts.shareholding import SOURCE
+
+    try:
+        cur, prev = rows[0], rows[1]
+        c, p = float(cur["pr_and_prgrp"]), float(prev["pr_and_prgrp"])
+        end = _date(cur["date"])
+    except (IndexError, KeyError, TypeError, ValueError):
         return []
-    return shareholding_facts(fs.entity.ticker, snaps, now=fs.retrieved_at)
+    if end is None:
+        return []
+    cite = f"NSE shareholding list: promoter {c}% on {cur['date']} vs {p}% on {prev['date']} (record {cur.get('recordId', '?')})"
+    return [Fact.make(entity_key=entity_key, metric="sh_promoter_change", value=Decimal(str(round((c - p) / 100, 6))), unit="ratio",
+                      period_end=end, period_type=PeriodType.point, source=SOURCE, source_field=cite, retrieved_at=now,
+                      available_from=end, availability_kind=AvailabilityKind.filed, status=Status.ok, evidence=cite)]
 
 
 ML_CHECKED = ("market_cap", "pe_ttm", "pb", "debt_to_equity", "sh_promoter")

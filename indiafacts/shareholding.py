@@ -101,6 +101,8 @@ def parse_shp(data: bytes | str | Path, source: str = "") -> Shareholding:
         cid = el.get("contextRef", "")
         if name in ("Symbol", "ISIN", "NameOfTheCompany") and text:
             scalar.setdefault(name, text)
+        if name == "WhetherAnySharesHeldByPromotersAreEncumberedUnderPledged" and text:
+            scalar.setdefault(name, text.lower())
         cat = CATEGORIES.get(cat_of.get(cid, ""))
         if cat is None or not text:
             continue
@@ -130,6 +132,8 @@ def parse_shp(data: bytes | str | Path, source: str = "") -> Shareholding:
     pl = None
     if prom_shares and prom_shares > 0 and "promoter" in pledged:
         pl = min(1.0, pledged["promoter"] / prom_shares)
+    elif not pledged and scalar.get("WhetherAnySharesHeldByPromotersAreEncumberedUnderPledged") == "false":
+        pl = 0.0                                                 # the filing itself says no promoter shares are pledged
     return Shareholding(symbol=scalar.get("Symbol", "").upper(), isin=scalar.get("ISIN", ""), name=scalar.get("NameOfTheCompany", ""),
                         as_on=as_on, pct=pct, pledged_of_promoter=pl, shareholders=holders.get("total"),
                         total_shares=shares.get("total") if shares.get("total", 0) > 0 else None, source=source)

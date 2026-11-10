@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import pytest
 
+os.environ["INDIAFACTS_NSE_API"] = "0"            # likewise: module-scoped fixtures must never reach NSE
 os.environ["INDIAFACTS_MARKETLENS"] = "0"        # set at import so module-scoped fixtures are offline too
 
 
@@ -54,3 +55,11 @@ def _isolated_shareholding_store(monkeypatch, tmp_path):
     monkeypatch.setenv("INDIAFACTS_SHP_STORE", str(tmp_path / "shp_home.csv"))
     monkeypatch.setenv("INDIAFACTS_SHP_REPO", str(tmp_path / "shp_repo.csv"))
     monkeypatch.setenv("INDIAFACTS_FIIDII_STORE", str(tmp_path / "fiidii.csv"))
+
+
+@pytest.fixture(autouse=True)
+def _offline_nse_api(monkeypatch, tmp_path):
+    """NSE's website API is off in ordinary tests; its tests switch it on with an injected opener and a temp cache."""
+    monkeypatch.setenv("INDIAFACTS_NSE_API", "0")
+    monkeypatch.setenv("INDIAFACTS_NSE_CACHE", str(tmp_path / "nse_cache"))
+    monkeypatch.delenv("INDIAFACTS_NSE_BROWSER_HEADERS", raising=False)
