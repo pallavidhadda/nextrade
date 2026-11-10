@@ -122,8 +122,15 @@ def _rank(f: Fact) -> int:
 
 
 def _extract(fs: FactSet, cfg: ScoreConfig, as_of: date, now: datetime):
+    facts, flags = extract_facts(fs, cfg, as_of, now)
+    return {m: (float(f.value), f.fact_id) for m, f in facts.items()}, flags
+
+
+def extract_facts(fs: FactSet, cfg: ScoreConfig, as_of: date, now: datetime):
+    """The Fact scoring would use for each metric, under the scoring rules (best source, latest period, not-yet-public,
+    stale, valid bounds, financials). Shared with poolstore so stored values equal what scoring uses."""
     flags: list[str] = []
-    out: dict[str, tuple[float, str]] = {}
+    out: dict[str, Fact] = {}
     max_age = timedelta(days=cfg.params["max_age_days"])
     financial = (fs.entity.sector or "") == "Financial Services"
     for spec in cfg.metrics:
@@ -149,7 +156,7 @@ def _extract(fs: FactSet, cfg: ScoreConfig, as_of: date, now: datetime):
         if not spec.valid(v):
             flags.append(f"{spec.id}={v:g} outside valid range ({spec.valid_min:g}, {spec.valid_max:g}); excluded")
             continue
-        out[spec.id] = (v, f.fact_id)
+        out[spec.id] = f
     return out, flags
 
 
@@ -230,6 +237,97 @@ def score_universe(factsets: dict[str, FactSet], factor_weights: dict[str, float
     for i, r in enumerate(ranked, 1):
         r.rank = i
     return results
+
+
+POLICY_PATH = Path(__file__).parent / "data" / "source_policy.json"
+
+
+def load_source_policy(path: Path | None = None) -> dict:
+    data = json.loads((path or POLICY_PATH).read_text(encoding="utf-8"))
+    if not isinstance(data.get("metrics"), dict) or not 0 < float(data.get("min_coverage", 0)) <= 1:
+        raise ValueError("source policy: needs metrics and a min_coverage in (0, 1]")
+    return data
+
+
+def factsets_from_sources(members: list[str], target_fs: FactSet, store: dict | None, ml_rows: dict | None, policy: dict,
+                          cfg: ScoreConfig, as_of: date, now: datetime, nifty_1y: float | None = None,
+                          store_at: datetime | None = None) -> tuple[dict[str, FactSet], dict[str, dict]]:
+    """Synthetic FactSets for score_universe in which every metric comes from ONE source for ALL members.
+    Per metric the first policy candidate ('pool_store' = pool_metrics.json, 'nse_marketlens' = Market Lens rows) that has a valid
+    value for at least policy min_coverage of the members wins; a metric with no such source is left out (not scored).
+    The target counts as a member: its pool_store value is its own freshly computed one, its Market Lens value is its row's.
+    Returns (factsets by ticker, metric_sources {metric: {source, covered, of}}); source is None when nothing qualified."""
+    from indiafacts import marketlens
+    from indiafacts.models import Entity
+
+    target = target_fs.entity.ticker
+    members = sorted(set(members) | {target})
+    n = len(members)
+    smetrics = (store or {}).get("metrics") or {}
+    ml_rows = ml_rows or {}
+    ml_vals = {t: marketlens.score_metrics_for(ml_rows.get(t.split(".")[0]) or {}, nifty_1y) for t in members}
+    fresh, _ = extract_facts(target_fs, cfg, as_of, now)
+    min_cov = float(policy["min_coverage"])
+
+    def store_val(t: str, m: str):
+        if t == target and m in fresh:
+            f = fresh[m]
+            return float(f.value), f.source, f.period_end, f.fact_id
+        e = (smetrics.get(t) or {}).get(m)
+        if not isinstance(e, dict) or not isinstance(e.get("value"), (int, float)):
+            return None
+        try:
+            end = date.fromisoformat(str(e.get("as_of")))
+        except ValueError:
+            return None
+        return float(e["value"]), str(e.get("source") or "unknown"), end, None
+
+    def ml_val(t: str, m: str):
+        v = ml_vals[t].get(m)
+        return None if v is None else (v, marketlens.SOURCE, marketlens.row_as_of(ml_rows[t.split(".")[0]], now), None)
+
+    getters = {"pool_store": store_val, "nse_marketlens": ml_val}
+    chosen: dict[str, dict[str, tuple]] = {t: {} for t in members}
+    sources: dict[str, dict] = {}
+    for spec in cfg.metrics:
+        best = 0
+        sources[spec.id] = {"source": None, "covered": 0, "of": n}
+        for name in policy["metrics"].get(spec.id, []):
+            get = getters.get(name)
+            if get is None:
+                continue
+            vals = {}
+            for t in members:
+                got = get(t, spec.id)
+                if got is not None and spec.valid(got[0]):
+                    vals[t] = got
+            best = max(best, len(vals))
+            if vals and len(vals) / n >= min_cov:
+                for t, got in vals.items():
+                    chosen[t][spec.id] = got
+                sources[spec.id] = {"source": name, "covered": len(vals), "of": n}
+                break
+        else:
+            sources[spec.id]["covered"] = best          # the best attempt, so the reason can be shown
+    out: dict[str, FactSet] = {}
+    for t in members:
+        if t == target:
+            ent = target_fs.entity
+        else:
+            row = ml_rows.get(t.split(".")[0]) or {}
+            ent = Entity.from_ticker(t).model_copy(update={
+                "name": row.get("name"), "sector": "Financial Services" if row.get("subSector") == "Financial Services" else None})
+        facts = []
+        for m, (v, src, end, _fid) in chosen[t].items():
+            label = marketlens.SOURCE if src == marketlens.SOURCE else f"pool_store:{src}"
+            ev = ("NSE Market Lens row used for every company in the comparison" if src == marketlens.SOURCE
+                  else f"pool_metrics.json (daily snapshot), originally from {src}; used for every company in the comparison")
+            facts.append(Fact.make(entity_key=t, metric=m, value=Decimal(str(round(v, 10))), unit="score_input", period_end=end,
+                                   period_type=PeriodType.point, source=label, source_field=f"source_policy:{m}",
+                                   retrieved_at=(store_at or now) if label.startswith("pool_store") and t != target else now,
+                                   status=Status.ok, evidence=ev))
+        out[t] = FactSet(entity=ent, facts=facts, retrieved_at=now)
+    return out, sources
 
 
 def rank_diff(before: dict[str, ScoreResult], after: dict[str, ScoreResult]) -> list[RankChange]:

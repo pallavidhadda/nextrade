@@ -50,6 +50,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     p.add_argument("--changes-only", action="store_true", help="print only the what-changed block")
     p.add_argument("--sector-pool", action="store_true", help="with an NSE index CSV: compare only against the target's NSE industry group (faster, sector-relative scores)")
     p.add_argument("--news", action="store_true", help="also fetch recent headlines (extra network call; shown as unverified text with a keyword sentiment hint)")
+    p.add_argument("--comparison", choices=("auto", "pool"), default="auto", help="auto (default): rank inside the target's NSE Market Lens sector using the published comparison data; pool: always fetch and rank the pool file")
     p.add_argument("--pool-size", type=int, default=None, help="use only the first N companies of the pool (plus the target): faster, a smaller comparison")
     p.add_argument("--shareholding", type=Path, action="append", default=None,
                    help="shareholding-pattern XBRL file saved from NSE (Corporate Filings > Shareholding Pattern); repeat for earlier quarters")
@@ -246,10 +247,62 @@ class _MemoPrices:
         return hit
 
 
+def _sector_scorecard(args, fs, profile) -> dict | None:
+    """Rank the target inside its NSE Market Lens sector (sub-sector if the sector has fewer than 8) from the published comparison
+    data: nothing is fetched per member. One source per metric for every member (data/source_policy.json). None means 'use the pool':
+    Market Lens off or unavailable, the target not in it, or no comparison data published."""
+    from indiafacts import marketlens, poolstore
+    from indiafacts.peers import marketlens_peers
+    from indiafacts.profile import weights_for
+    from indiafacts.scoring import factsets_from_sources, load_source_policy
+
+    if getattr(args, "no_marketlens", False) or not marketlens.enabled():
+        return None
+    try:
+        rows, _ = marketlens.universe_with_reason()
+        sym = fs.entity.ticker.split(".")[0]
+        got = marketlens.sector_members(sym, rows) if rows else None
+        store = poolstore.load()
+        if got is None or store is None:
+            return None
+        symbols, kind, name = got
+        row, _origin, _why = marketlens.target_row(sym)
+        if row is not None:
+            rows = {**rows, sym: row}
+        now, as_of = datetime.now(timezone.utc), args.as_of or date.today()
+        cfg = load_score_config(strict=False)
+        nifty = ((store.get("metrics") or {}).get(poolstore.NIFTY) or {}).get("return_1y") or poolstore.nifty_return_1y(fs)
+        try:
+            store_at = datetime.fromisoformat(store["meta"]["generated_at"])
+        except (KeyError, ValueError, TypeError):
+            store_at = None
+        factsets, sources = factsets_from_sources(
+            [s + ".NS" for s in symbols], fs, store, rows, load_source_policy(), cfg, as_of, now,
+            nifty_1y=(nifty or {}).get("value"), store_at=store_at)
+    except Exception:
+        return None
+    results = score_universe(factsets, weights_for(profile), cfg, as_of, now)
+    target = fs.entity.ticker
+    try:
+        peers = marketlens_peers(fs, rows)
+    except Exception:
+        peers = None
+    group, comparisons = peers if peers is not None else (select_peers(fs, {target: fs}), [])
+    label = f"NSE Market Lens {'sector' if kind == 'sector' else 'sub-sector'} '{name}' ({len(factsets)} companies)"
+    return {"peers": group, "peer_comparisons": comparisons, "result": results.get(target), "n": len(factsets), "failed": {},
+            "pool": label, "checklist": checklist(fs), "checklist_summary": summarize(checklist(fs)), "target_fs": fs,
+            "members": sorted(factsets), "config_overdue": cfg.overdue, "default_pool": False, "pool_label": label,
+            "comparison": "sector", "metric_sources": sources}
+
+
 def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -> dict:
     from indiafacts.profile import weights_for
 
     uni = args.universe
+    if not uni and not getattr(args, "sector_pool", False) and getattr(args, "comparison", "auto") == "auto":
+        sector = _sector_scorecard(args, fs, profile)
+        if sector is not None:
+            return sector
     target = fs.entity.ticker
     if uni and str(uni).startswith("tej"):
         from indiafacts.tej import TejStore, TejUnavailable, universe_members
@@ -315,7 +368,8 @@ def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -
     return {"peers": group, "peer_comparisons": comparisons,
             "result": results.get(target), "n": len(universe), "failed": failed, "pool": label,
             "checklist": checklist(fs), "checklist_summary": summarize(checklist(fs)), "target_fs": tgt,
-            "members": sorted(universe), "config_overdue": cfg.overdue, "default_pool": args.universe is None, "pool_label": label}
+            "members": sorted(universe), "config_overdue": cfg.overdue, "default_pool": args.universe is None, "pool_label": label,
+            "comparison": "pool", "metric_sources": None}
 
 
 def _filing_paths(args) -> list[Path] | None:

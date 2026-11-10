@@ -45,7 +45,9 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
                  "factors": {k: {"score": v.score, "coverage": v.coverage, "reason": v.reason} for k, v in r.factors.items()},
                  "contributions": {k: c.model_dump() for k, c in r.contributions.items()},
                  "missing_factors": [m.model_dump() for m in r.missing_factors],
-                 "pool_failed": len(scorecard.get("failed") or {})}
+                 "pool_failed": len(scorecard.get("failed") or {}),
+                 "comparison": scorecard.get("comparison") or "pool", "pool_label": scorecard.get("pool_label") or scorecard.get("pool"),
+                 "set_size": scorecard.get("n"), "metric_sources": scorecard.get("metric_sources")}
         from indiafacts.checklist import grouped
 
         checklist_groups = grouped(scorecard["checklist"])
