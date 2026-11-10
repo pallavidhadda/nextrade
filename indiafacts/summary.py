@@ -6,7 +6,8 @@ from indiafacts.render import DISCLAIMER
 
 FACTS_CAP = 800                  # size guard for the JSON summary (and so the snapshot branch); the overflow count is reported
 EVIDENCE_CAP = 200
-KEY_METRICS = ("price", "market_cap", "revenue", "net_income", "eps_diluted", "pe_ttm", "pb", "roe", "debt_to_equity")
+KEY_METRICS = ("price", "market_cap", "revenue", "net_income", "eps_diluted", "pe_ttm", "pb", "roe", "debt_to_equity",
+               "return_1y", "relative_return_1y")   # the 1-year returns feed the web "At a glance" tile (the full facts list is not sent to the page)
 
 
 def _val(f):
@@ -33,8 +34,10 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
     from indiafacts.completeness import completeness
 
     e = fs.entity
+    from indiafacts.completeness import attention_items
+
     gaps = [{"metric": f.metric, "period": str(f.period_end), "status": f.status.value, "reason": f.reason}
-            for f in fs.facts if f.status in (Status.gap, Status.unavailable)]
+            for f in attention_items(list(fs.facts)) if f.status in (Status.gap, Status.unavailable)]
     score = None
     checklist: list[dict] = []
     checklist_groups: list[dict] = []

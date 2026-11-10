@@ -409,7 +409,9 @@ export function AtAGlance({ s }: { s: Summary; onTab?: (t: string) => void }) {
     return f ? Number(f.value) : null;
   };
   const price = kf("price"), cap = kf("market_cap"), pe = kf("pe_ttm");
-  const r1 = fact("return_1y"), rel = fact("relative_return_1y");
+  // key_facts always reaches the page; the full facts list is stripped from the job response, so use it only as a fallback
+  const kv = (m: string) => { const k = kf(m); return k ? Number(k.value) : fact(m); };
+  const r1 = kv("return_1y"), rel = kv("relative_return_1y");
   const rated = !!st && x.label !== "No rating";
   const tiles: { k: string; v: string | null; sub: string; extra?: boolean }[] = [
     { k: "Last price", v: price ? rupee(price.value as number) : null, sub: price ? `as of ${price.period}` : "" },
