@@ -51,6 +51,22 @@ class FactorScore(BaseModel):
     input_fact_ids: list[str] = []
 
 
+class FactorContribution(BaseModel):
+    """One scored factor's part in the overall: contribution = effective_weight x score, effective weights sum to 1."""
+    score: float
+    base_weight: float                  # the preset's weight for the factor
+    effective_weight: float             # base weight renormalised over the factors that were scored
+    contribution: float                 # effective_weight x score; contributions add up to the overall
+    coverage: float
+    n_metrics: int                      # metrics that fed the factor score
+
+
+class MissingFactor(BaseModel):
+    factor: str
+    base_weight: float                  # weight the preset gave it, now redistributed over the scored factors
+    reason: str = ""
+
+
 class ScoreResult(BaseModel):
     ticker: str
     status: str                         # ok | abstain
@@ -62,6 +78,8 @@ class ScoreResult(BaseModel):
     metric_scores: dict[str, float] = {}
     flags: list[str] = []
     input_fact_ids: list[str] = []
+    contributions: dict[str, FactorContribution] = {}        # empty when the score abstained
+    missing_factors: list[MissingFactor] = []
     config_hash: str = ""
     as_of: date | None = None
 
@@ -97,6 +115,12 @@ def load_score_config(path: Path | str | None = None, today: date | None = None,
     return ScoreConfig(specs, data["params"], review_by, base, overdue)
 
 
+def _rank(f: Fact) -> int:
+    from indiafacts.analysis import SOURCE_RANK
+
+    return SOURCE_RANK.index(f.source) if f.source in SOURCE_RANK else len(SOURCE_RANK)
+
+
 def _extract(fs: FactSet, cfg: ScoreConfig, as_of: date, now: datetime):
     flags: list[str] = []
     out: dict[str, tuple[float, str]] = {}
@@ -109,6 +133,10 @@ def _extract(fs: FactSet, cfg: ScoreConfig, as_of: date, now: datetime):
         cands = [f for f in fs.facts if f.metric == spec.id and f.status == Status.ok and f.value is not None]
         if not cands:
             continue
+        pts = [f for f in cands if f.period_type == PeriodType.point]
+        if pts and len({f.source for f in pts}) > 1:                   # snapshots from several sources: the best-ranked source wins
+            best = min(_rank(f) for f in pts)
+            cands = [f for f in cands if f.period_type != PeriodType.point or _rank(f) == best]
         cands.sort(key=lambda f: (f.period_end, f.retrieved_at))
         f = cands[-1]
         if f.available_from is not None and f.available_from > as_of:
@@ -180,15 +208,22 @@ def score_universe(factsets: dict[str, FactSet], factor_weights: dict[str, float
                 fscores[fac] = FactorScore(score=round(float(np.mean([metric_scores[t][m.id] for m in got])), 4),
                                            coverage=round(cov, 4), input_fact_ids=ids)
         valid = {f: s.score for f, s in fscores.items() if s.score is not None and factor_weights.get(f, 0) > 0}
+        missing = [MissingFactor(factor=f, base_weight=factor_weights[f], reason=s.reason)
+                   for f, s in sorted(fscores.items()) if s.score is None and factor_weights.get(f, 0) > 0]
         used = sorted(i for f in valid for i in fscores[f].input_fact_ids)
         if len(valid) < p["min_valid_factors"]:
             results[t] = ScoreResult(ticker=t, status="abstain", overall=None, n=len(tickers), factors=fscores,
                                      metric_scores=metric_scores[t], flags=flags, config_hash=chash, as_of=as_of,
-                                     reason=f"fewer than {p['min_valid_factors']} valid factors ({len(valid)})")
+                                     missing_factors=missing, reason=f"fewer than {p['min_valid_factors']} valid factors ({len(valid)})")
             continue
         wsum = sum(factor_weights[f] for f in valid)
         overall = round(sum(factor_weights[f] * s for f, s in valid.items()) / wsum, 4)
+        contribs = {f: FactorContribution(score=s, base_weight=factor_weights[f], effective_weight=round(factor_weights[f] / wsum, 6),
+                                          contribution=round(factor_weights[f] / wsum * s, 4), coverage=fscores[f].coverage,
+                                          n_metrics=len(fscores[f].input_fact_ids))
+                    for f, s in valid.items()}
         results[t] = ScoreResult(ticker=t, status="ok", overall=overall, n=len(tickers), factors=fscores,
+                                 contributions=contribs, missing_factors=missing,
                                  metric_scores=metric_scores[t], flags=flags, input_fact_ids=used,
                                  config_hash=chash, as_of=as_of)
     ranked = sorted((r for r in results.values() if r.status == "ok"), key=lambda r: (-r.overall, r.ticker))

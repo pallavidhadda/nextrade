@@ -27,10 +27,23 @@ export type Summary = {
   score: null | {
     status: string; overall: number | null; rank: number | null; n: number | null; reason: string; pool: string | null; flags: string[];
     factors: Record<string, { score: number | null; coverage: number; reason: string }>;
+    contributions?: Record<string, { score: number; base_weight: number; effective_weight: number; contribution: number; coverage: number; n_metrics: number }>;
+    missing_factors?: { factor: string; base_weight: number; reason: string }[];
+    pool_failed?: number;
   };
+  completeness?: null | {
+    as_of: string; level: "High" | "Medium" | "Low" | "Insufficient"; reason: string; overall_coverage_pct: number;
+    pillars: Record<string, { label: string; coverage_pct: number | null; issues_n: number; stale_n: number; missing: string[] }>;
+    issues_total: number; stale_total: number;
+    conflicts: { metric: string; period: string; chosen: { value: string | null; source: string; unit: string }; alternative: { value: string | null; source: string; unit: string } | null; reason: string }[];
+  };
+  stamp?: null | { report_id: string; ticker: string; as_of: string; pool_size: number; params_hash: string; commit: string; llm_model: string | null };
+  scenario_reason?: string;
+  served_from?: "snapshot" | "live";
+  snapshot_as_of?: string;
   checklist: Check[]; gaps: Gap[]; notices: string[]; changes: string[];
   valuation: null | { method: "reverse_dcf_earnings" | "justified_pb"; assumptions: string; unavailable_reason: string | null; items: { metric: string; value: number | null; unit: string; fact_id: string }[] };
-  debate: null | { bull: { text: string; evidence: string }[]; bear: { text: string; evidence: string }[]; stance: { label: string; confidence: string; reason: string } };
+  debate: null | { bull: { text: string; evidence: string }[]; bear: { text: string; evidence: string }[]; stance: { label: string; confidence: string; reason: string; partial?: boolean } };
   levels: null | { applies: boolean; last_close: number | null; stop: number | null; risk_pct: number | null; targets: { r: number; price: number }[]; support: { name: string; price: number }[]; resistance: { name: string; price: number }[]; reason: string; notes: string[] };
   risk_panel: null | { profile_lens: string; notes: string[]; lenses: { name: string; fits: boolean | null; breaches: string[]; max_position_pct: number | null; reason: string }[] };
   news: { title: string; publisher: string; published: string | null; url: string; sentiment_hint: "positive" | "negative" | "neutral" }[];
@@ -38,4 +51,4 @@ export type Summary = {
   llm: null | { system: string; user: string; max_tokens: number; ids: string[]; digest: string; roles?: { id: string; title: string; system: string }[]; debate?: { id: string; title: string; system: string; uses_notes: boolean }[] };
   disclaimer: string;
 };
-export type Job = { status: "queued" | "running" | "done" | "error"; progress?: string; summary?: Summary; error?: string };
+export type Job = { status: "queued" | "running" | "done" | "error"; progress?: string; summary?: Summary; error?: string; served_from?: "snapshot" | "live"; snapshot_as_of?: string };

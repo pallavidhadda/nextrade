@@ -1,0 +1,39 @@
+# Daily snapshots
+
+Why: on Render's free tier (shared cloud IP) live analyses sometimes fail with exit 5 (zero usable facts), probably because Yahoo throttles that IP. A scheduled GitHub Actions job precomputes analyses and the API serves them instantly. Live analysis stays as a fallback and as "Refresh now".
+
+## How it works
+
+1. `.github/workflows/snapshots.yml` runs weekdays at 12:30 UTC (18:00 IST, after the NSE close). It runs `python -m indiafacts.snapshots`, which analyses the Nifty 50 (`indiafacts/data/nifty50.txt`, approximate, edit as needed) plus the web app's example tickers, one at a time with a 5 s pause. It uses the same runner and flags as the API (including `INDIAFACTS_POOL_SIZE`).
+2. Per ticker it writes `<TICKER>.json` (the API summary), `<TICKER>.html` (the report) and `index.json` (`{ticker: {as_of, ok, error, generated_at, commit}}`). A failed ticker is recorded and the run continues; if an older good snapshot exists it is kept and the failure is noted as `last_error`. The command exits 1 only if more than `--max-fail-pct` (default 30, env `SNAPSHOT_MAX_FAIL_PCT`) failed.
+3. The workflow pushes the files to the orphan branch `snapshots`. Main never gets snapshot commits.
+4. The API reads `index.json` and the ticker files from `INDIAFACTS_SNAPSHOT_BASE`, cached in memory for 1 h. In `POST /api/analyze`, a snapshot that is `ok` and at most 4 calendar days old is returned as an already-completed job, so the web app and the MCP connector keep their start-then-poll flow. The response and the job carry `served_from: "snapshot"`; the summary carries `served_from` and `snapshot_as_of`. Otherwise (no snapshot, stale, or `refresh=true` as query or body field) the analysis runs live and is labelled `served_from: "live"`.
+
+Why a branch, not a Release asset: the branch needs no extra API, `raw.githubusercontent.com` is free and unauthenticated for public repos, and history is a free audit trail. A private repo would need a token; use a Release asset or host elsewhere in that case.
+
+## Environment variables
+
+| Variable | Where | Meaning |
+| --- | --- | --- |
+| `INDIAFACTS_SNAPSHOT_BASE` | Render | `https://raw.githubusercontent.com/<owner>/<repo>/snapshots`. Unset disables snapshots (live only). |
+| `INDIAFACTS_SNAPSHOT_MAX_AGE_DAYS` | Render | Freshness limit in calendar days, default 4 (covers a weekend plus a holiday). |
+| `SNAPSHOT_MAX_FAIL_PCT` | job | Failure share that turns the run red, default 30. |
+| `INDIAFACTS_POOL_SIZE` | job, Render | Comparison pool size; the workflow sets 30. |
+
+## Probe: does Yahoo work from GitHub's runners?
+
+```
+gh workflow run snapshots.yml -f probe=true
+gh run watch
+```
+
+The log ends with `PROBE VERDICT: Yahoo WORKS ...` or `... does NOT work ...`. Locally: `python -m indiafacts.snapshots --probe`. Run the first full job with `gh workflow run snapshots.yml` (optionally `-f tickers=TCS.NS,INFY.NS`).
+
+## Staleness trade-off
+
+Fundamentals change about quarterly, so a snapshot is fine for them. Price-linked figures (price, P/E, P/B, levels, flows) can be up to a day old on a normal weekday, longer over a weekend; the `snapshot_as_of` date says exactly when, and the UI should show it next to "Refresh now". A snapshot ignores the user's profile fields (horizon, risk), so profile-specific wording is the generic one; "Refresh now" runs live with the profile.
+
+## Operations
+
+- Busy server: `INDIAFACTS_MAX_RUNNING=1` answers a second live analysis with 429 and the message "The server is busy with another analysis; try again in a minute." Snapshot hits never count toward that limit.
+- Keep-warm: Render's free tier sleeps after about 15 minutes idle. Point any external pinger (for example UptimeRobot or cron-job.org, every 10 minutes) at `GET /api/health`. Nothing in this repo pings it.

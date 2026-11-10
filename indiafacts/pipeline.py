@@ -142,6 +142,9 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
     base_facts = facts + extra + price_facts
     base_facts += _fundamental_facts(fs, base_facts, client, notices)
     base_facts += _ownership_facts(fs, shareholding_paths or [], shareholding_feed, notices)
+    from indiafacts.selfvalue import self_valuation_facts
+
+    base_facts += self_valuation_facts(base_facts)
     val_facts = valuation_facts(fs.model_copy(update={"facts": base_facts}), today=as_of or fs.retrieved_at.date(), now=fs.retrieved_at)
     return fs.model_copy(update={"facts": base_facts + val_facts, "not_yet_public": pending,
                                  "notices": notices, "price_notes": price_notes,

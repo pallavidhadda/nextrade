@@ -1,5 +1,0 @@
-streamlit>=1.40
-pandas>=2.2
-pydantic>=2.7
-yfinance>=0.2.40
-pyarrow>=15

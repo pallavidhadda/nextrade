@@ -146,7 +146,9 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
 
     scenario = build_scenario(fs, debate, levels, panel, today=args.as_of)
     prose = case_prose(debate, scorecard)
-    if not args.no_remember and debate.stance.label != "No rating":
+    from indiafacts.debate import has_direction
+
+    if not args.no_remember and has_direction(debate.stance.label):
         try:
             from indiafacts.journal import Journal
 
@@ -186,10 +188,13 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
         import json as _json
 
         from indiafacts.digest import build_digest as _build_digest
+        from indiafacts.stamp import report_stamp
         from indiafacts.summary import summarize_run
 
         args.json.parent.mkdir(parents=True, exist_ok=True)
-        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes, digest or _build_digest(fs, scorecard, profile, news=news, debate=debate, levels=levels, panel=panel), news=news, debate=debate, levels=levels, panel=panel, flows=flows, scenario=scenario, prose=prose), default=str), encoding="utf-8")
+        args.json.write_text(_json.dumps(summarize_run(fs, scorecard, explanation, profile, changes, digest or _build_digest(fs, scorecard, profile, news=news, debate=debate, levels=levels, panel=panel), news=news, debate=debate, levels=levels, panel=panel, flows=flows, scenario=scenario, prose=prose, as_of=args.as_of, news_fetched=args.news,
+                                                    stamp=report_stamp(fs.entity.ticker, args.as_of or fs.retrieved_at.date(),
+                                                                       (scorecard or {}).get("members") or [], getattr(llm_client, "model", None))), default=str), encoding="utf-8")
     if args.html:
         from indiafacts.htmlreport import build_html
 
@@ -294,7 +299,7 @@ def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -
     return {"peers": group, "peer_comparisons": comparisons,
             "result": results.get(target), "n": len(universe), "failed": failed, "pool": label,
             "checklist": checklist(fs), "checklist_summary": summarize(checklist(fs)), "target_fs": tgt,
-            "config_overdue": cfg.overdue, "default_pool": args.universe is None, "pool_label": label}
+            "members": sorted(universe), "config_overdue": cfg.overdue, "default_pool": args.universe is None, "pool_label": label}
 
 
 def _filing_paths(args) -> list[Path] | None:

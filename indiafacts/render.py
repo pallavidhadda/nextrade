@@ -110,7 +110,142 @@ def _profile_block(profile, is_default: bool, view: str) -> list[str]:
     return lines
 
 
-def _scorecard_block(sc: dict) -> list[str]:
+# ---------------------------------------------------------------------------------------------------------------------------
+# Shared "how sure is this report" view. Works on the same dict shape as the JSON summary so the text, HTML and web
+# renderers print identical wording. Education only; no buy/sell/target words.
+# ---------------------------------------------------------------------------------------------------------------------------
+SMALL_POOL = 12
+FACTOR_NAMES = {"value": "Value", "quality": "Quality", "growth": "Growth", "momentum": "Momentum", "risk": "Risk"}
+
+
+def _inr0(v: float) -> str:
+    return f"₹{v:,.0f}" if abs(v) >= 10 else f"₹{v:,.2f}"
+
+
+def _join_and(items: list[str]) -> str:
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+
+def level_formula(price: float, last: float | None, stop: float | None, targets: list[tuple[float, float]], notes: list[str] | None = None,
+                  mult: float = 3.0) -> str:
+    """Inline arithmetic for a reference level, or '' when it is not one of the computed ones."""
+    if last is None or stop is None or stop >= last:
+        return ""
+    held = any("held at the 52-week low" in n for n in (notes or []))
+    if abs(price - stop) < 0.005:
+        if held:
+            return f"{_inr0(stop)} = the 52-week low (the volatility-based stop would sit below it)"
+        move = (last - stop) / mult
+        return f"{_inr0(stop)} = last close {_inr0(last)} − {mult:g} × average daily move {_inr0(move)}"
+    for r, t in targets:
+        if abs(price - t) < 0.005:
+            return f"{_inr0(t)} = last close {_inr0(last)} + {r:g} × the stop distance {_inr0(last - stop)}"
+    return ""
+
+
+def exec_input(fs: FactSet, as_of: date | None, scorecard: dict | None, debate, explanation, scenario, levels, stamp: dict | None = None) -> dict:
+    """The parts of the JSON summary the executive block needs, built from the Python objects."""
+    from indiafacts.completeness import completeness
+    from indiafacts.stamp import report_stamp
+
+    when = as_of or fs.retrieved_at.date()
+    score = None
+    r = (scorecard or {}).get("result")
+    if r is not None:
+        score = {"status": r.status, "overall": r.overall, "rank": r.rank, "n": scorecard.get("n"), "reason": r.reason,
+                 "factors": {k: {"score": v.score, "coverage": v.coverage, "reason": v.reason} for k, v in r.factors.items()},
+                 "contributions": {k: c.model_dump() for k, c in r.contributions.items()},
+                 "missing_factors": [m.model_dump() for m in r.missing_factors], "pool_failed": len((scorecard or {}).get("failed") or {})}
+    deb = None if debate is None else {"stance": {"label": debate.stance.label, "confidence": debate.stance.confidence,
+                                                    "reason": debate.stance.reason, "partial": debate.stance.partial}}
+    lev = None if levels is None else {"applies": levels.applies, "last_close": levels.last_close, "stop": levels.stop,
+                                       "targets": [{"r": a, "price": b} for a, b in zip(levels.reward_risk, levels.targets)], "notes": levels.notes}
+    ex = None if explanation is None else {"triggers": [{"text": t.text} for t in explanation.triggers]}
+    st = stamp or report_stamp(fs.entity.ticker, when, (scorecard or {}).get("members") or [])
+    return {"completeness": completeness(fs, when), "score": score, "debate": deb, "levels": lev, "explanation": ex, "stamp": st,
+            "scenario_reason": getattr(scenario, "reason", "") if scenario is not None else ""}
+
+
+def exec_view(s: dict) -> dict:
+    """Plain-English executive block, completeness badge, score decomposition, rank caveat and stamp line from a summary-shaped dict."""
+    from indiafacts.debate import has_direction
+
+    out: dict = {}
+    st = ((s.get("debate") or {}).get("stance")) or None
+    label = st["label"] if st else "No rating"
+    directional = has_direction(label)
+    out["label"], out["directional"] = label, directional
+    if directional:
+        out["meaning"] = f"{label} (confidence {st['confidence']}). {st['reason'].rstrip('.')}. A rule-based reading of the evidence, not advice."
+    else:
+        why = st["reason"].rstrip(".") if st else "no score could be computed"
+        out["meaning"] = f"Partial research snapshot — no rating: {why}."
+    comp = s.get("completeness") or {}
+    pills = [(v["label"], v["coverage_pct"]) for v in (comp.get("pillars") or {}).values() if v.get("coverage_pct") is not None]
+    pills_sorted = sorted(pills, key=lambda x: x[1])
+    out["missing"] = [f"{n}: {p:.0f}% covered" for n, p in pills_sorted[:3]]
+    out["monitor"] = [t["text"] for t in ((s.get("explanation") or {}).get("triggers") or [])[:3]]
+    level = comp.get("level")
+    conflicts = []
+    for c in comp.get("conflicts") or []:
+        ch, alt = c["chosen"], c.get("alternative")
+        txt = f"{c['metric']} ({c['period']}): used {ch['value']} from {ch['source']}"
+        txt += (f"; other source {alt['source']} says {alt['value']}" if alt else "; no second value to compare")
+        conflicts.append(txt + f". {c['reason']}" if c.get("reason") else txt)
+    out["comp"] = {"level": level, "tone": {"High": "good", "Medium": "warn", "Low": "bad", "Insufficient": "bad"}.get(level, "warn"),
+                   "reason": comp.get("reason", ""), "overall": comp.get("overall_coverage_pct"), "pillars": pills,
+                   "stale": comp.get("stale_total", 0), "conflicts": conflicts} if level else None
+    sc = s.get("score") or {}
+    rows, sentence = [], ""
+    for k, c in (sc.get("contributions") or {}).items():
+        rows.append([FACTOR_NAMES.get(k, k.capitalize()), c["score"], c["base_weight"], c["effective_weight"], c["contribution"]])
+    miss = sc.get("missing_factors") or []
+    if miss:
+        names = [f"{FACTOR_NAMES.get(m['factor'], m['factor'].capitalize())} ({m['base_weight']:.0%})" for m in miss]
+        sentence = f"{_join_and(names)} could not be scored: {'its' if len(miss) == 1 else 'their'} weight moved to the remaining factors."
+    out["decomp"] = {"rows": rows, "total": sum(r[4] for r in rows), "overall": sc.get("overall"), "sentence": sentence} if rows else None
+    n, failed = sc.get("n"), sc.get("pool_failed") or 0
+    notes = []
+    if sc.get("rank") and n and n < SMALL_POOL:
+        notes.append(f"rank {sc['rank']} of {n} in a comparison set of {n} (small: rank is unstable)")
+    if failed:
+        notes.append(f"{failed} of {(n or 0) + failed} comparison companies could not be loaded")
+    out["rank_notes"] = notes
+    sp = s.get("stamp")
+    if sp:
+        line = f"Report {sp['report_id']} · data as of {sp['as_of']} · rules {sp['params_hash']} · build {sp['commit']}"
+        out["stamp_line"] = line + (f" · model {sp['llm_model']}" if sp.get("llm_model") else "")
+    else:
+        out["stamp_line"] = ""
+    out["scenario_reason"] = s.get("scenario_reason") or ("no scenario plan: the evidence is not enough for a rating" if not directional else "")
+    return out
+
+
+def exec_lines(x: dict) -> list[str]:
+    lines = ["", "WHAT THIS MEANS", "  " + x["meaning"]]
+    lines += ["WHAT IS MISSING"] + (["  " + m for m in x["missing"]] or ["  nothing flagged"])
+    lines += ["WHAT TO MONITOR"] + (["  " + m for m in x["monitor"]] or ["  nothing specific flagged"])
+    c = x["comp"]
+    if c:
+        lines += ["", f"DATA COMPLETENESS: {c['level']} ({c['reason']})"]
+        lines.append(f"  overall coverage {c['overall']:.0f}% | " + " | ".join(f"{n} {p:.0f}%" for n, p in c["pillars"]) + f" | stale figures: {c['stale']}")
+        lines += [f"  conflict: {t}" for t in c["conflicts"]]
+    return lines
+
+
+def decomp_lines(x: dict) -> list[str]:
+    d = x["decomp"]
+    if not d:
+        return []
+    out = ["  score breakdown (factor | score | base weight | effective weight | contribution)"]
+    out += [f"    {n} | {sc:.1f} | {b:.0%} | {e:.0%} | {co:.1f}" for n, sc, b, e, co in d["rows"]]
+    out.append(f"    sum of contributions {d['total']:.1f}" + (f" = overall {d['overall']:.1f}" if d["overall"] is not None else ""))
+    if d["sentence"]:
+        out.append("  " + d["sentence"])
+    return out
+
+
+def _scorecard_block(sc: dict, x: dict | None = None) -> list[str]:
     r = sc["result"]
     pool = ("built-in pool of 30 large NSE names (not an index)" if sc.get("default_pool")
             else (sc["pool"] if str(sc["pool"]).startswith(("TejHQ", "NSE industry group")) else f"pool file {sc['pool']}"))
@@ -122,10 +257,12 @@ def _scorecard_block(sc: dict) -> list[str]:
         lines.append(f"abstain: {r.reason}")
     else:
         lines.append(f"overall {r.overall:.1f}/100 | rank {r.rank} of {sc['n']} | config {r.config_hash}")
+        lines += [f"  note: {n}" for n in (x or {}).get("rank_notes", [])]
     if r is not None:
         for fac, fs_ in sorted(r.factors.items()):
             val = f"{fs_.score:.1f}" if fs_.score is not None else f"unav ({fs_.reason})"
             lines.append(f"  {fac}: {val} (coverage {fs_.coverage:.0%})")
+        lines += decomp_lines(x) if x else []
         lines += [f"  flag: {f}" for f in r.flags]
     if sc.get("config_overdue"):
         lines.append("  warning: score metric config review overdue; treat bounds as stale")
@@ -246,20 +383,27 @@ def _debate_block(d) -> list[str]:
     out = ["", "BULL CASE VERSUS BEAR CASE (educational; rule-based from the evidence above)"]
     out += ["bull:"] + ([f"  + {p.text}" for p in d.bull] or ["  (none found)"])
     out += ["bear:"] + ([f"  - {p.text}" for p in d.bear] or ["  (none found)"])
-    out.append(f"EDUCATIONAL RATING: {d.stance.label} (confidence {d.stance.confidence}). {d.stance.reason}.")
+    if d.stance.partial or d.stance.label in ("Insufficient evidence", "No rating"):
+        out.append(f"EDUCATIONAL RATING: {d.stance.label} (partial research snapshot; no rating is given). {d.stance.reason}.")
+    else:
+        out.append(f"EDUCATIONAL RATING: {d.stance.label} (confidence {d.stance.confidence}). {d.stance.reason}.")
     return out
 
 
-def _levels_block(lv, panel) -> list[str]:
-    out = ["", "REFERENCE LEVELS AND RISK LENSES (arithmetic on past closes; not predictions, not price targets, not personal advice)"]
+def _levels_block(lv, panel, scenario=None, directional: bool = True) -> list[str]:
+    out = ["", "REFERENCE LEVELS (NOT TARGETS) AND RISK LENSES (arithmetic on past closes; not predictions, not price targets, not personal advice)"]
+    if not directional:
+        return out + [f"not shown: {getattr(scenario, 'reason', '') or 'the evidence is not enough for a rating'}"]
     if lv.last_close is None:
         return out + [f"unavailable: {lv.reason}"]
     inr = lambda v: f"₹{v:,.2f}"
     out.append(f"last close {inr(lv.last_close)}")
     out += [f"support: {n} {inr(v)}" for n, v in lv.support] + [f"resistance: {n} {inr(v)}" for n, v in lv.resistance]
     if lv.applies:
-        out.append(f"reference stop {inr(lv.stop)} ({lv.risk_pct:.1f}% below the last close)")
-        out += [f"reward-to-risk {r:g}R: {inr(t)}" for r, t in zip(lv.reward_risk, lv.targets)]
+        tg = list(zip(lv.reward_risk, lv.targets))
+        out.append(f"reference stop {inr(lv.stop)} ({lv.risk_pct:.1f}% below the last close): "
+                   + (level_formula(lv.stop, lv.last_close, lv.stop, tg, lv.notes) or ""))
+        out += [f"reference level at {r:g}x the risk {inr(t)}: {level_formula(t, lv.last_close, lv.stop, tg, lv.notes)}" for r, t in tg]
         out += [f"note: {n}" for n in lv.notes]
     else:
         out.append(f"stop and reward-to-risk levels: not shown ({lv.reason})")
@@ -318,7 +462,7 @@ def _valuation_block(facts: Sequence[Fact], refs: _Refs) -> list[str]:
 
 def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is_default: bool = False,
            view: str = "pro", scorecard: dict | None = None, explanation=None, digest=None, changes=None, changes_note=None,
-           debate=None, news=None, levels=None, panel=None, flows=None, scenario=None, prose=None) -> str:
+           debate=None, news=None, levels=None, panel=None, flows=None, scenario=None, prose=None, stamp=None) -> str:
     e = factset.entity
     when = as_of or factset.retrieved_at.date()
     head = f"{e.ticker}  |  as of {when}  |  amounts in INR (₹ crore = 10^7)"
@@ -331,21 +475,26 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
     if e.isin.value:
         head += f"  |  ISIN {e.isin.value}"
 
+    from indiafacts.debate import has_direction
+
+    x = exec_view(exec_input(factset, as_of, scorecard, debate, explanation, scenario, levels, stamp))
+    directional = debate is None or has_direction(debate.stance.label)
     bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified) and f.reason != LENDER_REASON]
     refs = _Refs()
-    parts = [head, *notes, *(_profile_block(profile, profile_is_default, view) if profile else []),
+    parts = [head, *notes, *exec_lines(x), *(_profile_block(profile, profile_is_default, view) if profile else []),
              *_filings_block(factset.filings),
              *_changes_block(changes, changes_note),
              *(_explanation_block(explanation, digest) if explanation is not None else []),
-             *(_scorecard_block(scorecard) if scorecard else []),
+             *(_scorecard_block(scorecard, x) if scorecard else []),
              *(_peers_block(scorecard, e.ticker) if scorecard else []),
              *fundamentals_lines(factset),
              *ownership_lines(factset),
              *flows_lines(flows),
              *(_debate_block(debate) if debate is not None else []),
              *(_prose_lines(prose) if prose is not None else []),
-             *(scenario_lines(scenario) if scenario is not None else []),
-             *(_levels_block(levels, panel) if levels is not None else []),
+             *(scenario_lines(scenario, levels) if scenario is not None else []),
+             *([f"SCENARIO PLAN: not shown: {x['scenario_reason']}"] if not directional else []),
+             *(_levels_block(levels, panel, scenario, directional) if levels is not None else []),
              *(_news_block(news) if news else []),
              "", f"DATA QUALITY: {len(bad)} item(s) need attention (gaps, unavailable, conflicts, unverified)"]
 
@@ -403,4 +552,6 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
     if refs.index():
         parts += ["", "SOURCES", refs.index()]
     parts += ["", DISCLAIMER]
+    if x["stamp_line"]:
+        parts.append(x["stamp_line"])
     return "\n".join(parts)

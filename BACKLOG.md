@@ -179,3 +179,6 @@ Live run 1 (TCS.NS, Render): reached 6/7 comparison companies (so INDIAFACTS_POO
 ## XBRL instance parser (done 2026-11-02)
 `indiafacts/xbrl.py`: `--filing FILE.xml` and `--filings-dir` accept raw NSE XBRL. Quarter (OneD) and balance sheet (OneI) facts are ok; year-to-date (FourD) P&L, cash flow and EPS are `unverified` until a results page confirms the year meaning. Adds operating_cash_flow, capex_ppe, investing/financing cash flow, total_assets, total_liabilities, total_equity, equity_owners, cash_and_equivalents. Real check: Reliance consolidated FY24 EPS 102.90, total assets 17.56 lakh cr. Next: confirm FourD against the FY2023-24 results page, then use free cash flow in the valuation; extend to the newer integrated-filing taxonomy once a FY2025-26 file is available (taxonomy prefix may differ).
 Live connector status 2026-11-02: three jobs (TCS, TCS, INFY) all became "unknown or expired" before finishing: server restarts continue.
+
+## Daily snapshots (added 2026-11-10)
+See docs/SNAPSHOTS.md: GitHub Actions precomputes Nifty 50 analyses to the `snapshots` branch; the API serves them (served_from/snapshot_as_of) with live as fallback. Next: run the probe workflow, set INDIAFACTS_SNAPSHOT_BASE on Render, show "as of" and a Refresh now button in the web app.

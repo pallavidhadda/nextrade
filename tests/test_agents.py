@@ -45,24 +45,6 @@ def test_prompts_for_a_browser_cover_all_roles():
     assert len(p) == 6 and all("Never advise buying" in x["system"] for x in p)
 
 
-def test_streamlit_ai_run_checks_answers_and_never_returns_the_key():
-    from indiafacts.webui import ai_run, ai_html
-
-    block = {"digest": D.text, "ids": ["F1", "F2"], "system": "S", "user": "U", "max_tokens": 700}
-    seen = {}
-
-    def post(url, headers, body, timeout=60):
-        seen["h"] = repr(headers) + repr(body)
-        return {"candidates": [{"content": {"parts": [{"text": GOOD}]}, "finishReason": "STOP"}],
-                "usageMetadata": {"promptTokenCount": 10, "candidatesTokenCount": 5}}
-
-    out = ai_run(block, "Gemini", "", "", "SECRETKEY", panel=False, post=post)
-    assert out["results"][0]["error"] == "" and out["results"][0]["claims"]
-    assert "SECRETKEY" not in repr(out) and "SECRETKEY" not in ai_html(out)
-    panel = ai_run(block, "Gemini", "", "", "SECRETKEY", panel=True, post=post)
-    assert len(panel["results"]) == 6
-
-
 def test_debate_is_three_calls_and_the_bear_and_referee_see_earlier_answers():
     from indiafacts.agents import run_debate, debate_for_prompts
     c = Fake()

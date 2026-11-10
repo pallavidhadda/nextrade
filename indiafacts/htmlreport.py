@@ -50,11 +50,11 @@ def _fmt_pct(v: float, signed: bool = True) -> str:
 
 CSS = """
 :root{color-scheme:light;--surface:#fcfbf7;--page:#f6f4ee;--ink:#10201a;--ink2:#46524b;--muted:#6f786f;--grid:#e0ddd2;
---axis:#c3c2b7;--s1:#1f6f4a;--s2:#e0662f;--good:#1d6b3a;--bad:#c4452a;--hair:rgba(16,32,26,.12)}
+--axis:#c3c2b7;--s1:#1f6f4a;--s2:#e0662f;--good:#1d6b3a;--bad:#c4452a;--warn:#9a6700;--hair:rgba(16,32,26,.12)}
 @media (prefers-color-scheme: dark){:root:where(:not([data-theme="light"])){color-scheme:dark;--surface:#1a1a19;--page:#0d0d0d;
---ink:#f0efec;--ink2:#c3c2b7;--grid:#2c2c2a;--axis:#383835;--s1:#3987e5;--s2:#d95926;--good:#0ca30c;--hair:rgba(255,255,255,.10)}}
+--ink:#f0efec;--ink2:#c3c2b7;--grid:#2c2c2a;--axis:#383835;--s1:#3987e5;--s2:#d95926;--good:#0ca30c;--warn:#d4a72c;--hair:rgba(255,255,255,.10)}}
 :root[data-theme="dark"]{color-scheme:dark;--surface:#1a1a19;--page:#0d0d0d;--ink:#f0efec;--ink2:#c3c2b7;--grid:#2c2c2a;
---axis:#383835;--s1:#3987e5;--s2:#d95926;--good:#0ca30c;--hair:rgba(255,255,255,.10)}
+--axis:#383835;--s1:#3987e5;--s2:#d95926;--good:#0ca30c;--warn:#d4a72c;--hair:rgba(255,255,255,.10)}
 *{box-sizing:border-box}html,body{margin:0}
 body{background:var(--page);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:1100px;margin:0 auto;padding:16px}
@@ -100,6 +100,11 @@ display:none;max-width:280px;z-index:9;line-height:1.35}
 .badge{display:inline-block;font-size:11px;border:1px solid var(--hair);border-radius:6px;padding:0 6px;margin-right:6px;color:var(--ink2)}
 .chip{display:inline-block;font-size:11px;color:var(--ink2);border:1px solid var(--hair);border-radius:6px;padding:0 5px;margin-left:4px;cursor:default}
 ul.claims{padding-left:0;list-style:none;margin:6px 0}ul.claims li{padding:5px 0;border-top:1px solid var(--grid)}ul.claims li:first-child{border-top:0}
+.exec{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:12px 0}
+.exec h3{font-size:14px;margin:0 0 4px}.exec ul{margin:4px 0;padding-left:18px}
+.light{display:inline-block;font-weight:600;border:1px solid currentColor;border-radius:999px;padding:1px 10px;font-size:13px}
+.light.good{color:var(--good)}.light.warn{color:var(--warn)}.light.bad{color:var(--bad)}
+.stance-neutral{display:inline-block;font-weight:600;border:1px solid var(--axis);border-radius:6px;padding:1px 8px;color:var(--ink2)}
 .empty{color:var(--ink2);font-size:14px;padding:18px 0}
 footer{margin:18px 0 8px;font-size:12px;color:var(--muted)}
 @media print{#theme-toggle{display:none}}
@@ -436,12 +441,17 @@ def _flows_card(flows) -> str:
     return _card("flows", f"Market flows (as of {flows['as_of']})", flows["note"] or (cash or {}).get("note", ""), inner)
 
 
-def _scenario_card(sc, prose) -> str:
+def _scenario_card(sc, prose, levels=None, reason: str = "") -> str:
     inner = ""
     if prose is not None and prose.favour:
         inner += f'<p>{esc(prose.favour)}</p><p>{esc(prose.against)}</p><p><strong>{esc(prose.weighing)}</strong></p>'
     if sc is not None and sc.applies:
-        lv = "".join(f'<li class="check na"><span class="icon" aria-hidden="true">·</span><span>{esc(l)}<br><small>{esc(m)}</small></span><span class="val">₹{v:,.2f}</span></li>' for l, v, m in sc.levels)
+        from indiafacts.render import level_formula
+
+        tg = list(zip(levels.reward_risk, levels.targets)) if levels is not None else []
+        fm = lambda v: (level_formula(v, levels.last_close, levels.stop, tg, levels.notes) if levels is not None else "")
+        lv = "".join(f'<li class="check na"><span class="icon" aria-hidden="true">·</span><span>{esc(l)}<br><small>{esc(m)}</small>'
+                     + (f'<br><small>{esc(fm(v))}</small>' if fm(v) else "") + f'</span><span class="val">₹{v:,.2f}</span></li>' for l, v, m in sc.levels)
         st = "".join(f'<li class="check na"><span class="icon" aria-hidden="true">·</span><span>{esc(l)}<br><small>{esc(c)}</small></span><span class="val">{"depends on your ceiling" if p is None else f"up to {p:.1f}% of a portfolio"}</span></li>' for l, p, c in sc.stages)
         more = ""
         if sc.more_positive_if:
@@ -449,8 +459,10 @@ def _scenario_card(sc, prose) -> str:
         if sc.more_cautious_if:
             more += "<h3>Would turn more cautious if these fade</h3><ul>" + "".join(f"<li>{esc(x)}</li>" for x in sc.more_cautious_if) + "</ul>"
         watch = "<h3>Dates and things to watch</h3><ul>" + "".join(f"<li>{esc(w)}</li>" for w in sc.watch) + "</ul>"
-        inner += f'<h3>{esc(sc.headline)}</h3><p>{esc(sc.summary)}</p><h3>Levels</h3><ul class="checks">{lv}</ul><h3>Staged exposure</h3><ul class="checks">{st}</ul>{more}{watch}'
+        inner += f'<h3>{esc(sc.headline)}</h3><p>{esc(sc.summary)}</p><h3>Reference levels (not targets)</h3><ul class="checks">{lv}</ul><h3>Staged exposure</h3><ul class="checks">{st}</ul>{more}{watch}'
         inner += "".join(f'<p class="sub">{esc(n)}</p>' for n in sc.notes)
+    if sc is not None and not sc.applies and reason:
+        inner += f'<p class="sub">Not shown: {esc(reason)}.</p>'
     if not inner:
         return ""
     return _card("scenario", "Scenario plan", "Educational arithmetic on measured prices and stated risk limits. Not a forecast, not a price target, not advice.", inner)
@@ -513,6 +525,37 @@ def _segment_cards(facts: list[Fact], ctx: _Ctx) -> str:
 
 
 # ------------------------------------------------------------------- the page
+def _exec_cards(x: dict) -> str:
+    li = lambda items, empty: "<ul>" + ("".join(f"<li>{esc(i)}</li>" for i in items) or f"<li>{esc(empty)}</li>") + "</ul>"
+    block = (f'<div class="exec"><section class="card" id="what-it-means"><h3>What this means</h3>'
+             f'<p><span class="stance-neutral">{esc(x["label"])}</span></p><p>{esc(x["meaning"])}</p></section>'
+             f'<section class="card" id="what-is-missing"><h3>What is missing</h3>{li(x["missing"], "nothing flagged")}</section>'
+             f'<section class="card" id="what-to-monitor"><h3>What to monitor</h3>{li(x["monitor"], "nothing specific flagged")}</section></div>')
+    c = x["comp"]
+    if c:
+        pills = "".join(f"<li>{esc(n)}: {p:.0f}%</li>" for n, p in c["pillars"])
+        conf = ("<h3>Conflicting figures</h3><ul>" + "".join(f"<li>{esc(t)}</li>" for t in c["conflicts"]) + "</ul>") if c["conflicts"] else ""
+        mark = {"good": "✓", "warn": "!", "bad": "✕"}[c["tone"]]
+        block += (f'<section class="card" id="completeness"><h3>Data completeness</h3>'
+                  f'<p><span class="light {c["tone"]}"><span aria-hidden="true">{mark}</span> {esc(c["level"])}</span> '
+                  f'overall coverage {c["overall"]:.0f}% · stale figures: {c["stale"]}</p><p class="sub">{esc(c["reason"])}</p>'
+                  f'<ul style="columns:2">{pills}</ul>{conf}</section>')
+    return block
+
+
+def _decomp_card(x: dict) -> str:
+    d = x["decomp"]
+    if not d:
+        return ""
+    rows = [[n, f"{sc:.1f}", f"{b:.0%}", f"{e:.0%}", f"{co:.1f}"] for n, sc, b, e, co in d["rows"]]
+    rows.append(["Sum of contributions", "", "", "", f"{d['total']:.1f}" + (f" = overall {d['overall']:.1f}" if d["overall"] is not None else "")])
+    body = _table(["Factor", "Score", "Base weight", "Effective weight", "Contribution"], rows, num=(1, 2, 3, 4))
+    if d["sentence"]:
+        body += f'<p class="sub">{esc(d["sentence"])}</p>'
+    body += "".join(f'<p class="sub">{esc(n)}</p>' for n in x["rank_notes"])
+    return _card("score-breakdown", "How the overall score is built", "Contributions add up to the overall score.", body)
+
+
 def _tile(label: str, value: str, note: str) -> str:
     return f'<div class="tile"><div class="label">{esc(label)}</div><div class="value">{esc(value)}</div><div class="note">{esc(note)}</div></div>'
 
@@ -555,22 +598,31 @@ def _explanation_card(ex, digest) -> str:
                  body, twin)
 
 
-def _extra_cards(debate, news, levels, panel) -> str:
+def _extra_cards(debate, news, levels, panel, scenario=None) -> str:
     out = ""
     if debate is not None:
         def lst(pts):
             return "<ul>" + ("".join(f"<li>{esc(p.text)} <span class='sub'>[{esc(p.key)}]</span></li>" for p in pts) or "<li>None found.</li>") + "</ul>"
         st = debate.stance
         body = (f"<div class='grid two'><div><h3>Bull case</h3>{lst(debate.bull)}</div><div><h3>Bear case</h3>{lst(debate.bear)}</div></div>"
-                f"<p><b>Educational rating: {esc(st.label)}</b> (confidence {esc(st.confidence)}). {esc(st.reason)}.</p>"
-                "<p class='sub'>A transparent rule on the evidence on this page; it ignores your own situation and is not a prediction or a personal recommendation.</p>")
+                + (f"<p><b>Educational rating: {esc(st.label)}</b> (partial research snapshot; no rating is given). {esc(st.reason)}.</p>" if st.partial or st.label in ("Insufficient evidence", "No rating") else f"<p><b>Educational rating: {esc(st.label)}</b> (confidence {esc(st.confidence)}). {esc(st.reason)}.</p>")
+                + "<p class='sub'>A transparent rule on the evidence on this page; it ignores your own situation and is not a prediction or a personal recommendation.</p>")
         out += _card("debate", "Bull case versus bear case", "Educational, rule-based.", body)
-    if levels is not None and levels.last_close is not None:
+    from indiafacts.debate import has_direction
+
+    if levels is not None and debate is not None and not has_direction(debate.stance.label):
+        out += _card("levels", "Reference levels (not targets)", "Volatility-based.",
+                     f"<p class='sub'>Not shown: {esc(getattr(scenario, 'reason', '') or 'the evidence is not enough for a rating')}.</p>")
+    elif levels is not None and levels.last_close is not None:
+        from indiafacts.render import level_formula
+
+        tg = list(zip(levels.reward_risk, levels.targets))
         inr = lambda v: f"₹{v:,.2f}"
         rows = [["Last close", inr(levels.last_close)]] + [[f"Support: {n}", inr(v)] for n, v in levels.support] + \
                [[f"Resistance: {n}", inr(v)] for n, v in levels.resistance]
         if levels.applies:
-            rows += [[f"Reference stop ({levels.risk_pct:.1f}% below)", inr(levels.stop)]] + [[f"Reward-to-risk {r:g}R", inr(t)] for r, t in zip(levels.reward_risk, levels.targets)]
+            rows += [[f"Reference stop ({levels.risk_pct:.1f}% below): {level_formula(levels.stop, levels.last_close, levels.stop, tg, levels.notes)}", inr(levels.stop)]] + \
+                    [[f"Reference level at {r:g}x the risk: {level_formula(t, levels.last_close, levels.stop, tg, levels.notes)}", inr(t)] for r, t in tg]
         body = _table(["Level", "Price"], rows, num=(1,))
         if not levels.applies:
             body += f"<p class='sub'>Stop and reward-to-risk levels not shown: {esc(levels.reason)}.</p>"
@@ -581,7 +633,7 @@ def _extra_cards(debate, news, levels, panel) -> str:
                      "n/a" if l.max_position_pct is None else f"{l.max_position_pct:.1f}%"] for l in panel.lenses]
             body += "<h3>Risk lenses</h3>" + _table(["Lens", "Fit", "Why", "Position ceiling"], lens, num=(3,))
         body += "<p class='sub'>Arithmetic on past closes: not predictions, not price targets, not personal advice.</p>"
-        out += _card("levels", "Reference levels and risk lenses", "Volatility-based.", body)
+        out += _card("levels", "Reference levels (not targets) and risk lenses", "Volatility-based.", body)
     if news:
         rows = [[(n.published.date().isoformat() if n.published else "undated"), n.publisher, n.title, n.sentiment_hint] for n in news]
         out += _card("news", "Recent headlines", "Unverified third-party titles; keyword hint only.",
@@ -591,7 +643,10 @@ def _extra_cards(debate, news, levels, panel) -> str:
 
 def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view: str = "pro", scorecard: dict | None = None,
                as_of: date | None = None, now: datetime | None = None, explanation=None, digest=None, changes=None,
-               debate=None, news=None, levels=None, panel=None, flows=None, scenario=None, prose=None) -> str:
+               debate=None, news=None, levels=None, panel=None, flows=None, scenario=None, prose=None, stamp=None) -> str:
+    from indiafacts.render import exec_input, exec_view
+
+    x = exec_view(exec_input(fs, as_of, scorecard, debate, explanation, scenario, levels, stamp))
     e = fs.entity
     now = now or datetime.now()
     ctx = _Ctx()
@@ -602,7 +657,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
 
     tiles = ""
     if r is not None and r.status == "ok":
-        tiles += _tile("Overall score in the pool", f"{r.overall:.0f}/100", f"rank {r.rank} of {scorecard['n']}")
+        tiles += _tile("Overall score in the pool", f"{r.overall:.0f}/100", f"rank {r.rank} of {scorecard['n']}" + (" (small set: unstable)" if scorecard["n"] < 12 else ""))
     if scorecard:
         tiles += _tile("Nine-point checklist", scorecard["checklist_summary"].split(" passed")[0] + " passed", "pass/fail tests")
     r1, rel = by.get("return_1y"), by.get("relative_return_1y")
@@ -617,7 +672,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
     charts = _price_card(fs.charts, price_facts, e.ticker) + _drawdown_card(fs.charts)
     q = _quarter_card("chart-q-net_income", "Net profit by quarter", "net_income", facts, ctx) + \
         _quarter_card("chart-q-revenue", "Revenue by quarter", "revenue", facts, ctx)
-    sc_block = _score_card(scorecard) + _checklist_card(scorecard) + _scenario_card(scenario, prose) + _health_card(fs) + _ownership_card(fs) + _flows_card(flows)
+    sc_block = _score_card(scorecard) + _decomp_card(x) + _checklist_card(scorecard) + _scenario_card(scenario, prose, levels, x["scenario_reason"] if not x["directional"] else "") + _health_card(fs) + _ownership_card(fs) + _flows_card(flows)
     peers = _peer_card(scorecard, "pe_ttm", e.ticker) + _peer_card(scorecard, "pb", e.ticker) if scorecard else ""
     peer_note = ""
     if scorecard and scorecard.get("peers") and scorecard["peers"].picks:
@@ -626,7 +681,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
             f"{p.ticker} ({'same industry' if p.tier == 1 else 'same sector'}, {p.size_ratio:.2f}x size)" for p in g.picks))
             + (". " + esc("; ".join(g.notes)) if g.notes else "") + "</p>")
     seg = _segment_cards(facts, ctx)
-    extra = _extra_cards(debate, news, levels, panel)
+    extra = _extra_cards(debate, news, levels, panel, scenario)
 
     bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified) and f.reason != LENDER_REASON]
     dq_rows = [[f.metric, f.fiscal_label or f.period_end.isoformat(), f.status.value, f.reason] for f in bad[:60]]
@@ -660,6 +715,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
 <button id="theme-toggle" type="button">Theme: auto</button></div>
 <div class="banner"><b>{esc(DISCLAIMER)}</b></div>
 {prof}{notices}
+{_exec_cards(x)}
 <div class="tiles">{tiles}</div>
 {_changes_card(changes)}
 {_explanation_card(explanation, digest)}
@@ -670,6 +726,6 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
 {peer_note}<div class="grid two">{peers}</div>
 <div class="grid two">{seg}</div>
 <div class="grid">{dq}{sources}</div>
-<footer>{esc(DISCLAIMER)} Price charts use Yahoo Finance data (unofficial) and, where enabled, TejHQ open data; results pages are
+<footer>{esc(x["stamp_line"])}<br>{esc(DISCLAIMER)} Price charts use Yahoo Finance data (unofficial) and, where enabled, TejHQ open data; results pages are
 NSE filings you supplied. No chart implies a forecast.</footer></main>
 <div id="tip" role="status"></div><script>{JS}</script></body></html>"""
