@@ -47,6 +47,9 @@ def _offline_marketlens(monkeypatch):
     monkeypatch.setenv("INDIAFACTS_MARKETLENS", "0")
     monkeypatch.delenv("INDIAFACTS_MARKETLENS_URL", raising=False)
     monkeypatch.delenv("INDIAFACTS_MARKETLENS_CACHE", raising=False)
+    monkeypatch.delenv("INDIAFACTS_SNAPSHOT_BASE", raising=False)      # it would also point at the published comparison files
+    monkeypatch.delenv("INDIAFACTS_POOL_METRICS_URL", raising=False)
+    monkeypatch.delenv("INDIAFACTS_NSE_COPY_BASE", raising=False)      # the snapshot job's setup sets these in os.environ directly
 
 
 @pytest.fixture(autouse=True)

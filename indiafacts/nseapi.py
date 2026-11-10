@@ -28,6 +28,7 @@ from typing import Callable
 from urllib.error import HTTPError
 from urllib.parse import urlencode, urlparse
 from urllib.request import HTTPCookieProcessor, Request, build_opener, urlopen
+from indiafacts import published
 
 BASE = "https://www.nseindia.com/api"
 HOME = "https://www.nseindia.com/"
@@ -58,7 +59,7 @@ def live_enabled() -> bool:
 
 
 def copy_base() -> str:
-    base = os.environ.get("INDIAFACTS_NSE_COPY_BASE", "").strip()
+    base = published.url("INDIAFACTS_NSE_COPY_BASE", "nse/")
     return base if not base or base.endswith("/") else base + "/"
 
 

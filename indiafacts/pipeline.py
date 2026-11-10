@@ -188,10 +188,30 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
             from indiafacts import marketlens
 
             base_facts += marketlens.fallback_facts(fs.entity.ticker, ml_pre[0], now=fs.retrieved_at, origin=ml_pre[1])
+    base_facts = _refresh_market_value(fs, base_facts)
     val_facts = valuation_facts(fs.model_copy(update={"facts": base_facts}), today=as_of or fs.retrieved_at.date(), now=fs.retrieved_at)
     return fs.model_copy(update={"facts": base_facts + val_facts, "not_yet_public": pending,
                                  "notices": notices, "price_notes": price_notes,
                                  "charts": ({"price": charts} if charts else {}), "yahoo_unavailable": yahoo_down})
+
+
+def _refresh_market_value(fs, facts: list) -> list:
+    """EV, EV/EBITDA and FCF yield are computed with the annual figures, before NSE Market Lens adds the market value. When they
+    came out unavailable and a market value now exists, compute them again and replace the unavailable ones. Never raises."""
+    from indiafacts.fundamentals import MARKET_VALUE_METRICS, market_value_facts
+
+    try:
+        missing = {f.metric for f in facts if f.metric in MARKET_VALUE_METRICS and f.status == Status.unavailable}
+        if not missing or not any(f.metric == "market_cap" and f.status == Status.ok and f.value is not None for f in facts):
+            return facts
+        new = [f for f in market_value_facts(fs.model_copy(update={"facts": facts}), now=fs.retrieved_at)
+               if f.metric in missing and f.status == Status.ok]
+        if not new:
+            return facts
+        done = {f.metric for f in new}
+        return [f for f in facts if not (f.metric in done and f.status == Status.unavailable)] + new
+    except Exception:
+        return facts
 
 
 def _tej_action_dates(store, hist, ticker: str, as_of: date | None, enabled: bool, notices: list[str]) -> list[date]:
