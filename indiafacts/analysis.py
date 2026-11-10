@@ -199,7 +199,7 @@ def cross_check(a: Fact, b: Fact, tol: float = 0.05) -> Fact:
     )
 
 
-SOURCE_RANK = ("nse_filing", "nse_xbrl", "nse_shp", "nse_marketlens", "computed:selfvalue", "yahoo")   # official filing, exchange screener, our own arithmetic, then the vendor
+SOURCE_RANK = ("nse_filing", "nse_xbrl", "computed:filing_ebitda", "nse_shp", "nse_marketlens", "computed:selfvalue", "yahoo")   # official filing, exchange screener, our own arithmetic, then the vendor
 
 
 def prefer_sources(facts: list[Fact]) -> list[Fact]:
@@ -221,15 +221,16 @@ def check_ebitda(filing_facts: list[Fact], vendor_facts: list[Fact]) -> tuple[li
     Returns (new computed facts, replacements keyed by fact_id). A vendor series that equals
     PBT + finance costs (EBIT) is demoted to `unverified` for every period.
     """
-    def one(metric: str, end: date) -> Fact | None:
+    def one(metric: str, end: date, basis=None) -> Fact | None:
         hits = [f for f in filing_facts if f.metric == metric and f.period_end == end
-                and f.period_type == PeriodType.Q and f.status == Status.ok]
+                and f.period_type == PeriodType.Q and f.status == Status.ok and (basis is None or f.basis == basis)]
         return hits[0] if hits else None
 
     new: list[Fact] = []
     demote: dict[str, Fact] = {}
     for end in sorted({f.period_end for f in filing_facts if f.period_type == PeriodType.Q}):
-        pbt, interest, dep = one("profit_before_tax", end), one("interest_expense", end), one("depreciation", end)
+        pbt = one("profit_before_tax", end)
+        interest, dep = (one("interest_expense", end, pbt.basis), one("depreciation", end, pbt.basis)) if pbt else (None, None)
         if not (pbt and interest and dep):
             continue
         derived = Fact.make(
@@ -239,6 +240,14 @@ def check_ebitda(filing_facts: list[Fact], vendor_facts: list[Fact]) -> tuple[li
             related_fact_ids=[pbt.fact_id, interest.fact_id, dep.fact_id],
         )
         new.append(derived)
+        if pbt.basis == interest.basis == dep.basis:                  # same filing period and basis: the figure vendors often call EBITDA
+            new.append(Fact.make(
+                entity_key=pbt.entity_key, metric="ebitda", value=derived.value, unit="INR", period_end=end,
+                period_type=PeriodType.Q, fiscal_label=pbt.fiscal_label, basis=pbt.basis, source="computed:filing_ebitda",
+                source_field="profit_before_tax + interest_expense + depreciation", retrieved_at=pbt.retrieved_at,
+                status=Status.ok, available_from=pbt.available_from, availability_kind=pbt.availability_kind,
+                reason="EBITDA = profit before tax + finance costs + depreciation & amortisation, all from the same filing",
+                related_fact_ids=[pbt.fact_id, interest.fact_id, dep.fact_id]))
         vend = [f for f in vendor_facts if f.metric == "ebitda" and f.period_end == end
                 and f.period_type == PeriodType.Q and f.status == Status.ok]
         if not vend:
