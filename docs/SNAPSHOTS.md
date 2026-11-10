@@ -38,6 +38,22 @@ Fundamentals change about quarterly, so a snapshot is fine for them. Price-linke
 - Busy server: `INDIAFACTS_MAX_RUNNING=1` answers a second live analysis with 429 and the message "The server is busy with another analysis; try again in a minute." Snapshot hits never count toward that limit.
 - Keep-warm: Render's free tier sleeps after about 15 minutes idle. Point any external pinger (for example UptimeRobot or cron-job.org, every 10 minutes) at `GET /api/health`. Nothing in this repo pings it.
 
+## NSE filings daily copy
+
+NSE's website API (`indiafacts/nseapi.py`) answers GitHub's runners but answers HTTP 403 to Render's datacenter address. We do not try to get around that block. Instead the snapshot job (which fetches NSE live, as before) writes what it parsed for each ticker to `nse/<SYMBOL>.json` on the `snapshots` branch, and Render reads that copy.
+
+- Format: `{version, symbol, generated_at, shareholding: {as_on, sh: {...Shareholding fields}, rows: [newest 8 list rows: date, pr_and_prgrp, recordId, xbrl, ...]}, results: [{period, basis, audited, filing_date, xbrl_url, entity, filing, common, facts}]}`. `common` holds the fields all facts of a filing share; `fact_id` is recomputed on read. The raw XBRL files are not published (about 100-500 KB each, roughly 1 GB for 486 tickers); the parsed copy is about 80 KB per ticker, so about 40 MB for 486 (measure on the first real run).
+- Evidence: facts keep source `nse_xbrl` / `nse_shp` and their concept-level evidence; a fact read from the copy adds "official NSE filing <XBRL url>; daily copy as of <date>". The report notice reads "official NSE filings from the daily copy as of <date> (NSE does not answer this server directly)".
+- The job sets `INDIAFACTS_NSE_COPY_OUT=<out>/nse` and points `INDIAFACTS_NSE_COPY_BASE` at that same folder (yesterday's files, already checked out), so NSE is tried live first and yesterday's copy is only a fallback if NSE fails during the run. A part live did not produce keeps the older copy's version of it.
+- Reader: tries the copy when a live call fails, never raises, 1 h memory cache (5 min for a miss). If there is no copy either, the old notice "official NSE filings not reachable this run" stays.
+
+| Variable | Where | Meaning |
+| --- | --- | --- |
+| `INDIAFACTS_NSE_COPY_BASE` | Render | `https://raw.githubusercontent.com/<owner>/<repo>/snapshots/nse/` (or a `file://` folder). Where `<SYMBOL>.json` is read. |
+| `INDIAFACTS_NSE_COPY_FIRST` | Render | `1` reads the copy before trying NSE live (saves the 403 round trips; needs `INDIAFACTS_NSE_COPY_BASE`). |
+| `INDIAFACTS_NSE_API_LIVE` | any | `0` turns only the live NSE calls off; the copy is still read. `INDIAFACTS_NSE_API=0` turns both off. |
+| `INDIAFACTS_NSE_COPY_OUT` | job | Folder the copy is written to. Set by `snapshots.py`; leave unset elsewhere. |
+
 ## NSE Market Lens file
 
 Before precomputing, the job fetches the NSE Market Lens universe once (58 requests, 1 s apart; see `docs/DATA_PERMISSIONS.md`) into `snapshots/marketlens.json`, which is published on the `snapshots` branch next to the reports. Each analysis in the run reads that file (the job points `INDIAFACTS_MARKETLENS_URL` at it), so NSE is not called per ticker. If the fetch fails, the previous file on the branch is kept.

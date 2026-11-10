@@ -223,6 +223,18 @@ def _prepare_marketlens(out: Path, log=print) -> None:
         os.environ["INDIAFACTS_MARKETLENS"] = "0"
 
 
+def _prepare_nse_copy(out: Path) -> Path:
+    """The snapshot job fetches NSE live (it works from GitHub's runners) and publishes what it parsed as <out>/nse/<SYMBOL>.json for servers
+    NSE refuses. Yesterday's copy (already in <out>/nse from the snapshots branch) is the fallback if NSE fails during this run."""
+    d = out / "nse"
+    d.mkdir(parents=True, exist_ok=True)
+    os.environ["INDIAFACTS_NSE_COPY_OUT"] = str(d.resolve())
+    os.environ["INDIAFACTS_NSE_COPY_BASE"] = d.resolve().as_uri() + "/"
+    os.environ.pop("INDIAFACTS_NSE_COPY_FIRST", None)            # live first here, always
+    os.environ.pop("INDIAFACTS_NSE_API_LIVE", None)
+    return d
+
+
 def _default_pool_builder() -> Callable[[str], object]:
     """The same member build the live pool path used: Yahoo facts and prices, no per-member NSE filings."""
     from indiafacts.cli import _MemoPrices
@@ -357,6 +369,7 @@ def main(argv: list[str] | None = None, runner: Callable | None = None, sleep=ti
             _prepare_marketlens(Path(a.out))
             _prepare_pool_metrics(Path(a.out), tickers)
             drift_gate(Path(a.out), prev)
+        _prepare_nse_copy(Path(a.out))
     index = run_snapshots(tickers, Path(a.out), runner, a.delay, sleep)
     rate = failure_rate(index, tickers) * 100
     print(f"{len(tickers)} tickers, {rate:.0f}% failed (limit {a.max_fail_pct:.0f}%)", file=sys.stderr)
