@@ -193,3 +193,14 @@ def test_failed_entry_carries_runner_error_detail_without_home_paths(tmp_path):
     err = idx["TMPV.NS"]["error"]
     assert "TypeError: bad format" in err and "/Users/bob" not in err and len(err) <= 300
     assert error_detail([], 2) == "no output (exit 2)"
+
+
+def test_tej500_universe_is_a_union_after_nifty_and_falls_back_on_failure():
+    from indiafacts.snapshots import load_tickers
+    base = load_tickers()
+    wide = load_tickers(universe="tej500", tej_loader=lambda: ["RELIANCE.NS", "KEC.NS", "ZOMATO.NS"])
+    assert wide[:len(base)] == base and wide[len(base):] == ["KEC.NS", "ZOMATO.NS"] and len(set(wide)) == len(wide)
+    msgs = []
+    def boom():
+        raise OSError("offline")
+    assert load_tickers(universe="tej500", tej_loader=boom, log=msgs.append) == base and "unavailable" in msgs[0]
