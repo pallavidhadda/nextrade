@@ -16,9 +16,10 @@ async function readError(r: Response): Promise<string> {
   return `The service answered ${r.status}.`;
 }
 
-export async function submit(ticker: string, profile: Profile): Promise<string> {
+export async function submit(ticker: string, profile: Profile, refresh = false): Promise<string> {
+  // refresh=true skips any precomputed snapshot and runs a fresh analysis
   const r = await fetch(`${API_BASE}/api/analyze`, {
-    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ticker, ...profile }),
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ticker, ...profile, ...(refresh ? { refresh: true } : {}) }),
   }).catch(() => { throw new ApiError("Could not reach the analysis service. Is it running?", 0); });
   if (!r.ok) throw new ApiError(await readError(r), r.status);
   return (await r.json()).job_id as string;

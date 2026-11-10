@@ -168,6 +168,16 @@ function Home() {
     } finally { setBusy(false); }
   }
 
+  async function onRefresh(t: string) {
+    setError(null); setBusy(true);
+    try {
+      const id = await submit(t, Object.fromEntries(Object.entries(profile).filter(([, v]) => v)) as Profile, true);
+      setUrl({ job: id, t, tab: "summary" });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+    } finally { setBusy(false); }
+  }
+
   function pick(sym: string) {
     setTicker(sym);
     setFieldError("");
@@ -187,7 +197,7 @@ function Home() {
     </form>
   );
 
-  if (summary && jobId) return <Shell search={barSearch}><ResultView s={summary} served={job?.served_from ?? summary.served_from} servedAsOf={job?.snapshot_as_of ?? summary.snapshot_as_of} jobId={jobId} tab={tab} onTab={(t) => setUrl({ tab: t })} /></Shell>;
+  if (summary && jobId) return <Shell search={barSearch}><ResultView s={summary} served={job?.served_from ?? summary.served_from} servedAsOf={job?.snapshot_as_of ?? summary.snapshot_as_of} jobId={jobId} tab={tab} onTab={(t) => setUrl({ tab: t })} onRefresh={() => onRefresh(summary.ticker)} refreshing={busy} /></Shell>;
 
   if (running) {
     const pr = progressRatio(job?.progress);
@@ -296,7 +306,7 @@ function ReportFrame({ src, ticker }: { src: string; ticker: string }) {
   return <iframe ref={ref} className="report" title={`Full report for ${ticker}`} src={src} sandbox="allow-scripts" scrolling="no" style={{ height: h }} />;
 }
 
-function ResultView({ s: base, served, servedAsOf, jobId, tab, onTab }: { s: Summary; served?: string; servedAsOf?: string; jobId: string; tab: string; onTab: (t: string) => void }) {
+function ResultView({ s: base, served, servedAsOf, jobId, tab, onTab, onRefresh, refreshing }: { s: Summary; served?: string; servedAsOf?: string; jobId: string; tab: string; onTab: (t: string) => void; onRefresh?: () => void; refreshing?: boolean }) {
   const [own, setOwn] = useState<Summary["explanation"]>(null);
   const [panel, setPanel] = useState<PanelResult[]>([]);
   const s: Summary = own ? { ...base, explanation: own } : base;
@@ -314,7 +324,12 @@ function ResultView({ s: base, served, servedAsOf, jobId, tab, onTab }: { s: Sum
             <div className="actions">
               <a className="key primary" href={reportDownloadUrl(jobId)} download><span>Download report</span></a>            </div>
           </div>
-          {served === "snapshot" && servedAsOf && <p className="snap-label">Precomputed as of close on {servedAsOf}</p>}
+          {served === "snapshot" && servedAsOf && (
+            <p className="snap-label">
+              Precomputed as of close on {servedAsOf}.{" "}
+              {onRefresh && <button type="button" className="link-button" onClick={onRefresh} disabled={refreshing}>{refreshing ? "Starting…" : "Refresh now"}</button>}
+            </p>
+          )}
           <CompBadge s={s} />
           <div className="band-read"><ScoreNumber s={s} /><ScoreFactors s={s} /></div>
         </div>

@@ -350,5 +350,8 @@ td > .tag:first-child, .claims .tag { margin-left: 0; }
 .light.good { color: var(--color-green); } .light.warn { color: oklch(48% 0.12 75); } .light.bad { color: var(--color-error); }
 .band .light.good { color: var(--color-accent); } .band .light.warn { color: oklch(85% 0.14 85); } .band .light.bad { color: oklch(78% 0.14 30); }
 .comp-badge, .snap-label { margin: var(--space-sm) 0 0; font-size: var(--text-sm); }
+.link-button { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.link-button:disabled { opacity: 0.6; cursor: progress; }
+.link-button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 .stance-tag.neutral { background: var(--color-paper-3); color: var(--color-ink-2); border: 1px solid var(--color-rule); }
 .pillars { columns: 2; } .stamp-line { margin-top: var(--space-md); overflow-wrap: anywhere; }
