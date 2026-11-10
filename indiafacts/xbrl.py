@@ -16,7 +16,7 @@ from indiafacts.models import (AvailabilityKind, Basis, Entity, Fact, FactSet, F
 
 SOURCE = "nse_xbrl"
 MAX_BYTES = 20 * 1024 * 1024
-_TS = re.compile(r"_(\d{2})(\d{2})(\d{4})\d{6}\.xml$", re.I)
+_TS = re.compile(r"_(\d{2})(\d{2})(\d{4})\d{6}(?:_WEB)?\.xml$", re.I)
 _XBRLI = "{http://www.xbrl.org/2003/instance}"
 
 # concept -> (metric, unit kind)
