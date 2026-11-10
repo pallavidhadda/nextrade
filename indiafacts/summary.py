@@ -81,7 +81,8 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
     deb = None
     if debate is not None:
         deb = {"bull": [{"text": p.text, "evidence": p.key} for p in debate.bull], "bear": [{"text": p.text, "evidence": p.key} for p in debate.bear],
-               "stance": {"label": debate.stance.label, "confidence": debate.stance.confidence, "reason": debate.stance.reason}}
+               "stance": {"label": debate.stance.label, "confidence": debate.stance.confidence, "reason": debate.stance.reason,
+                                 "partial": debate.stance.partial, "evidence_note": debate.stance.evidence_note}}
     lev = None
     if levels is not None:
         lev = {"applies": levels.applies, "last_close": levels.last_close, "stop": levels.stop, "risk_pct": levels.risk_pct,
@@ -101,6 +102,6 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
     return {"ticker": e.ticker, "name": e.name, "sector": e.sector, "industry": e.industry,
             "isin": e.isin.value, "retrieved_at": fs.retrieved_at.isoformat(),
             "profile": {"horizon": profile.horizon, "risk": profile.effective_risk, "experience": profile.experience},
-            "key_facts": key, "facts": facts, "facts_total": len(fs.facts), "fundamentals": fundamentals_rows(fs), "ownership": ownership(fs), "market_flows": flows, "scenario": (None if scenario is None or not scenario.applies else {"tone": scenario.tone, "headline": scenario.headline, "summary": scenario.summary, "levels": [{"label": l, "price": v, "meaning": m} for l, v, m in scenario.levels], "stages": [{"label": l, "pct": p, "condition": c} for l, p, c in scenario.stages], "watch": scenario.watch, "more_positive_if": scenario.more_positive_if, "more_cautious_if": scenario.more_cautious_if, "notes": scenario.notes}), "prose": (None if prose is None or not prose.favour else {"favour": prose.favour, "against": prose.against, "weighing": prose.weighing}), "score": score, "completeness": completeness(fs, as_of, news=news if news_fetched else None),"checklist": checklist, "checklist_groups": checklist_groups, "peers": peer_summary(scorecard), "gaps": gaps,
+            "key_facts": key, "facts": facts, "facts_total": len(fs.facts), "fundamentals": fundamentals_rows(fs), "ownership": ownership(fs), "market_flows": flows, "scenario": (None if scenario is None or not scenario.applies else {"tone": scenario.tone, "headline": scenario.headline, "summary": scenario.summary, "levels": [{"label": l, "price": v, "meaning": m} for l, v, m in scenario.levels], "stages": [{"label": l, "pct": p, "condition": c} for l, p, c in scenario.stages], "watch": scenario.watch, "more_positive_if": scenario.more_positive_if, "more_cautious_if": scenario.more_cautious_if, "notes": scenario.notes, "evidence_note": scenario.evidence_note}), "prose": (None if prose is None or not prose.favour else {"favour": prose.favour, "against": prose.against, "weighing": prose.weighing}), "score": score, "completeness": completeness(fs, as_of, news=news if news_fetched else None),"checklist": checklist, "checklist_groups": checklist_groups, "peers": peer_summary(scorecard), "gaps": gaps,
             "notices": list(fs.notices), "changes": [str(c) for c in (changes or [])][:20],
             "valuation": valuation, "debate": deb, "levels": lev, "risk_panel": rp, "news": nws, "explanation": ex, "llm": llm, "stamp": stamp, "scenario_reason": getattr(scenario, "reason", "") if scenario is not None else "", "disclaimer": DISCLAIMER}

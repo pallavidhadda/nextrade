@@ -149,7 +149,7 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     prose = case_prose(debate, scorecard)
     from indiafacts.debate import has_direction
 
-    if not args.no_remember and has_direction(debate.stance.label):
+    if not args.no_remember and has_direction(debate.stance.label) and not debate.stance.partial:
         try:
             from indiafacts.journal import Journal
 

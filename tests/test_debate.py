@@ -76,36 +76,55 @@ RELIANCE_ALPHA = sc_with(55.2, {"value": None, "quality": None, "growth": 50, "m
                           "beats_nifty_1y": "fail"})
 
 
-def test_d9_gate_withholds_rating_without_fundamental_pillars():
+def test_d9_thin_evidence_keeps_the_rating_but_forces_low_confidence_and_a_note():
     d = build_debate(fs_with(), RELIANCE_ALPHA)
-    assert d.stance.label == "Insufficient evidence" and d.stance.confidence == "n/a" and d.stance.partial
-    assert "Quality and Value could not be scored" in d.stance.reason and "partial research snapshot" in d.stance.reason
-    assert d.bull and d.bear                     # the evidence is still shown, only the rating is withheld
-    assert not any(w in d.stance.reason.lower() for w in BANNED)
+    assert d.stance.label in ("Buy", "Overweight", "Hold", "Underweight", "Sell") and d.stance.confidence == "Low" and d.stance.partial
+    assert d.stance.evidence_note == ("Insufficient evidence: quality and value could not be scored, "
+                                      "so this rating rests on growth, momentum and risk only.")
+    assert d.bull and d.bear
+    assert not any(w in (d.stance.reason + d.stance.evidence_note).lower() for w in BANNED)
 
 
 def test_d9_gate_passes_with_both_pillars_or_four_factors_with_one():
     both = sc_with(60, {"value": 60, "quality": 62, "growth": None, "momentum": None, "risk": 55}, {})
-    assert build_debate(fs_with(), both).stance.label not in ("Insufficient evidence", "No rating")
+    assert not build_debate(fs_with(), both).stance.partial
     three_one = sc_with(60, {"value": None, "quality": 62, "growth": 55, "momentum": 70, "risk": None}, {})
-    assert build_debate(fs_with(), three_one).stance.label == "Insufficient evidence"
-    assert not build_debate(fs_with(), STRONG).stance.partial
+    s = build_debate(fs_with(), three_one).stance
+    assert s.partial and s.confidence == "Low" and s.evidence_note.startswith("Insufficient evidence: value could not be scored")
+    assert not build_debate(fs_with(), STRONG).stance.partial and not build_debate(fs_with(), STRONG).stance.evidence_note
 
 
 def test_d9_gate_threshold_comes_from_params():
     p = load_stance_params(strict=False)
     p["evidence_gate"] = {"min_factors_with_one_fundamental": 3}
     three_one = sc_with(60, {"value": None, "quality": 62, "growth": 55, "momentum": 70, "risk": None}, {})
-    assert build_debate(fs_with(), three_one, params=p).stance.label != "Insufficient evidence"
+    assert not build_debate(fs_with(), three_one, params=p).stance.partial
 
 
-def test_d9_no_scenario_plan_without_a_rating():
+def test_d9_scenario_plan_is_shown_with_the_note_but_not_without_a_rating():
     from indiafacts.debate import has_direction
     from indiafacts.scenario import build_scenario
+    from tests.test_scenario import levels
     d = build_debate(fs_with(), RELIANCE_ALPHA)
-    assert not has_direction(d.stance.label) and not has_direction("No rating") and has_direction("Hold")
-    sc = build_scenario(fs_with(), d, levels=None, panel=None, today=ASOF)
-    assert not sc.applies and "not enough for a rating" in sc.reason
+    assert has_direction(d.stance.label) and not has_direction("No rating") and has_direction("Hold")
+    sc = build_scenario(fs_with(), d, levels=levels(), panel=None, today=ASOF)
+    assert sc.applies and sc.evidence_note == d.stance.evidence_note
+    none = build_debate(fs_with(), None)
+    assert not build_scenario(fs_with(), none, levels=levels(), panel=None, today=ASOF).applies
+
+
+def test_d10_points_are_plain_sentences():
+    c = lambda i, res, v, disp="x": CheckResult(id=i, label=i, result=res, value=v, display=disp, threshold="> 0")
+    from indiafacts.checklist import point_text, watch_text
+    assert point_text(c("positive_1y_return", "fail", -0.104)) == "The share price is 10.4% lower than a year ago."
+    assert point_text(c("beats_nifty_1y", "fail", -0.086)) == "Over the past year the share did 8.6 percentage points worse than the Nifty 50."
+    assert point_text(c("earnings_growing", "pass", 0.12)) == "Profit grew 12% compared with a year earlier."
+    assert point_text(c("earnings_growing", "pass", 0.12, "+12.0% (last financial year)")) == "Profit grew 12% in the last financial year."
+    assert watch_text(c("positive_1y_return", "fail", -0.104)) == "Whether the price climbs back above where it was a year ago (it is 10.4% lower now)."
+    assert point_text(c("something_new", "fail", 1.0)) == "something_new"
+    d = build_debate(fs_with(), WEAK)
+    assert not any("Check failed" in p.text or "Check passed" in p.text for p in d.bull + d.bear)
+    assert {p.key for p in d.bear} >= {"check:debt_moderate", "check:beats_nifty_1y"}
 
 
 def test_d6_no_opinion_words_and_every_point_has_a_reason_text():

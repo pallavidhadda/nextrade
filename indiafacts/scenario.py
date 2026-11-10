@@ -37,6 +37,7 @@ class Scenario:
     more_cautious_if: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
     reason: str = ""
+    evidence_note: str = ""               # shown above the plan when the rating rests on thin evidence
 
 
 def _next_results_due(fs: FactSet, today: date) -> date | None:
@@ -70,9 +71,9 @@ def build_scenario(fs: FactSet, debate, levels, panel, today: date | None = None
     from indiafacts.debate import has_direction
 
     if not has_direction(label) or levels is None or levels.last_close is None:
-        sc.reason = ("no scenario plan: the evidence is not enough for a rating" if label == "Insufficient evidence"
-                     else "no scenario plan without a rating and a last close")
+        sc.reason = "no scenario plan without a rating and a last close"
         return sc
+    sc.evidence_note = getattr(debate.stance, "evidence_note", "") if debate is not None else ""
     last = levels.last_close
     sc.applies = True
     below = sorted(levels.support, key=lambda kv: -kv[1])                 # nearest support first
@@ -146,7 +147,10 @@ def build_scenario(fs: FactSet, debate, levels, panel, today: date | None = None
 def scenario_lines(sc: Scenario, levels=None) -> list[str]:
     if not sc.applies:
         return []
-    out = ["", f"SCENARIO PLAN (educational arithmetic, not a forecast and not advice): {sc.headline}", f"  {sc.summary}"]
+    out = ["", f"SCENARIO PLAN (educational arithmetic, not a forecast and not advice): {sc.headline}"]
+    if sc.evidence_note:
+        out.append(f"  {sc.evidence_note}")
+    out.append(f"  {sc.summary}")
     if sc.levels:
         out.append("  Reference levels (not targets):")
     tg = list(zip(levels.reward_risk, levels.targets)) if levels is not None else []

@@ -92,9 +92,11 @@ def test_ex10_triggers_are_deterministic_with_thresholds_and_ids(inputs):
     t1, t2 = triggers(sc, d), triggers(sc, d)
     assert [t.model_dump() for t in t1] == [t.model_dump() for t in t2] and t1
     failed = [c for c in sc["checklist"] if c.result == "fail"]
-    assert len([t for t in t1 if "now" in t.text]) >= len(failed)
+    assert len(t1) == min(len(failed), 4)                       # forward-looking, one per failed check, at most four
     assert all(t.ids and set(t.ids) <= set(d.ids) for t in t1)
-    assert any("needs" in t.text.lower() or "at" in t.text for t in t1)
+    assert all(t.text.startswith("Whether") for t in t1)
+    blob = " ".join(t.text for t in t1)
+    assert "Needs data" not in blob and "no data for" not in blob and "this test would pass" not in blob
 
 
 def test_template_sentences_read_cleanly_with_numbers_and_no_source_tags(inputs):
