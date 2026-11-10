@@ -211,7 +211,7 @@ iframe.report { display: block; width: 100%; border: 0; background: transparent;
 
 /* at a glance: four open readings, no boxes */
 .glance { padding-block: var(--space-xl) var(--space-2xl); }
-.glance-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: 1px solid var(--color-ink); }
+.glance-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-block: 1px solid var(--color-ink); }
 .glance-row > div { padding: var(--space-lg) var(--space-lg) var(--space-lg) 0; position: relative; }
 .glance-row > div + div { padding-left: var(--space-lg); border-left: 1px solid var(--color-rule); }
 .glance-k { display: block; font-size: var(--text-sm); color: var(--color-muted); }
