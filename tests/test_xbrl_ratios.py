@@ -24,3 +24,26 @@ def test_eps_and_money_are_not_rescaled():
     fs = facts_from_nse_xbrl(FIX, datetime(2026, 11, 1, tzinfo=timezone.utc))
     assert _q(fs, "finance_costs" if False else "interest_expense").value == Decimal("84810000000")
     assert _q(fs, "eps_diluted").unit == "INR_per_share" and abs(_q(fs, "eps_diluted").value) < 100
+
+
+def _variant(tmp_path, repl):
+    text = FIX.read_text(encoding="utf-8")
+    for a, b in repl:
+        assert a in text, a
+        text = text.replace(a, b)
+    out = tmp_path / FIX.name
+    out.write_text(text, encoding="utf-8")
+    return out
+
+
+def test_filer_storing_debt_equity_as_published_is_not_scaled(tmp_path):
+    p = _variant(tmp_path, [("0.0041</in-capmkt:DebtEquityRatio>", "1.80</in-capmkt:DebtEquityRatio>")])
+    fs = facts_from_nse_xbrl(p, datetime(2026, 11, 1, tzinfo=timezone.utc))
+    assert _q(fs, "debt_equity_ratio").value == Decimal("1.80")                    # raw 1.80 is already the published figure
+    assert _q(fs, "interest_service_coverage_ratio").value == Decimal("5.55")      # coverage ratios still follow the hundredths rule
+
+
+def test_zero_coverage_ratio_is_not_a_figure(tmp_path):
+    p = _variant(tmp_path, [("0.0555</in-capmkt:InterestServiceCoverageRatio>", "0</in-capmkt:InterestServiceCoverageRatio>")])
+    fs = facts_from_nse_xbrl(p, datetime(2026, 11, 1, tzinfo=timezone.utc))
+    assert [f.value for f in fs.facts if f.metric == "interest_service_coverage_ratio" and f.period_type == PeriodType.Q] == []
