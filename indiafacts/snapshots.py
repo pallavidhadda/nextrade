@@ -200,6 +200,23 @@ def client_from_env() -> SnapshotClient | None:
     return SnapshotClient(base) if base else None
 
 
+def _prepare_marketlens(out: Path, log=print) -> None:
+    """Fetch NSE Market Lens once (58 requests, 1 s apart) into <out>/marketlens.json, published with the reports. Every analysis
+    in this run then reads that file, so NSE is not called per ticker. If the fetch fails, yesterday's file (if any) is kept."""
+    from indiafacts import marketlens
+
+    if not marketlens.enabled():
+        return
+    out.mkdir(parents=True, exist_ok=True)
+    path = out / "marketlens.json"
+    rows, problems = marketlens.refresh(path)
+    log(f"marketlens: {len(rows)} stocks, {len(problems)} problem(s)" + (f" ({problems[0]})" if problems else ""))
+    if path.exists():
+        os.environ["INDIAFACTS_MARKETLENS_URL"] = path.resolve().as_uri()
+    else:
+        os.environ["INDIAFACTS_MARKETLENS"] = "0"
+
+
 def main(argv: list[str] | None = None, runner: Callable | None = None, sleep=time.sleep) -> int:
     p = argparse.ArgumentParser(prog="python -m indiafacts.snapshots", description="Precompute analysis snapshots (education only).")
     p.add_argument("--out", default="snapshots", help="output directory")
@@ -210,6 +227,7 @@ def main(argv: list[str] | None = None, runner: Callable | None = None, sleep=ti
     p.add_argument("--universe", choices=UNIVERSES, default="nifty50", help="nifty50 (default) or tej500: also the top 500 by traded value from TejHQ's open data")
     p.add_argument("--limit", type=int, default=0, help="only the first N tickers (testing)")
     a = p.parse_args(argv)
+    real_runner = runner is None
     if runner is None:
         from indiafacts.runner import subprocess_runner as runner
     given = [norm(t) for t in a.tickers.split(",") if t.strip()]
@@ -218,6 +236,8 @@ def main(argv: list[str] | None = None, runner: Callable | None = None, sleep=ti
     tickers = given or load_tickers(universe=a.universe)
     if a.limit:
         tickers = tickers[:a.limit]
+    if real_runner:
+        _prepare_marketlens(Path(a.out))
     index = run_snapshots(tickers, Path(a.out), runner, a.delay, sleep)
     rate = failure_rate(index, tickers) * 100
     print(f"{len(tickers)} tickers, {rate:.0f}% failed (limit {a.max_fail_pct:.0f}%)", file=sys.stderr)
