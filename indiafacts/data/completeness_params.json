@@ -140,9 +140,8 @@
     "ownership": {
       "label": "Ownership",
       "expected": [
-        "sh_promoter",
-        "sh_foreign_inst",
-        "sh_domestic_inst",
+        "sh_promoter|insider_holding",
+        "sh_foreign_inst|sh_domestic_inst|institutional_holding",
         "sh_public",
         "sh_promoter_pledged"
       ],

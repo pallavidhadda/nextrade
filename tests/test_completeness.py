@@ -116,13 +116,11 @@ def test_unverified_vendor_figure_counts_as_present_but_not_verified():
         pt("insider_holding", status="unverified", reason="vendor estimate", value="0.5"),
         pt("institutional_holding", status="unverified", reason="vendor estimate", value="0.3")]
     o = completeness(fsof(facts), AS_OF)["pillars"]["ownership"]
-    assert o["present_ok"] == 0 and o["vendor_only"] is False     # expected sh_* entries are still missing
-    sh = [pt("sh_promoter", status="unverified", reason="vendor estimate", value="0.5")]
-    o = completeness(fsof([f for f in full() if not f.metric.startswith("sh_")] + sh), AS_OF)["pillars"]["ownership"]
-    assert o["present_ok"] == 1 and o["verified_n"] == 0 and o["vendor_only"] is True and o["vendor_estimate"] == ["sh_promoter"]
-    assert o["coverage_pct"] == 20.0
+    # Yahoo's insider and institutional estimates stand in for promoter and institutional holdings (2 of 4 entries)
+    assert o["present_ok"] == 2 and o["verified_n"] == 0 and o["vendor_only"] is True
+    assert o["coverage_pct"] == 50.0
     full_o = completeness(fsof(full()), AS_OF)["pillars"]["ownership"]
-    assert full_o["verified_n"] == 5 and full_o["vendor_only"] is False
+    assert full_o["verified_n"] == 4 and full_o["vendor_only"] is False and full_o["coverage_pct"] == 100.0
 
 
 def test_conflict_with_value_is_present_gap_and_unavailable_are_missing():
