@@ -5,10 +5,10 @@ import ContourMap from "@/components/ContourMap";
 import TickerBox from "@/components/TickerBox";
 import ProfileChooser from "@/components/Profile";
 import OwnModelPanel from "@/components/OwnModel";
-import { AnalystPanel, AtAGlance, CompBadge, Executive, ScenarioPlan, Checklist, Debate, Health, MarketFlows, Ownership, Explanation, Gaps, KeyFacts, Levels, News, Valuation } from "@/components/Result";
+import { AnalystPanel, AtAGlance, CompBadge, Executive, ScenarioPlan, Checklist, Debate, Health, MarketFlows, Ownership, Explanation, Gaps, KeyFacts, Levels, News, PeerSpread, Valuation } from "@/components/Result";
 import { Scrub, ScoreFactors, ScoreNumber, SplitWords } from "@/components/Reveal";
 import companies from "@/lib/companies.json";
-import { ApiError, poll, reportDownloadUrl, reportUrl, submit } from "@/lib/api";
+import { ApiError, factsCsvUrl, poll, reportDownloadUrl, reportUrl, submit } from "@/lib/api";
 import { execView } from "@/lib/exec";
 import type { Job, PanelResult, Profile, Summary } from "@/lib/types";
 
@@ -313,6 +313,7 @@ function ResultView({ s: base, served, servedAsOf, jobId, tab, onTab }: { s: Sum
             </div>
             <div className="actions">
               <a className="key primary" href={reportDownloadUrl(jobId)} download><span>Download report</span></a>
+              {s.facts_total ? <a className="key" href={factsCsvUrl(jobId)} download><span>Download facts (CSV)</span></a> : null}
             </div>
           </div>
           {served === "snapshot" && servedAsOf && <p className="snap-label">Precomputed as of close on {servedAsOf}</p>}
@@ -340,7 +341,7 @@ function ResultView({ s: base, served, servedAsOf, jobId, tab, onTab }: { s: Sum
           <div className="stack"><Gaps s={s} /></div>
         ) : (
           <div className="stack">
-            <Explanation s={s} /><Debate s={s} /><Checklist s={s} /><Health s={s} /><Valuation s={s} /><Ownership s={s} /><ScenarioPlan s={s} /><Levels s={s} /><MarketFlows s={s} /><News s={s} /><KeyFacts s={s} />
+            <Explanation s={s} /><Debate s={s} /><Checklist s={s} /><Health s={s} /><Valuation s={s} /><PeerSpread s={s} /><Ownership s={s} /><ScenarioPlan s={s} /><Levels s={s} /><MarketFlows s={s} /><News s={s} /><KeyFacts s={s} />
             {base.llm && <aside className="ai-nudge" data-r><p>Want a second opinion? Run a bull vs bear debate or an analyst panel with your own AI model.</p><button type="button" className="key" onClick={() => onTab("ai")}><span>Open AI analysis</span><Arrow /></button></aside>}
           </div>
         )}

@@ -165,3 +165,20 @@ def test_vr2_peer_values_are_exposed_for_plotting(params):
     t = TARGET(pe=20)
     cmp = {c.metric: c for c in compare_peers(t, select_peers(t, pool_of(*cos), params=params), pool_of(*cos), params=params)}
     assert cmp["pe_ttm"].peer_values == [("P0.NS", 10.0), ("P1.NS", 11.0), ("P2.NS", 12.0), ("P3.NS", 13.0)]
+
+
+def test_quartiles_position_and_few_peers_warning(params):
+    cos = [co(f"P{i}.NS", "Energy", "Refining", 1e13 * (1 + i / 10), pe=10 + i) for i in range(4)]   # pe 10..13
+    t = co("TGT.NS", "Energy", "Refining", 1e13, pe=30)
+    g = select_peers(t, pool_of(*cos), params=params)
+    assert g.few_peers and any("fewer than 5" in n for n in g.notes) and not g.approximate
+    pe = next(c for c in compare_peers(t, g, pool_of(*cos), params=params) if c.metric == "pe_ttm")
+    assert (pe.q1, pe.peer_median, pe.q3) == (10.75, 11.5, 12.25) and pe.position == "above_q3"
+
+
+def test_conglomerate_target_flagged_approximate(params):
+    cos = [co(f"P{i}.NS", "Energy", "Refining", 1e13 * (1 + i / 10)) for i in range(6)]
+    t = co("RELIANCE.NS", "Energy", "Refining", 1e13)
+    g = select_peers(t, pool_of(*cos), params=params)
+    assert g.approximate and "approximate peers: a diversified group" in " ".join(g.notes) and not g.few_peers
+    assert params["conglomerates"]["review_by"]

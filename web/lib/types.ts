@@ -6,7 +6,9 @@ export type Profile = {
 };
 
 export type KeyFact = { metric: string; value: number | null; unit: string; period: string; source: string; basis: string; fact_id: string };
-export type Check = { label: string; result: "pass" | "fail" | "unavailable"; display: string; threshold: string; reason: string };
+export type Check = { label: string; group?: string; result: "pass" | "fail" | "unavailable"; display: string; threshold: string; reason: string };
+export type PeerMetric = { metric: string; status: string; target: number | null; median: number | null; q1: number | null; q3: number | null; position: string | null; n: number; premium: number | null; diff: number | null; reason: string };
+export type Peers = { n_peers: number; candidates: number; approximate: boolean; few_peers: boolean; unavailable_reason: string | null; notes: string[]; picks: { ticker: string; tier: number; size_ratio: number }[]; metrics: PeerMetric[] };
 export type Health = { metric: string; label: string; display: string; reading: string; status: string; meaning: string; reason: string; period: string };
 export type OwnRow = { metric: string; label: string; display: string; reading: string; change: string | null; meaning: string };
 export type Ownership = { source: "official" | "proxy" | "none"; as_on: string; rows: OwnRow[]; how_to: string };
@@ -19,6 +21,7 @@ export type Summary = {
   ticker: string; name: string | null; sector: string | null; industry: string | null; isin: string | null; retrieved_at: string;
   profile: { horizon: string; risk: string; experience: string };
   key_facts: KeyFact[];
+  facts_total?: number;
   fundamentals?: Health[];
   ownership?: Ownership;
   scenario?: null | { tone: string; headline: string; summary: string; levels: { label: string; price: number; meaning: string }[]; stages: { label: string; pct: number | null; condition: string }[]; watch: string[]; more_positive_if: string[]; more_cautious_if: string[]; notes: string[] };
@@ -41,12 +44,14 @@ export type Summary = {
   scenario_reason?: string;
   served_from?: "snapshot" | "live";
   snapshot_as_of?: string;
+  peers?: null | Peers;
+  checklist_groups?: { group: string; passed: number; total: number; unavailable: number; text: string }[];
   checklist: Check[]; gaps: Gap[]; notices: string[]; changes: string[];
   valuation: null | { method: "reverse_dcf_earnings" | "justified_pb"; assumptions: string; unavailable_reason: string | null; items: { metric: string; value: number | null; unit: string; fact_id: string }[] };
   debate: null | { bull: { text: string; evidence: string }[]; bear: { text: string; evidence: string }[]; stance: { label: string; confidence: string; reason: string; partial?: boolean } };
   levels: null | { applies: boolean; last_close: number | null; stop: number | null; risk_pct: number | null; targets: { r: number; price: number }[]; support: { name: string; price: number }[]; resistance: { name: string; price: number }[]; reason: string; notes: string[] };
   risk_panel: null | { profile_lens: string; notes: string[]; lenses: { name: string; fits: boolean | null; breaches: string[]; max_position_pct: number | null; reason: string }[] };
-  news: { title: string; publisher: string; published: string | null; url: string; sentiment_hint: "positive" | "negative" | "neutral" }[];
+  news: { title: string; publisher: string; published: string | null; url: string; sentiment_hint: "positive" | "negative" | "neutral"; source_kind?: "exchange" | "media"; category?: string; event_type?: string }[];
   explanation: null | { source: string; summary: string; uncertainty: string; claims: Claim[]; triggers: { text: string; ids: string[] }[]; usage: Record<string, number> };
   llm: null | { system: string; user: string; max_tokens: number; ids: string[]; digest: string; roles?: { id: string; title: string; system: string }[]; debate?: { id: string; title: string; system: string; uses_notes: boolean }[] };
   disclaimer: string;

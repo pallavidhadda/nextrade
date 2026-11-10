@@ -126,8 +126,9 @@ def main(argv: list[str] | None = None, client=None, sleep=time.sleep, price_cli
     news, news_note = [], ""
     if args.news:
         from indiafacts.news import fetch_news
+        from indiafacts.nsefeed import recent_for
 
-        news, news_note = fetch_news(fs.entity.ticker, news_client)
+        news, news_note = fetch_news(fs.entity.ticker, news_client, nse=recent_for if news_client is None else None)
         if news_note:
             fs = fs.model_copy(update={"notices": fs.notices + [news_note]})
     from indiafacts.riskpanel import build_risk_panel

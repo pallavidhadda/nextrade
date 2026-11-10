@@ -2,6 +2,8 @@
 Education only; not financial, investment or trading advice. No user-supplied paths ever reach the analysis."""
 from __future__ import annotations
 
+import csv
+import io
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import hmac
@@ -18,7 +20,7 @@ from typing import Callable, Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from indiafacts.render import DISCLAIMER
@@ -26,6 +28,16 @@ from indiafacts.runner import TICKER, Runner, subprocess_runner  # noqa: F401  (
 
 CACHE_SECONDS = 3600
 JOB_KEEP_SECONDS = 6 * 3600
+
+
+FACT_COLUMNS = ["fact_id", "metric", "value", "unit", "period_end", "period_type", "basis", "source", "status", "reason", "evidence"]
+_TEXT_COLUMNS = {"metric", "unit", "source", "reason", "evidence"}
+
+
+def _csv_text(v) -> str:
+    """Text from third-party sources must not be read as a spreadsheet formula."""
+    v = "" if v is None else str(v)
+    return "'" + v if v[:1] in ("=", "+", "-", "@", "\t", "\r") else v
 
 
 class AnalyzeRequest(BaseModel):
@@ -207,7 +219,32 @@ def create_app(runner: Runner = subprocess_runner, max_running: int | None = Non
         j = jobs.get(job_id)
         if not j:
             raise HTTPException(404, "unknown job")
-        return {k: j[k] for k in ("status", "progress", "summary", "error", "served_from", "snapshot_as_of") if k in j}
+        out = {k: j[k] for k in ("status", "progress", "summary", "error", "served_from", "snapshot_as_of") if k in j}
+        if out.get("summary"):
+            out["summary"] = {k: v for k, v in out["summary"].items() if k != "facts"}      # the web page does not need them; the CSV route does
+        return out
+
+    @app.get("/api/jobs/{job_id}/facts.csv")
+    def facts_csv(job_id: str):
+        j = jobs.get(job_id)
+        if not j or j["status"] != "done":
+            raise HTTPException(404, "no facts for this job")
+        summary = j.get("summary") or {}
+        facts = summary.get("facts")
+        if facts is None:
+            raise HTTPException(404, "this result carries no per-fact data")
+        buf = io.StringIO(newline="")
+        buf.write(f"# {DISCLAIMER}\n")
+        if summary.get("facts_total") is not None and summary["facts_total"] > len(facts):
+            buf.write(f"# {len(facts)} of {summary['facts_total']} facts included (size cap)\n")
+        w = csv.writer(buf, lineterminator="\n")
+        w.writerow(FACT_COLUMNS)
+        for f in facts:
+            w.writerow([_csv_text(f.get(c)) if c in _TEXT_COLUMNS else ("" if f.get(c) is None else f.get(c)) for c in FACT_COLUMNS])
+        t = re.sub(r"[^A-Za-z0-9_-]", "", str(summary.get("ticker", "facts")).split(".")[0]) or "facts"
+        d = str(summary.get("retrieved_at", ""))[:10]
+        return Response(buf.getvalue(), media_type="text/csv; charset=utf-8",
+                        headers={"content-disposition": f'attachment; filename="nextrade_{t}_{d}_facts.csv"', "x-content-type-options": "nosniff"})
 
     @app.post("/api/jobs/{job_id}/validate")
     def validate(job_id: str, req: ValidateRequest):

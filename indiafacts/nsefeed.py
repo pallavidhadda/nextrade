@@ -31,6 +31,7 @@ class Announcement:
     summary: str
     url: str
     published: datetime | None
+    category: str = ""
 
 
 def _get(url: str, opener: Callable = urlopen, now: Callable[[], float] = time.time) -> str:
@@ -67,7 +68,8 @@ def parse_feed(xml_text: str) -> list[Announcement]:
             except ValueError:
                 pass
         subject = desc.split("SUBJECT:")[-1].strip() if "SUBJECT:" in desc else desc[:80]
-        out.append(Announcement(title, _symbol_from_url(link), subject, desc, link, when))
+        m = re.search(r"informed the Exchange about\s+(.+?)\s*(?:\||$)", desc, re.I)
+        out.append(Announcement(title, _symbol_from_url(link), subject, desc, link, when, m.group(1).strip() if m else ""))
     return out
 
 

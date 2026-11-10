@@ -3,15 +3,18 @@ they are never Facts, never scored, and are shown to the narrator as data, not i
 from __future__ import annotations
 
 import email.utils
+import json
 import re
 import urllib.parse
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict
 
 MAX_AGE_DAYS = 30
+IST = timezone(timedelta(hours=5, minutes=30))
 TITLE_MAX = 160
 _CTRL = re.compile(r"[\x00-\x1f\x7f]+|\x1b\[[0-9;]*m")
 _POS = ("surge", "jump", "rally", "rallies", "beat", "beats", "record", "rise", "rises", "gain", "gains", "upgrade", "win", "wins", "order win",
@@ -28,6 +31,9 @@ class NewsItem(BaseModel):
     published: datetime | None = None
     url: str = ""
     sentiment_hint: str = "neutral"          # positive | negative | neutral; keyword guess, not analysis
+    source_kind: str = "media"               # exchange (NSE announcement) | media (third-party headline)
+    category: str = ""                       # NSE's own category for an announcement; empty for media
+    event_type: str = "other"                # keyword guess: results, dividend/corporate action, order/contract, regulatory, management, rating, other
 
 
 class NewsClient(Protocol):
@@ -113,6 +119,27 @@ def sentiment_hint(title: str) -> str:
     return "positive" if pos > neg else "negative" if neg > pos else "neutral"
 
 
+def _params() -> dict:
+    return json.loads((Path(__file__).parent / "data" / "news_params.json").read_text(encoding="utf-8"))
+
+
+def event_type(text: str, params: dict | None = None) -> str:
+    """Rough event label from keywords; first matching type in the params order wins. A guess, not analysis."""
+    words = " ".join(re.findall(r"[a-z0-9]+", (text or "").lower()))
+    for name, kws in (params or _params())["event_types"]:
+        if any(re.search(rf"\b{re.escape(k)}\b", words) for k in kws):
+            return name
+    return "other"
+
+
+def mentions_company(title: str, ticker: str) -> bool:
+    """True when the title names the company: its symbol, listed name or a known brand name, as whole words."""
+    from indiafacts.companies import _norm, aliases_for
+
+    t = f" {_norm(title)} "
+    return any(f" {a} " in t for a in aliases_for(ticker))
+
+
 def _clean(s: str, n: int = TITLE_MAX) -> str:
     return re.sub(r"\s+", " ", _CTRL.sub(" ", s or "")).strip()[:n]
 
@@ -132,14 +159,30 @@ def _parse(row: dict) -> tuple[str, str, datetime | None, str]:
     return row.get("title", ""), row.get("publisher", ""), when, row.get("link", "")
 
 
-def fetch_news(ticker: str, client: NewsClient | None = None, limit: int = 6, now: datetime | None = None) -> tuple[list[NewsItem], str]:
+def fetch_news(ticker: str, client: NewsClient | None = None, limit: int = 6, now: datetime | None = None,
+               nse=None) -> tuple[list[NewsItem], str]:
+    """NSE announcements (when `nse(symbol) -> (items, note)` is given and returns any) lead; third-party headlines follow,
+    kept only when the title names the company. The returned note carries a fetch failure or the count of dropped headlines."""
     now = now or datetime.now(timezone.utc)
+    params = _params()
+    exch: list[NewsItem] = []
+    if nse is not None:
+        try:
+            anns, _why = nse(ticker.split(".")[0])
+        except Exception:
+            anns = []
+        for a in anns[: params["exchange_max"]]:
+            subject = _clean(a.subject or a.summary or a.company)
+            exch.append(NewsItem(title=subject, publisher="NSE", published=a.published.replace(tzinfo=IST) if a.published else None,
+                                 url=a.url if a.url.startswith(("https://", "http://")) else "", sentiment_hint=sentiment_hint(subject),
+                                 source_kind="exchange", category=_clean(a.category, 60), event_type=event_type(f"{a.category} {subject}", params)))
     try:
         rows = (client or CombinedNews()).news(ticker)
     except Exception:
-        return [], "news headlines could not be fetched (source unreachable from this machine); the report has no news section"
+        return exch[:limit], "news headlines could not be fetched (source unreachable from this machine); the report has no news section" if not exch else ""
     seen: set[str] = set()
     items: list[NewsItem] = []
+    dropped = 0
     for row in rows:
         title, pub, when, url = _parse(row)
         title = _clean(title)
@@ -148,9 +191,15 @@ def fetch_news(ticker: str, client: NewsClient | None = None, limit: int = 6, no
             continue
         if when is not None and when < now - timedelta(days=MAX_AGE_DAYS):
             continue
+        if not mentions_company(title, ticker):
+            dropped += 1
+            continue
         if url and not url.startswith(("https://", "http://")):
             url = ""
         seen.add(key)
-        items.append(NewsItem(title=title, publisher=_clean(pub, 40), published=when, url=url[:300], sentiment_hint=sentiment_hint(title)))
+        items.append(NewsItem(title=title, publisher=_clean(pub, 40), published=when, url=url[:300], sentiment_hint=sentiment_hint(title),
+                              event_type=event_type(title, params)))
     items.sort(key=lambda i: i.published or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
-    return items[:limit], ""
+    exch.sort(key=lambda i: i.published or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+    note = (f"news: {dropped} third-party headline(s) dropped because the title does not name the company" if dropped else "")
+    return (exch + items)[:limit], note

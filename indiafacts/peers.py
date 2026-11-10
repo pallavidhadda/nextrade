@@ -5,13 +5,14 @@ import json
 import math
 from datetime import date
 from pathlib import Path
-from statistics import median
+from statistics import median, quantiles
 
 from pydantic import BaseModel
 
 from indiafacts.models import FactSet, Status
 
 PARAMS_PATH = Path(__file__).parent / "data" / "peer_params.json"
+APPROX_NOTE = "approximate peers: a diversified group compared with single-business companies"
 METRICS = ("pe_ttm", "pb", "ev_ebitda", "roe", "fy_roce", "net_margin_q", "net_income_yoy")
 
 
@@ -35,6 +36,8 @@ class PeerGroup(BaseModel):
     candidates: int = 0
     notes: list[str] = []
     unavailable_reason: str = ""
+    approximate: bool = False        # a diversified group is compared with single-business companies
+    few_peers: bool = False          # fewer peers than the warn threshold
 
 
 class MetricComparison(BaseModel):
@@ -50,11 +53,15 @@ class MetricComparison(BaseModel):
     reason: str = ""
     peer_fact_ids: list[str] = []
     peer_values: list[tuple[str, float]] = []      # valid peers only, for plotting
+    q1: float | None = None
+    q3: float | None = None
+    position: str | None = None        # below_q1 | within_iqr | above_q3 (where the target sits among valid peers)
 
 
 def load_peer_params(path: Path | None = None, today: date | None = None, strict: bool = True) -> dict:
     d = json.loads(Path(path or PARAMS_PATH).read_text(encoding="utf-8"))
-    overdue = date.fromisoformat(d["review_by"]) < (today or date.today())
+    due = [d["review_by"]] + ([d["conglomerates"]["review_by"]] if d.get("conglomerates") else [])
+    overdue = any(date.fromisoformat(x) < (today or date.today()) for x in due)
     if overdue and strict:
         raise ValueError(f"peer params: review overdue (review_by {d['review_by']})")
     d["overdue"] = overdue
@@ -84,6 +91,9 @@ def select_peers(target: FactSet, pool: dict[str, FactSet], k: int | None = None
     if not t_ind and not t_sec:
         g.unavailable_reason = "target industry or sector unknown; cannot choose peers"
         return g
+    if t in set(p.get("conglomerates", {}).get("tickers", [])):
+        g.approximate = True
+        g.notes.append(APPROX_NOTE)
     if any(f.metric.startswith("segment_revenue_") for f in target.facts):
         g.notes.append("multi-segment company: single-industry peers are approximate; sum-of-the-parts not built")
 
@@ -129,6 +139,10 @@ def select_peers(target: FactSet, pool: dict[str, FactSet], k: int | None = None
         g.notes.append("no same-industry peers in the loaded pool; sector-level peers are a coarse comparison")
     for tier, _, tk, ratio, _ in eligible[k:]:
         g.excluded.append(Exclusion(ticker=tk, reason=f"eligible but beyond the {k} closest in size within tier order"))
+    warn = p.get("warn_below_peers", 5)
+    if g.picks and len(g.picks) < warn:
+        g.few_peers = True
+        g.notes.append(f"only {len(g.picks)} peer(s) used, fewer than {warn}: treat the comparison as rough")
     if not g.picks:
         g.unavailable_reason = "no peers in pool" if g.candidates == 0 else "no eligible peers in pool"
     return g
@@ -153,11 +167,31 @@ def compare_peers(target: FactSet, group: PeerGroup, pool: dict[str, FactSet], p
                                         reason=f"fewer than {p['min_valid_peers']} valid peer values ({n})"))
             continue
         med = float(median(vals))
+        qs = quantiles(vals, n=4, method="inclusive")
+        q1, q3 = float(qs[0]), float(qs[2])
+        pos = None if tv is None else "below_q1" if tv < q1 else "above_q3" if tv > q3 else "within_iqr"
         multiple = m in p["lower_is_cheaper"]
         prem = (tv / med - 1) if multiple and tv is not None and med != 0 else None
         diff = (tv - med) if not multiple and tv is not None else None
         out.append(MetricComparison(
-            metric=m, status="ok", target_value=tv, peer_median=med, premium=prem, diff=diff, n=n,
+            metric=m, status="ok", target_value=tv, peer_median=med, q1=q1, q3=q3, position=pos, premium=prem, diff=diff, n=n,
             peer_fact_ids=sorted(ids), peer_values=named,
             higher_than=sum(1 for v in vals if tv is not None and v < tv) if tv is not None else None, of=n))
     return out
+
+
+POSITION_TEXT = {"below_q1": "below Q1", "within_iqr": "Q1 to Q3", "above_q3": "above Q3"}
+
+
+def peer_summary(sc: dict | None) -> dict | None:
+    """JSON shape for the web app; None when no peer step ran."""
+    g = (sc or {}).get("peers")
+    if g is None:
+        return None
+    return {"n_peers": len(g.picks), "candidates": g.candidates, "approximate": g.approximate, "few_peers": g.few_peers,
+            "unavailable_reason": g.unavailable_reason or None, "notes": list(g.notes),
+            "picks": [{"ticker": p.ticker, "tier": p.tier, "size_ratio": p.size_ratio} for p in g.picks],
+            "metrics": [{"metric": c.metric, "status": c.status, "target": c.target_value, "median": c.peer_median,
+                         "q1": c.q1, "q3": c.q3, "position": POSITION_TEXT.get(c.position or ""), "n": c.n,
+                         "premium": c.premium, "diff": c.diff, "reason": c.reason}
+                        for c in (sc.get("peer_comparisons") or [])]}

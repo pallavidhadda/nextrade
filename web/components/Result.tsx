@@ -108,20 +108,59 @@ export function Checklist({ s }: { s: Summary }) {
           <div className="meter" role="img" aria-label={`${pass} of ${s.checklist.length} checks passed`}>
             {s.checklist.map((c, i) => <i key={c.label} className={c.result} style={{ ["--i" as string]: i }} />)}
           </div>
-          <table>
-            <thead><tr><th>Test</th><th>Result</th></tr></thead>
-            <tbody>
-              {s.checklist.map((c, i) => (
-                <tr key={c.label}>
-                  <td>{c.label}<span className="ids">{c.display ? `${c.display}, needs ${c.threshold}` : c.reason}</span></td>
-                  <td><span className={`tag resolve ${c.result}`} style={{ ["--i" as string]: i }}>{c.result === "unavailable" ? "Unavailable" : c.result === "pass" ? "Pass" : "Fail"}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {(s.checklist_groups?.length ? s.checklist_groups : [{ group: "", text: "" }]).map((g) => (
+            <div key={g.group}>
+              {g.group && <h3>{g.group}: {g.text}</h3>}
+              <table>
+                <thead><tr><th>Test</th><th>Result</th></tr></thead>
+                <tbody>
+                  {s.checklist.filter((c) => !g.group || c.group === g.group).map((c, i) => (
+                    <tr key={c.label}>
+                      <td>{c.label}<span className="ids">{c.display ? `${c.display}, needs ${c.threshold}` : c.reason}</span></td>
+                      <td><span className={`tag resolve ${c.result}`} style={{ ["--i" as string]: i }}>{c.result === "unavailable" ? "Unavailable" : c.result === "pass" ? "Pass" : "Fail"}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
           </>
         )}
-        <p className="helper" style={{ marginTop: "var(--space-sm)" }}>Project-defined tests. Missing data shows as unavailable, never as a fail.</p>
+        <p className="helper" style={{ marginTop: "var(--space-sm)" }}>Project-defined tests, grouped for reading. Each counts once; there are no weights. Missing data shows as unavailable, never as a fail.</p>
+      </div>
+    </section>
+  );
+}
+
+const fmtPeer = (v: number | null) => (v === null ? "n/a" : Number(v.toPrecision(3)).toString());
+
+export function PeerSpread({ s }: { s: Summary }) {
+  const p = s.peers;
+  if (!p) return null;
+  return (
+    <section className="entry" data-r aria-labelledby="peer-h">
+      <header><h2 id="peer-h">Peer comparison</h2><span className="note">{p.n_peers} peers used</span></header>
+      <div className="body">
+        {p.unavailable_reason ? <p>No peer comparison: {p.unavailable_reason}.</p> : (
+          <>
+            {p.approximate && <p className="helper"><strong>Approximate peers:</strong> a diversified group compared with single-business companies.</p>}
+            {p.few_peers && <p className="helper"><strong>Only {p.n_peers} peer(s) used</strong>, fewer than 5. Treat this as rough.</p>}
+            <table>
+              <thead><tr><th>Metric</th><th className="num">{s.ticker}</th><th className="num">Median</th><th className="num">Q1</th><th className="num">Q3</th><th>Where it sits</th><th className="num">n</th></tr></thead>
+              <tbody>
+                {p.metrics.map((m) => (
+                  <tr key={m.metric}>
+                    <td>{metricLabel(m.metric)}{m.status !== "ok" && <span className="ids">{m.reason}</span>}</td>
+                    <td className="num">{fmtPeer(m.target)}</td><td className="num">{fmtPeer(m.median)}</td><td className="num">{fmtPeer(m.q1)}</td><td className="num">{fmtPeer(m.q3)}</td>
+                    <td>{m.position ?? "n/a"}</td><td className="num">{m.n}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="helper">Q1 and Q3 are the 25th and 75th percentiles of valid peer values. Peers: {p.picks.map((k) => k.ticker).join(", ")}. A place in the spread is not a verdict.</p>
+            {p.notes.filter((n) => !n.startsWith("approximate peers") && !n.startsWith("only ")).map((n) => <p className="helper" key={n}>{n}</p>)}
+          </>
+        )}
       </div>
     </section>
   );
@@ -260,16 +299,16 @@ export function News({ s }: { s: Summary }) {
   if (!s.news || s.news.length === 0) return null;
   return (
     <section className="entry" data-r aria-labelledby="news-h">
-      <header><h2 id="news-h">Recent headlines</h2><span className="note">unverified, keyword hint only</span></header>
+      <header><h2 id="news-h">Recent news</h2><span className="note">NSE announcements first; keyword hints only</span></header>
       <div className="body">
         <table>
-          <thead><tr><th>Date</th><th>Source</th><th>Headline</th><th>Hint</th></tr></thead>
+          <thead><tr><th>Date</th><th>Source</th><th>Headline</th><th>Event type (keyword guess)</th><th>Hint</th></tr></thead>
           <tbody>{s.news.map((n, i) => (
-            <tr key={i}><td>{n.published ?? "undated"}</td><td>{n.publisher}</td><td>{n.title}</td>
+            <tr key={i}><td>{n.published ?? "undated"}</td><td>{n.publisher}{n.source_kind === "exchange" && n.category ? ` (${n.category})` : ""}</td><td>{n.title}</td><td>{n.event_type ?? "other"}</td>
               <td><span className={`tag ${n.sentiment_hint === "neutral" ? "hypothesis" : n.sentiment_hint === "positive" ? "fact" : "fail"}`}>{n.sentiment_hint}</span></td></tr>
           ))}</tbody>
         </table>
-        <p className="helper" style={{ marginTop: "var(--space-sm)" }}>Third-party headlines are not verified and are not facts about the company. The hint is a keyword guess, not analysis.</p>
+        <p className="helper" style={{ marginTop: "var(--space-sm)" }}>Third-party headlines are not verified and are not facts about the company; only those naming the company are kept. The event type and the hint are keyword guesses, not analysis.</p>
       </div>
     </section>
   );

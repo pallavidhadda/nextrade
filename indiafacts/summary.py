@@ -4,6 +4,8 @@ from __future__ import annotations
 from indiafacts.models import FactSet, Status
 from indiafacts.render import DISCLAIMER
 
+FACTS_CAP = 800                  # size guard for the JSON summary (and so the snapshot branch); the overflow count is reported
+EVIDENCE_CAP = 200
 KEY_METRICS = ("price", "market_cap", "revenue", "net_income", "eps_diluted", "pe_ttm", "pb", "roe", "debt_to_equity")
 
 
@@ -24,6 +26,7 @@ def _pool_name(sc: dict) -> str | None:
 
 from indiafacts.fundamentals_view import fundamentals_rows
 from indiafacts.ownership_view import ownership
+from indiafacts.peers import peer_summary
 
 
 def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, changes=None, digest=None, news=None, debate=None, levels=None, panel=None, flows=None, scenario=None, prose=None, as_of=None, news_fetched=False, stamp=None) -> dict:
@@ -34,6 +37,7 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
             for f in fs.facts if f.status in (Status.gap, Status.unavailable)]
     score = None
     checklist: list[dict] = []
+    checklist_groups: list[dict] = []
     if scorecard and scorecard.get("result") is not None:
         r = scorecard["result"]
         score = {"status": r.status, "overall": r.overall, "rank": r.rank, "n": scorecard.get("n"),
@@ -42,7 +46,10 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
                  "contributions": {k: c.model_dump() for k, c in r.contributions.items()},
                  "missing_factors": [m.model_dump() for m in r.missing_factors],
                  "pool_failed": len(scorecard.get("failed") or {})}
-        checklist = [{"label": c.label, "result": c.result, "display": c.display, "threshold": c.threshold, "reason": c.reason}
+        from indiafacts.checklist import grouped
+
+        checklist_groups = grouped(scorecard["checklist"])
+        checklist = [{"label": c.label, "group": c.group, "result": c.result, "display": c.display, "threshold": c.threshold, "reason": c.reason}
                      for c in scorecard["checklist"]]
     key = []
     for m in KEY_METRICS:
@@ -86,10 +93,14 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
         rp = {"profile_lens": panel.profile_lens, "notes": panel.notes,
               "lenses": [{"name": l.name, "fits": l.fits, "breaches": l.breaches, "max_position_pct": l.max_position_pct, "reason": l.reason} for l in panel.lenses]}
     nws = [{"title": n.title, "publisher": n.publisher, "published": n.published.date().isoformat() if n.published else None,
-            "url": n.url, "sentiment_hint": n.sentiment_hint} for n in (news or [])]
+            "url": n.url, "sentiment_hint": n.sentiment_hint, "source_kind": n.source_kind, "category": n.category,
+            "event_type": n.event_type} for n in (news or [])]
+    facts = [{"fact_id": f.fact_id, "metric": f.metric, "value": None if f.value is None else str(f.value), "unit": f.unit,
+              "period_end": f.period_end.isoformat(), "period_type": f.period_type.value, "basis": f.basis.value, "source": f.source,
+              "status": f.status.value, "reason": f.reason, "evidence": (f.evidence or "")[:EVIDENCE_CAP]} for f in fs.facts[:FACTS_CAP]]
     return {"ticker": e.ticker, "name": e.name, "sector": e.sector, "industry": e.industry,
             "isin": e.isin.value, "retrieved_at": fs.retrieved_at.isoformat(),
             "profile": {"horizon": profile.horizon, "risk": profile.effective_risk, "experience": profile.experience},
-            "key_facts": key, "fundamentals": fundamentals_rows(fs), "ownership": ownership(fs), "market_flows": flows, "scenario": (None if scenario is None or not scenario.applies else {"tone": scenario.tone, "headline": scenario.headline, "summary": scenario.summary, "levels": [{"label": l, "price": v, "meaning": m} for l, v, m in scenario.levels], "stages": [{"label": l, "pct": p, "condition": c} for l, p, c in scenario.stages], "watch": scenario.watch, "more_positive_if": scenario.more_positive_if, "more_cautious_if": scenario.more_cautious_if, "notes": scenario.notes}), "prose": (None if prose is None or not prose.favour else {"favour": prose.favour, "against": prose.against, "weighing": prose.weighing}), "score": score, "completeness": completeness(fs, as_of, news=news if news_fetched else None),"checklist": checklist, "gaps": gaps,
+            "key_facts": key, "facts": facts, "facts_total": len(fs.facts), "fundamentals": fundamentals_rows(fs), "ownership": ownership(fs), "market_flows": flows, "scenario": (None if scenario is None or not scenario.applies else {"tone": scenario.tone, "headline": scenario.headline, "summary": scenario.summary, "levels": [{"label": l, "price": v, "meaning": m} for l, v, m in scenario.levels], "stages": [{"label": l, "pct": p, "condition": c} for l, p, c in scenario.stages], "watch": scenario.watch, "more_positive_if": scenario.more_positive_if, "more_cautious_if": scenario.more_cautious_if, "notes": scenario.notes}), "prose": (None if prose is None or not prose.favour else {"favour": prose.favour, "against": prose.against, "weighing": prose.weighing}), "score": score, "completeness": completeness(fs, as_of, news=news if news_fetched else None),"checklist": checklist, "checklist_groups": checklist_groups, "peers": peer_summary(scorecard), "gaps": gaps,
             "notices": list(fs.notices), "changes": [str(c) for c in (changes or [])][:20],
             "valuation": valuation, "debate": deb, "levels": lev, "risk_panel": rp, "news": nws, "explanation": ex, "llm": llm, "stamp": stamp, "scenario_reason": getattr(scenario, "reason", "") if scenario is not None else "", "disclaimer": DISCLAIMER}
