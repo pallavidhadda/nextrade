@@ -183,14 +183,21 @@ def reconcile_sources(a: Fact, b: Fact, tol: float = 0.05) -> list[Fact]:
     ]
 
 
-def cross_check(a: Fact, b: Fact, tol: float = 0.05) -> Fact:
-    """One computed Fact stating whether two sources agree on the same metric and period."""
+DEFINITION_PREFIX = "different definition: "
+
+
+def cross_check(a: Fact, b: Fact, tol: float = 0.05, definition: str = "") -> Fact:
+    """One computed Fact stating whether two sources agree on the same metric and period. When the two sources are known to define
+    the figure differently (`definition` says how), a gap is not a disagreement: the check is ok and its reason starts with
+    DEFINITION_PREFIX so reports can list it separately."""
     related = [a.fact_id, b.fact_id]
     spread = abs(b.value - a.value) / abs(a.value) if a.value else None
     ok = spread is not None and spread <= Decimal(str(tol))
     reason = "" if ok else (
         f"{a.source} {a.value} vs {b.source} {b.value}: sources differ by {spread:.1%}"
         if spread is not None else "reference value is zero")
+    if definition and not ok and spread is not None:
+        ok, reason = True, f"{DEFINITION_PREFIX}{definition} ({a.source} {a.value} vs {b.source} {b.value}, {spread:.1%} apart)"
     return Fact.make(
         entity_key=a.entity_key, metric=f"{a.metric}_source_check", value=spread, unit="ratio",
         period_end=a.period_end, period_type=a.period_type, fiscal_label=a.fiscal_label, source=COMPUTED,
@@ -199,7 +206,7 @@ def cross_check(a: Fact, b: Fact, tol: float = 0.05) -> Fact:
     )
 
 
-SOURCE_RANK = ("nse_filing", "nse_xbrl", "nse_shp", "nse_marketlens", "computed:selfvalue", "yahoo")   # official filing, exchange screener, our own arithmetic, then the vendor
+SOURCE_RANK = ("nse_filing", "nse_xbrl", "computed:filing_ebitda", "nse_shp", "nse_marketlens", "computed:selfvalue", "yahoo")   # official filing, exchange screener, our own arithmetic, then the vendor
 
 
 def prefer_sources(facts: list[Fact]) -> list[Fact]:
@@ -221,15 +228,16 @@ def check_ebitda(filing_facts: list[Fact], vendor_facts: list[Fact]) -> tuple[li
     Returns (new computed facts, replacements keyed by fact_id). A vendor series that equals
     PBT + finance costs (EBIT) is demoted to `unverified` for every period.
     """
-    def one(metric: str, end: date) -> Fact | None:
+    def one(metric: str, end: date, basis=None) -> Fact | None:
         hits = [f for f in filing_facts if f.metric == metric and f.period_end == end
-                and f.period_type == PeriodType.Q and f.status == Status.ok]
+                and f.period_type == PeriodType.Q and f.status == Status.ok and (basis is None or f.basis == basis)]
         return hits[0] if hits else None
 
     new: list[Fact] = []
     demote: dict[str, Fact] = {}
     for end in sorted({f.period_end for f in filing_facts if f.period_type == PeriodType.Q}):
-        pbt, interest, dep = one("profit_before_tax", end), one("interest_expense", end), one("depreciation", end)
+        pbt = one("profit_before_tax", end)
+        interest, dep = (one("interest_expense", end, pbt.basis), one("depreciation", end, pbt.basis)) if pbt else (None, None)
         if not (pbt and interest and dep):
             continue
         derived = Fact.make(
@@ -238,16 +246,28 @@ def check_ebitda(filing_facts: list[Fact], vendor_facts: list[Fact]) -> tuple[li
             source=COMPUTED, retrieved_at=pbt.retrieved_at, status=Status.ok,
             related_fact_ids=[pbt.fact_id, interest.fact_id, dep.fact_id],
         )
-        new.append(derived)
+        same_basis = pbt.basis == interest.basis == dep.basis
+        if same_basis:                                              # same filing period and basis: the figure vendors often call EBITDA
+            ref = Fact.make(
+                entity_key=pbt.entity_key, metric="ebitda", value=derived.value, unit="INR", period_end=end,
+                period_type=PeriodType.Q, fiscal_label=pbt.fiscal_label, basis=pbt.basis, source="computed:filing_ebitda",
+                source_field="profit_before_tax + interest_expense + depreciation", retrieved_at=pbt.retrieved_at,
+                status=Status.ok, available_from=pbt.available_from, availability_kind=pbt.availability_kind,
+                reason="EBITDA = profit before tax + finance costs + depreciation & amortisation, all from the same filing",
+                related_fact_ids=[pbt.fact_id, interest.fact_id, dep.fact_id])
+            new.append(ref)                                         # the filing EBITDA replaces ebitda_derived for this period
+        else:
+            ref = derived
+            new.append(derived)                                     # mixed bases: only the derived figure, labelled as such
         vend = [f for f in vendor_facts if f.metric == "ebitda" and f.period_end == end
                 and f.period_type == PeriodType.Q and f.status == Status.ok]
         if not vend:
             continue
-        chk = cross_check(derived, vend[0])
+        chk = cross_check(ref, vend[0])
         ebit = pbt.value + interest.value
         if chk.status == Status.conflict and abs(vend[0].value - ebit) <= abs(ebit) * Decimal("0.001"):
-            chk = chk.with_(reason=(f"{vend[0].source} 'EBITDA' equals profit before tax + finance costs (EBIT); "
-                                    f"depreciation not added back (derived {derived.value})"))
+            chk = cross_check(ref, vend[0], definition=(f"{vend[0].source} 'EBITDA' equals profit before tax + finance costs (EBIT); "
+                                                          f"depreciation is not added back (filing EBITDA {derived.value})"))
             note = f"appears to be EBIT, not EBITDA (checked against {pbt.fiscal_label} filing); series not trusted"
             for f in vendor_facts:
                 if f.metric == "ebitda" and f.period_type == PeriodType.Q and f.value is not None:

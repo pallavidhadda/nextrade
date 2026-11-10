@@ -72,8 +72,20 @@ def _pick(stmt: pd.DataFrame | None, names: tuple[str, ...], col) -> tuple[Decim
     return None, ""
 
 
+def _has_values(statements: dict[str, pd.DataFrame | None], col) -> bool:
+    """True when Yahoo has at least one value in this year's column for a row we read."""
+    for st_name, names in {(v[0], v[1]) for v in ROWS.values()}:
+        stmt = statements.get(st_name)
+        if stmt is None or col not in stmt.columns:
+            continue
+        if any(n in stmt.index and _num(stmt.at[n, col]) is not None for n in names):
+            return True
+    return False
+
+
 def annual_facts(ticker: str, statements: dict[str, pd.DataFrame | None], sector: str | None = None,
-                 industry: str | None = None, now: datetime | None = None, max_years: int = 5) -> list[Fact]:
+                 industry: str | None = None, now: datetime | None = None, max_years: int = 5,
+                 notices: list[str] | None = None) -> list[Fact]:
     """Year figures from Yahoo's annual statements. Empty cells become unavailable facts with a reason."""
     now = now or datetime.now(timezone.utc)
     lender = is_lender(sector, industry)
@@ -83,7 +95,15 @@ def annual_facts(ticker: str, statements: dict[str, pd.DataFrame | None], sector
         if s is not None and not s.empty:
             cols = list(s.columns)[:max_years]
             break
+    kept = [c for c in cols if _has_values(statements, c)]
     for col in cols:
+        if col in kept or notices is None:
+            continue
+        later = [c for c in kept if pd.Timestamp(c) > pd.Timestamp(col)]
+        nxt = min(later, key=pd.Timestamp) if later else (max(kept, key=pd.Timestamp) if kept else None)
+        start = f"; annual history starts at {fiscal_label(pd.Timestamp(nxt).date(), 'FY')}" if nxt is not None else ""
+        notices.append(f"Yahoo lists the year ending {pd.Timestamp(col).date()} without figures{start}")
+    for col in kept:
         end = pd.Timestamp(col).date()
         for metric, (st_name, names) in ROWS.items():
             stmt = statements.get(st_name)
@@ -94,8 +114,6 @@ def annual_facts(ticker: str, statements: dict[str, pd.DataFrame | None], sector
                 out.append(Fact.make(value=None, status=Status.unavailable, reason=LENDER_REASON,
                                      source_field="n/a", **common))
                 continue
-            if stmt is not None and col in stmt.columns and stmt[col].isna().all():
-                continue                               # Yahoo lists the year but has no data for it at all: not a gap worth reporting
             if stmt is None or col not in stmt.columns:
                 out.append(Fact.make(value=None, status=Status.unavailable,
                                      reason=f"Yahoo returned no annual {st_name} statement", source_field="n/a", **common))

@@ -1,0 +1,27 @@
+{
+  "note": "Which source feeds each score metric when a company is ranked inside a sector. One source is chosen per metric for every company in the comparison: the first candidate covering at least min_coverage of the set. A metric with no qualifying source is not scored. pool_store = pool_metrics.json (our own calculation from Yahoo prices and NSE filings, built daily); nse_marketlens = NSE Market Lens rows. Market Lens fields not listed here are placeholders (return on equity, growth, beta) or absent (drawdown, EV, cash flow).",
+  "reviewed_on": "2026-11-10",
+  "review_by": "2027-05-10",
+  "min_coverage": 0.6,
+  "metrics": {
+    "pe_ttm": ["pool_store", "nse_marketlens"],
+    "pb": ["pool_store", "nse_marketlens"],
+    "ev_ebitda": ["pool_store"],
+    "fy_fcf_yield": ["pool_store"],
+    "roe": ["pool_store"],
+    "net_margin_q": ["pool_store"],
+    "debt_to_equity": ["pool_store", "nse_marketlens"],
+    "fy_roce": ["pool_store"],
+    "fy_net_debt_to_ebitda": ["pool_store"],
+    "net_income_yoy": ["pool_store"],
+    "revenue_yoy": ["pool_store"],
+    "fy_revenue_cagr_3y": ["pool_store"],
+    "fy_net_income_cagr_3y": ["pool_store"],
+    "return_1y": ["pool_store", "nse_marketlens"],
+    "relative_return_1y": ["pool_store", "nse_marketlens"],
+    "pct_from_52w_high": ["pool_store", "nse_marketlens"],
+    "volatility_1y": ["pool_store", "nse_marketlens"],
+    "max_drawdown_3y": ["pool_store"],
+    "beta_1y": ["pool_store"]
+  }
+}

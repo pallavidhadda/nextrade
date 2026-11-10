@@ -173,6 +173,7 @@ class FactSet(BaseModel):
     price_notes: list[str] = Field(default_factory=list)
     filings: list[FilingMeta] = Field(default_factory=list)
     charts: dict = Field(default_factory=dict)           # plotting series for the HTML report (not Facts)
+    yahoo_unavailable: bool = False                      # Yahoo failed for the target; current figures come from NSE Market Lens
 
     def by_metric(self, name: str) -> list[Fact]:
         return [f for f in self.facts if f.metric == name]

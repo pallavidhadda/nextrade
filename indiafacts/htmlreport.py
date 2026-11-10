@@ -173,8 +173,11 @@ def _card(ident: str, title: str, sub: str, inner: str, twin: str = "", cls: str
 
 
 # ---------------------------------------------------------------- line charts
-def _price_card(charts: dict, facts: list[Fact], name: str) -> str:
+def _price_card(charts: dict, facts: list[Fact], name: str, yahoo_down: bool = False) -> str:
     c = (charts or {}).get("price") or {}
+    if yahoo_down:
+        return _card("chart-price", "Price against the Nifty 50", "Rebased to 100 at the start of the window.",
+                     '<p class="empty">Not available this run: Yahoo Finance was unavailable.</p>')
     if not c or len(c.get("dates", [])) < 2:
         return _card("chart-price", "Price against the Nifty 50", "Rebased to 100 at the start of the window.",
                      '<p class="empty">Price history unavailable for this run (not loaded, or too short).</p>')
@@ -236,8 +239,11 @@ def _price_card(charts: dict, facts: list[Fact], name: str) -> str:
                  "split-adjusted to today's share count.", legend + svg, twin)
 
 
-def _drawdown_card(charts: dict) -> str:
+def _drawdown_card(charts: dict, yahoo_down: bool = False) -> str:
     c = (charts or {}).get("price") or {}
+    if yahoo_down:
+        return _card("chart-drawdown", "Fall from the previous high", "Stock only.",
+                     '<p class="empty">Not available this run: Yahoo Finance was unavailable.</p>')
     if not c or len(c.get("dates", [])) < 2:
         return _card("chart-drawdown", "Fall from the previous high", "Stock only.",
                      '<p class="empty">Price history unavailable for this run.</p>')
@@ -595,7 +601,7 @@ def _peer_card(sc: dict | None, metric: str, target: str) -> str:
                  svg, _table(["Company", "Value"], rows, num=(1,)))
 
 
-def _peer_table_card(sc: dict | None, target: str) -> str:
+def _peer_table_card(sc: dict | None, target: str, heading: str = "") -> str:
     from indiafacts.peers import POSITION_TEXT
 
     g = (sc or {}).get("peers")
@@ -613,7 +619,7 @@ def _peer_table_card(sc: dict | None, target: str) -> str:
         else:
             rows.append([c.metric, "n/a" if c.target_value is None else f"{c.target_value:.3g}", f"{c.peer_median:.3g}",
                          f"{c.q1:.3g}", f"{c.q3:.3g}", POSITION_TEXT.get(c.position or "", "n/a"), str(c.n)])
-    return _card("peer-table", "Peer spread by metric",
+    return _card("peer-table", heading or "Peer spread by metric",
                  f"{len(g.picks)} peers used, picked by rule from the pool. Q1 and Q3 are the 25th and 75th percentiles of valid peer values. A position is a place in the spread, not a verdict.",
                  warn + _table(["Metric", target, "Peer median", "Q1", "Q3", "Position", "Peers (n)"], rows, num=(1, 2, 3, 4, 6)))
 
@@ -655,6 +661,9 @@ def _exec_cards(x: dict) -> str:
         items = "".join(f"<li>{esc(n)}: {esc(st)}</li>" for n, st in c["items"])
         conf = ("<h3>Conflicting figures</h3><ul>" + "".join(f"<li>{esc(t)}</li>" for t in c["conflicts"]) + "</ul>") if c["conflicts"] else ""
         extra = "".join(f'<p class="sub">{esc(t)}</p>' for t in (c["stale"], c["verification"]) if t)
+        if c.get("definitions"):
+            conf += ("<h3>Same figure, different definition (not a disagreement)</h3><ul>"
+                     + "".join(f"<li>{esc(t)}</li>" for t in c["definitions"]) + "</ul>")
         block += (f'<section class="card" id="completeness"><h3>How complete is the data</h3>'
                   f'<p><span class="light {c["tone"]}">{esc(c["level"])}</span> {esc(c["words"])}</p>'
                   f'<ul style="columns:2">{items}</ul>{extra}{conf}</section>')
@@ -671,6 +680,10 @@ def _decomp_card(x: dict) -> str:
     if d["sentence"]:
         body += f'<p class="sub">{esc(d["sentence"])}</p>'
     body += "".join(f'<p class="sub">{esc(n)}</p>' for n in x["rank_notes"])
+    cv = x.get("comparison")
+    if cv and cv["sources"]:
+        body += ('<h3>Where each measure comes from</h3><p class="sub">The same source is used for every company compared.</p><ul>'
+                 + "".join(f"<li>{esc(t)}</li>" for t in cv["sources"]) + "</ul>")
     return _card("score-breakdown", "How the overall score is built", "Contributions add up to the overall score.", body)
 
 
@@ -795,12 +808,12 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
     else:
         tiles += '<div class="tile" title="not available"><div class="label">Rating</div><div class="value">—</div><div class="note">not available</div></div>'
 
-    charts = _price_card(fs.charts, price_facts, e.ticker) + _drawdown_card(fs.charts)
+    charts = _price_card(fs.charts, price_facts, e.ticker, fs.yahoo_unavailable) + _drawdown_card(fs.charts, fs.yahoo_unavailable)
     q = _quarter_card("chart-q-net_income", "Net profit by quarter", "net_income", facts, ctx) + \
         _quarter_card("chart-q-revenue", "Revenue by quarter", "revenue", facts, ctx)
     q += _ratio_cards(facts, ctx)
     sc_block = _score_card(scorecard) + _decomp_card(x) + _checklist_card(scorecard) + _scenario_card(scenario, prose, levels, x["scenario_reason"] if not x["directional"] else "") + _health_card(fs) + _ownership_card(fs) + _flows_card(flows)
-    peers = (_peer_table_card(scorecard, e.ticker) + _peer_card(scorecard, "pe_ttm", e.ticker) + _peer_card(scorecard, "pb", e.ticker)) if scorecard else ""
+    peers = (_peer_table_card(scorecard, e.ticker, (x.get("comparison") or {}).get("heading", "")) + _peer_card(scorecard, "pe_ttm", e.ticker) + _peer_card(scorecard, "pb", e.ticker)) if scorecard else ""
     peer_note = ""
     if scorecard and scorecard.get("peers") and scorecard["peers"].picks:
         g = scorecard["peers"]
@@ -814,11 +827,16 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
     seg = _segment_cards(facts, ctx)
     extra = _extra_cards(debate, news, levels, panel, scenario)
 
-    bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified) and f.reason != LENDER_REASON]
+    from indiafacts.completeness import attention_items, data_notes, definition_differences
+
+    bad = attention_items(list(facts))
     dq_rows = [[f.metric, f.fiscal_label or f.period_end.isoformat(), f.status.value, f.reason] for f in bad[:60]]
-    dq = _card("data-quality", f"Data quality: {len(bad)} item(s) need attention",
+    from indiafacts.render import YAHOO_DOWN_LINE
+
+    dq = _card("data-quality", data_notes(bad, definition_differences(list(facts))),
                "Gaps, unavailable values, conflicts and unverified figures are listed instead of hidden.",
-               _table(["Metric", "Period", "Status", "Reason"], dq_rows) if dq_rows else '<p class="empty">None.</p>')
+               (f'<p class="banner">{esc(YAHOO_DOWN_LINE)}</p>' if fs.yahoo_unavailable else "")
+               + (_table(["Metric", "Period", "Status", "Reason"], dq_rows) if dq_rows else '<p class="empty">None.</p>'))
     src_rows = [[fid, f.metric, f.fiscal_label or f.period_end.isoformat(), format_inr(f.value) if f.unit == "INR" else str(f.value),
                  f"{f.source}:{f.source_field or ''}", f.evidence or "", str(f.retrieved_at.date())] for fid, f in ctx.used.items()]
     sources = (f'<section class="card" id="sources"><h2>Sources for plotted figures</h2>'
@@ -830,7 +848,9 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
         prof = (f'<div class="banner">Profile: horizon {esc(profile.horizon)}, goal {esc(profile.goal)}, effective risk '
                 f'{esc(profile.effective_risk)}, view {esc(view)}, profile {esc(profile.profile_hash)}'
                 + (" (default profile, not set by you)" if profile_is_default else "") + "</div>")
-    notices = "".join(f"<li>{esc(n)}</li>" for n in fs.notices)
+    from indiafacts.render import YAHOO_DOWN_LINE as _YD
+
+    notices = "".join(f"<li>{esc(n)}</li>" for n in fs.notices if n != _YD)
     notices = f'<div class="banner"><ul style="margin:0;padding-left:18px">{notices}</ul></div>' if notices else ""
     when = (as_of or fs.retrieved_at.date()).isoformat()
     last_bar = (fs.charts.get("price") or {}).get("dates", [None])[-1] if fs.charts else None
@@ -857,6 +877,7 @@ def build_html(fs: FactSet, profile=None, profile_is_default: bool = False, view
 {peer_note}<div class="grid two">{peers}</div>
 <div class="grid two">{seg}</div>
 <div class="grid">{dq}{sources}</div>
-<footer>{esc(x["stamp_line"])}<br>{esc(DISCLAIMER)} Price charts use Yahoo Finance data (unofficial) and, where enabled, TejHQ open data; results pages are
-NSE filings you supplied. No chart implies a forecast.</footer></main>
+<footer>{esc(DISCLAIMER)} Price charts use Yahoo Finance data (unofficial) and, where enabled, TejHQ open data; results pages are
+NSE filings you supplied. No chart implies a forecast.
+{('<small class="muted">Report ID ' + esc(x["report_id"]) + '</small>') if x.get("report_id") else ""}</footer></main>
 <div id="tip" role="status"></div><script>{JS}</script></body></html>"""

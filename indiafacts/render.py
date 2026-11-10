@@ -69,6 +69,21 @@ def _cell(f: Fact | None, refs: _Refs) -> str:
     return tag
 
 
+def one_per_metric(facts: Sequence[Fact]) -> list[Fact]:
+    """One figure per metric: the latest period, then consolidated over other bases, then the best-ranked source."""
+    from indiafacts.analysis import SOURCE_RANK
+
+    def key(f: Fact):
+        r = SOURCE_RANK.index(f.source) if f.source in SOURCE_RANK else len(SOURCE_RANK)
+        return (-f.period_end.toordinal(), f.basis.value != "consolidated", r)
+
+    best: dict[str, Fact] = {}
+    for f in facts:
+        if f.metric not in best or key(f) < key(best[f.metric]):
+            best[f.metric] = f
+    return [f for f in facts if best[f.metric] is f]
+
+
 def render_table(facts: Sequence[Fact], refs: _Refs | None = None) -> str:
     for f in facts:
         if not isinstance(f, Fact):
@@ -242,6 +257,40 @@ def monitor_items(s: dict, limit: int = 4) -> list[str]:
     return uniq[:limit]
 
 
+METRIC_WORDS = {
+    "pe_ttm": "P/E", "pb": "Price to book", "ev_ebitda": "EV/EBITDA", "fy_fcf_yield": "Free cash flow yield", "roe": "Return on equity",
+    "net_margin_q": "Net margin", "debt_to_equity": "Debt to equity", "fy_roce": "Return on capital employed",
+    "fy_net_debt_to_ebitda": "Net debt to EBITDA", "net_income_yoy": "Profit growth", "revenue_yoy": "Revenue growth",
+    "fy_revenue_cagr_3y": "3-year revenue growth", "fy_net_income_cagr_3y": "3-year profit growth", "return_1y": "1-year price return",
+    "relative_return_1y": "1-year return against the Nifty 50", "pct_from_52w_high": "Distance from the 52-week high",
+    "volatility_1y": "Price swings over 1 year", "max_drawdown_3y": "Worst fall over 3 years", "beta_1y": "Sensitivity to the market (beta)",
+}
+SOURCE_WORDS = {"nse_marketlens": "NSE Market Lens", "pool_store": "our own calculation"}
+YAHOO_DOWN_LINE = ("Yahoo Finance was unavailable: current figures come from NSE Market Lens; "
+                   "the price chart, drawdown and technical indicators are not shown.")
+
+
+def comparison_view(sc: dict) -> dict | None:
+    """Plain-words description of a sector comparison from the summary score: a heading and one line per metric saying where the
+    figure came from for the companies compared. None when the run did not rank inside a sector."""
+    if (sc or {}).get("comparison") != "sector" or not sc.get("set_size"):
+        return None
+    n = sc["set_size"]
+    kind = "sub-sector" if sc.get("set_kind") == "subSector" else "sector"
+    heading = (f"Compared with {n} companies in {sc['set_name']} (NSE Market Lens {kind})" if sc.get("set_name")
+               else f"Compared with {n} companies in the same NSE Market Lens {kind}")
+    lines = []
+    for m, info in (sc.get("metric_sources") or {}).items():
+        name = METRIC_WORDS.get(m, m.replace("_", " ").capitalize())
+        got, of = info.get("covered") or 0, info.get("of") or n
+        if info.get("source") is None:
+            lines.append(f"{name}: not scored (only {got} of {of} companies had a usable figure)")
+        else:
+            span = f"all {of} companies" if got == of else f"{got} of {of}"
+            lines.append(f"{name}: {SOURCE_WORDS.get(info['source'], info['source'])} for {span}")
+    return {"heading": heading, "sources": lines}
+
+
 def exec_view(s: dict) -> dict:
     """Plain-English executive block, completeness badge, score decomposition, rank caveat and stamp line from a summary-shaped dict."""
     from indiafacts.debate import has_direction
@@ -275,7 +324,8 @@ def exec_view(s: dict) -> dict:
     out["comp"] = {"level": level, "tone": {"High": "good", "Medium": "warn", "Low": "bad", "Insufficient": "bad"}.get(level, "warn"),
                    "words": LEVEL_WORDS.get(level, ""), "items": area_items(comp),
                    "stale": f"{stale} figure{' is' if stale == 1 else 's are'} out of date" if stale > 0 else "",
-                   "verification": ((comp.get("verification") or {}).get("label") or ""), "conflicts": conflicts} if level else None
+                   "verification": ((comp.get("verification") or {}).get("label") or ""), "conflicts": conflicts,
+                   "definitions": [f"{d['metric']} ({d['period']}): {d['reason']}" for d in comp.get("definitions") or []]} if level else None
     sc = s.get("score") or {}
     rows, sentence = [], ""
     for k, c in (sc.get("contributions") or {}).items():
@@ -292,12 +342,10 @@ def exec_view(s: dict) -> dict:
     if failed:
         notes.append(f"{failed} of {(n or 0) + failed} comparison companies could not be loaded")
     out["rank_notes"] = notes
+    out["comparison"] = comparison_view(sc)
     sp = s.get("stamp")
-    if sp:
-        line = f"Report {sp['report_id']} · data as of {sp['as_of']} · rules {sp['params_hash']} · build {sp['commit']}"
-        out["stamp_line"] = line + (f" · model {sp['llm_model']}" if sp.get("llm_model") else "")
-    else:
-        out["stamp_line"] = ""
+    out["stamp_line"] = ""                                         # no longer shown; the id alone sits in the HTML footer
+    out["report_id"] = sp["report_id"] if sp else ""
     out["scenario_reason"] = s.get("scenario_reason") or ("no scenario plan without a rating" if not directional else "")
     return out
 
@@ -315,6 +363,7 @@ def exec_lines(x: dict) -> list[str]:
         if c["verification"]:
             lines.append(f"  {c['verification']}")
         lines += [f"  conflict: {t}" for t in c["conflicts"]]
+        lines += [f"  same figure, different definition (not a disagreement): {t}" for t in c.get("definitions", [])]
     return lines
 
 
@@ -327,13 +376,16 @@ def decomp_lines(x: dict) -> list[str]:
     out.append(f"    sum of contributions {d['total']:.1f}" + (f" = overall {d['overall']:.1f}" if d["overall"] is not None else ""))
     if d["sentence"]:
         out.append("  " + d["sentence"])
+    cv = x.get("comparison")
+    if cv and cv["sources"]:
+        out += ["  where each measure comes from (the same source for every company compared)"] + [f"    {t}" for t in cv["sources"]]
     return out
 
 
 def _scorecard_block(sc: dict, x: dict | None = None) -> list[str]:
     r = sc["result"]
     pool = ("built-in pool of 30 large NSE names (not an index)" if sc.get("default_pool")
-            else (sc["pool"] if str(sc["pool"]).startswith(("TejHQ", "NSE industry group")) else f"pool file {sc['pool']}"))
+            else (sc["pool"] if str(sc["pool"]).startswith(("TejHQ", "NSE industry group", "NSE Market Lens")) else f"pool file {sc['pool']}"))
     lines = ["", f"SCORECARD (percentile ranks inside {sc['n']} companies from the {pool}; ordering within the pool, "
                  "not absolute quality)"]
     if r is None:
@@ -393,11 +445,13 @@ def peer_pick_text(p) -> str:
     return base if p.size_ratio is None else f"{base}, {p.size_ratio:.2f}x size"
 
 
-def _peers_block(sc: dict, ticker: str) -> list[str]:
+def _peers_block(sc: dict, ticker: str, comparison_heading: str = "") -> list[str]:
     g = sc.get("peers")
     if g is None:
         return []
     lines = ["", "PEERS (picked by rule from the loaded pool; medians use valid values only; not-meaningful P/E above 75 is left out)"]
+    if comparison_heading:
+        lines.append(comparison_heading)
     if g.unavailable_reason:
         return lines[:1] + [f"no peer comparison: {g.unavailable_reason}"] + [f"note: {n}" for n in g.notes]
     lines.append(f"peers used: {len(g.picks)}" + (f" (of {g.candidates} candidates in the pool)" if g.candidates else "")
@@ -570,7 +624,8 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
     e = factset.entity
     when = as_of or factset.retrieved_at.date()
     head = f"{e.ticker}  |  as of {when}  |  amounts in INR (₹ crore = 10^7)"
-    notes = ["", "NOTICES"] + [f"- {n}" for n in factset.notices] if factset.notices else []
+    shown = [n for n in factset.notices if n != YAHOO_DOWN_LINE]          # said once, in the data section
+    notes = ["", "NOTICES"] + [f"- {n}" for n in shown] if shown else []
     if e.resolution != "resolved":
         return "\n".join([head, *notes, "", f"No data: {e.resolution_reason}", "", DISCLAIMER])
     facts = factset.facts
@@ -583,14 +638,16 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
 
     x = exec_view(exec_input(factset, as_of, scorecard, debate, explanation, scenario, levels, stamp))
     directional = debate is None or has_direction(debate.stance.label)
-    bad = [f for f in facts if f.status in (Status.gap, Status.unavailable, Status.conflict, Status.unverified) and f.reason != LENDER_REASON]
+    from indiafacts.completeness import attention_items, data_notes, definition_differences
+
+    bad = attention_items(list(facts))
     refs = _Refs()
     parts = [head, *notes, *exec_lines(x), *(_profile_block(profile, profile_is_default, view) if profile else []),
              *_filings_block(factset.filings),
              *_changes_block(changes, changes_note),
              *(_explanation_block(explanation, digest) if explanation is not None else []),
              *(_scorecard_block(scorecard, x) if scorecard else []),
-             *(_peers_block(scorecard, e.ticker) if scorecard else []),
+             *(_peers_block(scorecard, e.ticker, (x.get("comparison") or {}).get("heading", "")) if scorecard else []),
              *fundamentals_lines(factset),
              *ownership_lines(factset),
              *flows_lines(flows),
@@ -600,12 +657,13 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
              *([f"SCENARIO PLAN: not shown: {x['scenario_reason']}"] if not directional else []),
              *(_levels_block(levels, panel, scenario, directional) if levels is not None else []),
              *(_news_block(news) if news else []),
-             "", f"DATA QUALITY: {len(bad)} item(s) need attention (gaps, unavailable, conflicts, unverified)"]
+             "", data_notes(bad, definition_differences(list(facts))), *([YAHOO_DOWN_LINE] if factset.yahoo_unavailable else [])]
 
     parts += ["", "QUARTERLY (Yahoo; availability dates are deadline estimates)", render_table([f for f in facts if view == "pro" or not (f.metric in PRO_ONLY or f.metric.startswith("segment_"))], refs)]
 
     overview = [f for f in facts if f.period_type == PeriodType.point and f.status == Status.ok
                 and not f.source.startswith("computed")]
+    overview = one_per_metric(overview)
     if overview:
         parts += ["", "OVERVIEW (live snapshot)"]
         parts += [f"{f.metric}: {_fmt(f)} [{refs.ref(f)}]" for f in overview]
@@ -624,7 +682,9 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
         parts += [f"{f.metric}: {_fmt(f)} [{refs.ref(f)}] - {f.reason}" for f in vendor]
 
     pf = {f.metric: f for f in facts if _is_price(f)}
-    if pf:
+    if factset.yahoo_unavailable:
+        parts += ["", "PRICE HISTORY: not available this run (Yahoo Finance was unavailable); no price chart, drawdown or technical indicators"]
+    elif pf:
         parts += ["", "PRICE HISTORY (price returns; dividends excluded; Nifty 50 = price index)"]
         parts += [f"- {n}" for n in factset.price_notes]
         parts += ["| window | stock | Nifty 50 | relative | max drawdown |", "|---|---|---|---|---|"]
@@ -656,6 +716,4 @@ def render(factset: FactSet, as_of: date | None = None, profile=None, profile_is
     if refs.index():
         parts += ["", "SOURCES", refs.index()]
     parts += ["", DISCLAIMER]
-    if x["stamp_line"]:
-        parts.append(x["stamp_line"])
     return "\n".join(parts)

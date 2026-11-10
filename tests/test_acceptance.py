@@ -23,7 +23,7 @@ def test_a1_reliance_replay_offline(capsys):
     assert re.search(r"price_pe_eps_check .*\[r\d+\]", out) and "conflict" not in out.split("COMPUTED CHECKS")[1].split("\n\n")[0]
     assert "basis: unknown" in out
     assert DISCLAIMER in out
-    assert "net_income_ttm_vendor" in out and "unverified" in out
+    assert "net_income_ttm_vendor" in out and "Data notes:" in out
 
 
 def test_a2_asof_before_june_filing(capsys):

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import subprocess
 from datetime import date
@@ -16,6 +17,23 @@ def params_hash(data_dir: Path | None = None) -> str:
     for p in sorted(Path(data_dir or DATA_DIR).glob("*.json"), key=lambda p: p.name):
         h.update(p.name.encode() + b"\0" + p.read_bytes() + b"\0")
     return h.hexdigest()[:12]
+
+
+def source_policy_hash(data_dir: Path | None = None) -> str:
+    """First 12 hex characters of sha256 over data/source_policy.json; 'none' when absent."""
+    try:
+        return hashlib.sha256((Path(data_dir or DATA_DIR) / "source_policy.json").read_bytes()).hexdigest()[:12]
+    except OSError:
+        return "none"
+
+
+def drift_status() -> str:
+    """ok | warning | breaking from the drift report the snapshot job points INDIAFACTS_DRIFT_REPORT at; 'unknown' when there is none."""
+    try:
+        p = os.environ.get("INDIAFACTS_DRIFT_REPORT", "").strip().removeprefix("file://")
+        return str(json.loads(Path(p).read_text(encoding="utf-8")).get("status") or "unknown") if p else "unknown"
+    except Exception:
+        return "unknown"
 
 
 def app_commit() -> str:
@@ -37,4 +55,5 @@ def report_stamp(ticker: str, as_of: date, pool: list[str] | None = None, llm_mo
     members = sorted(pool or [])
     rid = hashlib.sha256(f"{ticker}|{as_of.isoformat()}|{ph}|{cm}".encode()).hexdigest()[:10]
     return {"report_id": rid, "ticker": ticker, "as_of": as_of.isoformat(), "pool_size": len(members), "pool_members": members,
-            "params_hash": ph, "commit": cm, "llm_model": llm_model}
+            "params_hash": ph, "commit": cm, "llm_model": llm_model,
+            "drift_status": drift_status(), "source_policy": source_policy_hash(data_dir)}

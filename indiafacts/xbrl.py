@@ -18,6 +18,11 @@ SOURCE = "nse_xbrl"
 MAX_BYTES = 20 * 1024 * 1024
 _TS = re.compile(r"_(\d{2})(\d{2})(\d{4})\d{6}(?:_WEB)?\.xml$", re.I)
 _XBRLI = "{http://www.xbrl.org/2003/instance}"
+# The three coverage/leverage ratios sit in the file as a hundredth of the figure the company publishes (RELIANCE Q2 FY27 file:
+# D/E 0.0041, the results page and Market Lens: 0.41). EPS and money are not touched.
+RATIO_FILE_FACTOR = Decimal(100)
+UNSCALED_DE_FLOOR = Decimal(1)       # a filer that stores D/E as published (0.4 or 1.8) is not scaled; hundredths of any real D/E are below 1
+_COVER_RATIOS = ("DebtServiceCoverageRatio", "InterestServiceCoverageRatio")
 
 # concept -> (metric, unit kind)
 _PL = {
@@ -127,12 +132,18 @@ def facts_from_nse_xbrl(path: Path, retrieved_at: datetime | None = None) -> Fac
         v = _dec(vals.get((concept, ctx), ""))
         if v is None:
             return
+        raw = v
+        if unit == "ratio":
+            if concept in _COVER_RATIOS and v == 0:
+                return                           # a coverage ratio of 0 is "not applicable" (TCS files 0), not a measured figure
+            if not (concept == "DebtEquityRatio" and v >= UNSCALED_DE_FLOOR):
+                v = v * RATIO_FILE_FACTOR        # a D/E of 1 or more in the file is already unscaled: scaled it would read 100x or more
         facts.append(Fact.make(
             entity_key=ticker, metric=metric, value=v, unit=unit, period_start=start, period_end=stop, period_type=ptype,
             fiscal_label=fiscal_label(stop, ptype.value) if ptype != PeriodType.point else None, basis=basis, source=SOURCE,
             source_field=f"in-bse-fin:{concept} [{audit or 'audit status unknown'}]", retrieved_at=now, available_from=avail,
             availability_kind=AvailabilityKind.filed if avail else AvailabilityKind.unknown, status=status, reason=reason,
-            evidence=f"{document} | in-bse-fin:{concept} @ {ctx}", reported_value=v, reported_unit=unit, audit_status=audit, filing_id=filing_id))
+            evidence=f"{document} | in-bse-fin:{concept} @ {ctx}", reported_value=raw, reported_unit=unit, audit_status=audit, filing_id=filing_id))
 
     year_note = "year-to-date value read from context FourD; the file's own dates repeat the quarter, so confirm against the results page"
     have_owner = ("ProfitOrLossAttributableToOwnersOfParent", "OneD") in vals

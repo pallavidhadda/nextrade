@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+import os
 import time
 from datetime import date, datetime, timezone
 from decimal import Decimal
@@ -104,6 +105,8 @@ def fetch_facts(
 ) -> FactSet:
     entity = Entity.from_ticker(ticker)
     now = now or datetime.now(timezone.utc)
+    if os.environ.get("INDIAFACTS_YAHOO_DISABLED", "").strip() == "1":       # test switch: behave as if Yahoo returned nothing
+        return FactSet(entity=entity.unresolved("Yahoo disabled (INDIAFACTS_YAHOO_DISABLED=1)"), facts=[], retrieved_at=now)
     client = client or YfinanceClient(entity.ticker)
     stmt, info, why = _fetch_payload(client, sleep)
     if stmt is None and not info:

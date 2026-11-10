@@ -7,6 +7,32 @@ const fname = (k: string) => FACTORS[k] ?? k.charAt(0).toUpperCase() + k.slice(1
 const inr0 = (v: number) => `₹${Math.abs(v) >= 10 ? Math.round(v).toLocaleString("en-IN") : v.toFixed(2)}`;
 const pct0 = (v: number) => `${Math.round(v * 100)}%`;
 
+export const YAHOO_DOWN_LINE = "Yahoo Finance was unavailable: current figures come from NSE Market Lens; the price chart, drawdown and technical indicators are not shown.";
+const METRIC_WORDS: Record<string, string> = {
+  pe_ttm: "P/E", pb: "Price to book", ev_ebitda: "EV/EBITDA", fy_fcf_yield: "Free cash flow yield", roe: "Return on equity",
+  net_margin_q: "Net margin", debt_to_equity: "Debt to equity", fy_roce: "Return on capital employed",
+  fy_net_debt_to_ebitda: "Net debt to EBITDA", net_income_yoy: "Profit growth", revenue_yoy: "Revenue growth",
+  fy_revenue_cagr_3y: "3-year revenue growth", fy_net_income_cagr_3y: "3-year profit growth", return_1y: "1-year price return",
+  relative_return_1y: "1-year return against the Nifty 50", pct_from_52w_high: "Distance from the 52-week high",
+  volatility_1y: "Price swings over 1 year", max_drawdown_3y: "Worst fall over 3 years", beta_1y: "Sensitivity to the market (beta)",
+};
+const SOURCE_WORDS: Record<string, string> = { nse_marketlens: "NSE Market Lens", pool_store: "our own calculation" };
+
+// Mirrors comparison_view in indiafacts/render.py
+export function comparisonView(sc: Summary["score"]): { heading: string; sources: string[] } | null {
+  if (!sc || sc.comparison !== "sector" || !sc.set_size) return null;
+  const n = sc.set_size;
+  const kind = sc.set_kind === "subSector" ? "sub-sector" : "sector";
+  const heading = sc.set_name ? `Compared with ${n} companies in ${sc.set_name} (NSE Market Lens ${kind})` : `Compared with ${n} companies in the same NSE Market Lens ${kind}`;
+  const sources = Object.entries(sc.metric_sources ?? {}).map(([m, info]) => {
+    const name = METRIC_WORDS[m] ?? (m.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()));
+    const got = info.covered ?? 0, of = info.of || n;
+    if (info.source === null) return `${name}: not scored (only ${got} of ${of} companies had a usable figure)`;
+    return `${name}: ${SOURCE_WORDS[info.source] ?? info.source} for ${got === of ? `all ${of} companies` : `${got} of ${of}`}`;
+  });
+  return { heading, sources };
+}
+
 export function hasDirection(label: string): boolean {
   return !["No rating", "Insufficient evidence"].includes(label);   // the second is a legacy label from older saved summaries
 }
@@ -115,7 +141,7 @@ export function execView(s: Summary) {
   const stampLine = sp ? `Report ${sp.report_id} · data as of ${sp.as_of} · rules ${sp.params_hash} · build ${sp.commit}${sp.llm_model ? ` · model ${sp.llm_model}` : ""}` : "";
   const scenarioReason = s.scenario_reason || (!directional ? "no scenario plan without a rating" : "");
   return {
-    label, directional, insufficient, evidenceNote: note, meaning, missing, monitor, tone, rows, sentence, rankNotes, stampLine, scenarioReason, comp, items, stale, words, verification, conflicts,
+    label, directional, insufficient, evidenceNote: note, meaning, missing, monitor, tone, rows, sentence, rankNotes, stampLine, scenarioReason, comparison: comparisonView(sc), comp, items, stale, words, verification, conflicts, definitions: (comp?.definitions ?? []).map((d) => `${d.metric} (${d.period}): ${d.reason}`),
     total: rows.reduce((a, r) => a + r.contribution, 0),
   };
 }

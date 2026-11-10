@@ -6,7 +6,8 @@ from indiafacts.render import DISCLAIMER
 
 FACTS_CAP = 800                  # size guard for the JSON summary (and so the snapshot branch); the overflow count is reported
 EVIDENCE_CAP = 200
-KEY_METRICS = ("price", "market_cap", "revenue", "net_income", "eps_diluted", "pe_ttm", "pb", "roe", "debt_to_equity")
+KEY_METRICS = ("price", "market_cap", "revenue", "net_income", "eps_diluted", "pe_ttm", "pb", "roe", "debt_to_equity",
+               "return_1y", "relative_return_1y")   # the 1-year returns feed the web "At a glance" tile (the full facts list is not sent to the page)
 
 
 def _val(f):
@@ -33,8 +34,10 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
     from indiafacts.completeness import completeness
 
     e = fs.entity
+    from indiafacts.completeness import attention_items
+
     gaps = [{"metric": f.metric, "period": str(f.period_end), "status": f.status.value, "reason": f.reason}
-            for f in fs.facts if f.status in (Status.gap, Status.unavailable)]
+            for f in attention_items(list(fs.facts)) if f.status in (Status.gap, Status.unavailable)]
     score = None
     checklist: list[dict] = []
     checklist_groups: list[dict] = []
@@ -45,7 +48,10 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
                  "factors": {k: {"score": v.score, "coverage": v.coverage, "reason": v.reason} for k, v in r.factors.items()},
                  "contributions": {k: c.model_dump() for k, c in r.contributions.items()},
                  "missing_factors": [m.model_dump() for m in r.missing_factors],
-                 "pool_failed": len(scorecard.get("failed") or {})}
+                 "pool_failed": len(scorecard.get("failed") or {}),
+                 "comparison": scorecard.get("comparison") or "pool", "pool_label": scorecard.get("pool_label") or scorecard.get("pool"),
+                 "set_size": scorecard.get("n"), "metric_sources": scorecard.get("metric_sources"),
+                 "set_name": scorecard.get("set_name"), "set_kind": scorecard.get("set_kind")}
         from indiafacts.checklist import grouped
 
         checklist_groups = grouped(scorecard["checklist"])
@@ -102,6 +108,6 @@ def summarize_run(fs: FactSet, scorecard: dict | None, explanation, profile, cha
     return {"ticker": e.ticker, "name": e.name, "sector": e.sector, "industry": e.industry,
             "isin": e.isin.value, "retrieved_at": fs.retrieved_at.isoformat(),
             "profile": {"horizon": profile.horizon, "risk": profile.effective_risk, "experience": profile.experience},
-            "key_facts": key, "facts": facts, "facts_total": len(fs.facts), "fundamentals": fundamentals_rows(fs), "ownership": ownership(fs), "market_flows": flows, "scenario": (None if scenario is None or not scenario.applies else {"tone": scenario.tone, "headline": scenario.headline, "summary": scenario.summary, "levels": [{"label": l, "price": v, "meaning": m} for l, v, m in scenario.levels], "stages": [{"label": l, "pct": p, "condition": c} for l, p, c in scenario.stages], "watch": scenario.watch, "more_positive_if": scenario.more_positive_if, "more_cautious_if": scenario.more_cautious_if, "notes": scenario.notes, "evidence_note": scenario.evidence_note}), "prose": (None if prose is None or not prose.favour else {"favour": prose.favour, "against": prose.against, "weighing": prose.weighing}), "score": score, "completeness": completeness(fs, as_of, news=news if news_fetched else None),"checklist": checklist, "checklist_groups": checklist_groups, "peers": peer_summary(scorecard), "gaps": gaps,
+            "yahoo_unavailable": fs.yahoo_unavailable, "key_facts": key, "facts": facts, "facts_total": len(fs.facts), "fundamentals": fundamentals_rows(fs), "ownership": ownership(fs), "market_flows": flows, "scenario": (None if scenario is None or not scenario.applies else {"tone": scenario.tone, "headline": scenario.headline, "summary": scenario.summary, "levels": [{"label": l, "price": v, "meaning": m} for l, v, m in scenario.levels], "stages": [{"label": l, "pct": p, "condition": c} for l, p, c in scenario.stages], "watch": scenario.watch, "more_positive_if": scenario.more_positive_if, "more_cautious_if": scenario.more_cautious_if, "notes": scenario.notes, "evidence_note": scenario.evidence_note}), "prose": (None if prose is None or not prose.favour else {"favour": prose.favour, "against": prose.against, "weighing": prose.weighing}), "score": score, "completeness": completeness(fs, as_of, news=news if news_fetched else None),"checklist": checklist, "checklist_groups": checklist_groups, "peers": peer_summary(scorecard), "gaps": gaps,
             "notices": list(fs.notices), "changes": [str(c) for c in (changes or [])][:20],
             "valuation": valuation, "debate": deb, "levels": lev, "risk_panel": rp, "news": nws, "explanation": ex, "llm": llm, "stamp": stamp, "scenario_reason": getattr(scenario, "reason", "") if scenario is not None else "", "disclaimer": DISCLAIMER}

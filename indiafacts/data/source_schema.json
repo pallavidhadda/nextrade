@@ -1,0 +1,49 @@
+{
+  "note": "Baseline shape of each external source, checked daily by indiafacts/drift.py against today's files and yesterday's published copies. required = field must be present (with a numeric or null value for type num) in at least min_present of rows. ranges = sanity ranges (inclusive) for non-null values; unit_check = fields whose median is compared with yesterday (more than 5x either way is a unit change). watch = fields checked for placeholders (0 or null, or one repeated value, in more than 50% of rows); a placeholder is dropped from scoring for that day. expected_placeholders are known to be placeholders today and are reported as info only.",
+  "reviewed_on": "2026-11-10",
+  "review_by": "2027-05-10",
+  "thresholds": {
+    "min_present": 0.9,
+    "row_change": 0.3,
+    "unit_jump": 5,
+    "placeholder_share": 0.5,
+    "range_breaking_share": 0.2,
+    "range_warning_share": 0.05,
+    "min_rows_for_stats": 5,
+    "min_sector_rows": 5,
+    "anchor_tolerance": 0.05,
+    "holdings_tolerance": 1.0
+  },
+  "marketlens": {
+    "required": {
+      "id": "str", "sector": "str", "marketCap": "num", "closePrice": "num", "peRatio": "num", "pbRatio": "num", "debtToEquity": "num",
+      "week52High": "num", "week52Low": "num", "oneYearReturn": "num", "annVolatility": "num", "promoterHolding": "num", "publicHolding": "num"
+    },
+    "ranges": {
+      "peRatio": [0, 500], "pbRatio": [0, 100], "marketCap": [1e9, 1e15], "annVolatility": [0, 200], "debtToEquity": [0, 100],
+      "oneYearReturn": [-100, 2000], "promoterHolding": [0, 100], "publicHolding": [0, 100]
+    },
+    "unit_check": ["marketCap", "peRatio", "pbRatio", "debtToEquity", "oneYearReturn", "annVolatility", "closePrice"],
+    "watch": ["marketCap", "closePrice", "peRatio", "pbRatio", "debtToEquity", "oneYearReturn", "annVolatility", "week52High", "week52Low",
+              "beta", "returnOnEquity", "revenueGrowth"],
+    "expected_placeholders": ["returnOnEquity", "revenueGrowth", "beta"],
+    "holdings_sum": ["promoterHolding", "publicHolding"],
+    "anchors": ["RELIANCE", "TCS", "HDFCBANK"]
+  },
+  "pool_metrics": {
+    "required": ["pe_ttm", "pb", "return_1y", "volatility_1y"],
+    "ranges": {
+      "pe_ttm": [0, 500], "pb": [0, 100], "volatility_1y": [0, 2], "return_1y": [-1, 20], "debt_to_equity": [0, 100],
+      "pct_from_52w_high": [-1, 0.0001]
+    },
+    "unit_check": ["pe_ttm", "pb", "return_1y", "volatility_1y"],
+    "watch": ["pe_ttm", "pb", "return_1y", "volatility_1y", "debt_to_equity", "roe", "revenue_yoy", "net_income_yoy"],
+    "expected_placeholders": []
+  },
+  "nse_api": {
+    "corporate-share-holdings-master": {"container": null, "required": ["symbol", "date", "pr_and_prgrp", "public_val"]},
+    "corporates-financial-results": {"container": null, "required": ["symbol", "toDate", "period", "consolidated", "xbrl"]},
+    "integrated-filing-results": {"container": "data", "required": ["symbol", "qe_Date", "consolidated", "xbrl"]},
+    "results-comparision": {"container": "dict", "required": ["resCmpData", "bankNonBnking"]}
+  }
+}

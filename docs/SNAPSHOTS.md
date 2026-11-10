@@ -51,3 +51,19 @@ Before precomputing, the job fetches the NSE Market Lens universe once (58 reque
 `INDIAFACTS_MARKETLENS_LIVE=0` disables the direct Market Lens request for the target on live analyses (the snapshot job sets it).
 
 Refresh by hand: `python -m indiafacts.marketlens`.
+
+## Drift check
+
+Why: a source can change shape or units without any error (Market Lens already ships beta = 1 and return on equity = 0 for every company). `indiafacts/drift.py` compares today's `marketlens.json` and `pool_metrics.json` (and, when samples are given, NSE API list responses) with the baseline `indiafacts/data/source_schema.json` and with yesterday's published copies. The snapshot job runs it after fetching Market Lens and building `pool_metrics.json` (`snapshots.drift_gate`) and publishes `drift_report.json` next to them: `{generated_at, status: ok|warning|breaking, checks: [{source, check, field, severity, detail}], disabled_fields}`.
+
+Checks: required fields present with the right type; sanity ranges (P/E 0-500, P/B 0-100, market cap above 1e9 INR, volatility, holdings sum 100 +/- 1); row count against yesterday (total, and per sector with at least 5 rows; more than 30% change); placeholders (0 or null, or one repeated value, in more than 50% of rows); units (median more than 5 times yesterday's); anchors (Market Lens market cap of RELIANCE, TCS and HDFCBANK within 5% of our own figure; skipped, as info, while `pool_metrics.json` publishes no `market_cap` metric). Thresholds live in the schema file.
+
+| Severity | Triggers | What happens |
+| --- | --- | --- |
+| breaking | missing required field, wrong type, out-of-range values (over 20% of rows), unit jump, row count drop over 30%, anchor failure | That source's new file is not published: yesterday's copy is kept (or none, if there was none). `drift_report.json` is still published; `index.json` gets `_meta.drift_status`. The `drift-issue` job opens or comments on a GitHub issue titled `Source drift: <source>`. |
+| warning | placeholder field, smaller shifts, row count rise over 30% | Files are published. The run's step summary lists the findings. |
+| info | a known placeholder (`expected_placeholders` in the schema), or a check that could not run | Listed in the report only. |
+
+Placeholder fields go into `disabled_fields` (`marketlens.<field>`, `pool_metrics.<metric>`). Market Lens fields are skipped for that day by `marketlens._num` through `INDIAFACTS_DRIFT_REPORT` (the job sets it to the report path; unset means nothing is skipped). Placeholder pool metrics are removed from the published `pool_metrics.json`. The report stamp carries `drift_status` and `source_policy` (hash of `data/source_policy.json`).
+
+Issues: the `drift-issue` job is the only one with `issues: write`. It runs `python -m indiafacts.drift issues drift_report.json` using `gh` and `GH_TOKEN`, deduplicated by exact title (an open issue gets a comment instead). Run the workflow by hand with `-f dry_run=true` to print the titles and bodies instead. Issues are not closed automatically. Locally: `python -m indiafacts.drift check --marketlens new.json --marketlens-prev old.json --pool pool.json --nse-dir tests/fixtures`.

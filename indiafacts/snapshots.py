@@ -218,6 +218,113 @@ def _prepare_marketlens(out: Path, log=print) -> None:
         os.environ["INDIAFACTS_MARKETLENS"] = "0"
 
 
+def _default_pool_builder() -> Callable[[str], object]:
+    """The same member build the live pool path used: Yahoo facts and prices, no per-member NSE filings."""
+    from indiafacts.cli import _MemoPrices
+    from indiafacts.pipeline import build_factset
+    from indiafacts.prices import YfinancePriceClient
+
+    memo = _MemoPrices(YfinancePriceClient())
+    return lambda t: build_factset(t, prices=True, price_client=memo, tej=True, marketlens=True, marketlens_live=False, nse_api=False)
+
+
+def _prepare_pool_metrics(out: Path, tickers: list[str], builder: Callable[[str], object] | None = None, log=print) -> Path | None:
+    """Stage 1: every score metric for the whole universe, from the cached per-ticker fetch, into <out>/pool_metrics.json (published with
+    the reports). Stage 2 (the reports) reads it through INDIAFACTS_POOL_METRICS_URL, so no report fetches pool members. If nothing
+    could be built, yesterday's file (if any) is kept. Never raises."""
+    from indiafacts import poolstore
+
+    try:
+        out.mkdir(parents=True, exist_ok=True)
+        path = out / "pool_metrics.json"
+        store = poolstore.build(tickers, builder or _default_pool_builder(), log=log)
+        n = store["meta"]["n"]
+        log(f"pool_metrics: {n} companies")
+        if n:
+            poolstore.write(store, path)
+        if path.exists():
+            os.environ["INDIAFACTS_POOL_METRICS_URL"] = path.resolve().as_uri()
+            return path
+    except Exception as exc:
+        log(f"pool_metrics: failed ({type(exc).__name__}: {str(exc)[:160]})")
+    return None
+
+
+DRIFT_FILES = {"marketlens": "marketlens.json", "pool_metrics": "pool_metrics.json"}
+
+
+def backup_previous(out: Path, dest: Path) -> Path:
+    """Copy yesterday's published marketlens.json / pool_metrics.json aside before today's fetch overwrites them."""
+    import shutil
+
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in DRIFT_FILES.values():
+        if (out / name).exists():
+            shutil.copy2(out / name, dest / name)
+    return dest
+
+
+def _json_or_none(path: Path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def drift_gate(out: Path, prev_dir: Path, anchors: dict | None = None, log=print) -> dict:
+    """Run the source drift check on today's marketlens.json and pool_metrics.json against yesterday's copies (prev_dir).
+    A breaking source keeps yesterday's file (or publishes none if there was none). Placeholder pool metrics are stripped from the
+    published file, and placeholder Market Lens fields are skipped through INDIAFACTS_DRIFT_REPORT. Writes <out>/drift_report.json; never raises."""
+    from indiafacts import drift
+
+    try:
+        ml, pool = _json_or_none(out / "marketlens.json"), _json_or_none(out / "pool_metrics.json")
+        if anchors is None:
+            anchors = {t.removesuffix(".NS"): (m.get("market_cap") or {}).get("value") for t, m in ((pool or {}).get("metrics") or {}).items()
+                       if isinstance(m, dict) and isinstance(m.get("market_cap"), dict)} or None
+        report = drift.build_report(ml, _json_or_none(prev_dir / "marketlens.json"), pool, _json_or_none(prev_dir / "pool_metrics.json"),
+                                    anchors=anchors)
+    except Exception as exc:                                                          # a broken checker must not stop the daily job
+        report = {"generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "status": "warning", "disabled_fields": [],
+                  "checks": [{"source": "drift", "check": "checker", "field": None, "severity": "warning", "detail": f"{type(exc).__name__}: {str(exc)[:160]}"}]}
+    bad = drift.breaking_sources(report)
+    for source, name in DRIFT_FILES.items():
+        if source not in bad:
+            continue
+        kept = prev_dir / name
+        if kept.exists():
+            (out / name).write_bytes(kept.read_bytes())
+            log(f"drift: {source} is breaking; kept yesterday's {name}")
+        else:
+            (out / name).unlink(missing_ok=True)
+            log(f"drift: {source} is breaking and there is no earlier {name}; none published")
+    pool_now = _json_or_none(out / "pool_metrics.json")
+    if "pool_metrics" not in bad and pool_now and any(d.startswith("pool_metrics.") for d in report.get("disabled_fields", [])):
+        from indiafacts import poolstore
+
+        poolstore.write(drift.strip_disabled_pool(pool_now, report["disabled_fields"]), out / "pool_metrics.json")
+    (out / "drift_report.json").write_text(json.dumps(report, indent=1), encoding="utf-8")
+    os.environ["INDIAFACTS_DRIFT_REPORT"] = str((out / "drift_report.json").resolve())
+    if not (out / "marketlens.json").exists():
+        os.environ["INDIAFACTS_MARKETLENS"] = "0"
+    if not (out / "pool_metrics.json").exists():
+        os.environ.pop("INDIAFACTS_POOL_METRICS_URL", None)
+    log(f"drift: {report['status']} ({len(report['checks'])} finding(s), {len(report['disabled_fields'])} field(s) not scored)")
+    mark_index(out, report)
+    return report
+
+
+def mark_index(out: Path, report: dict) -> None:
+    """index.json gets a `_meta` entry (not a ticker) so readers can see today's drift status."""
+    from indiafacts import drift
+
+    idx = _json_or_none(out / "index.json")
+    idx = idx if isinstance(idx, dict) else {}
+    idx["_meta"] = {"drift_status": report["status"], "drift_checked_at": report["generated_at"],
+                    "drift_breaking": drift.breaking_sources(report)}
+    (out / "index.json").write_text(json.dumps(idx, indent=1, sort_keys=True), encoding="utf-8")
+
+
 def main(argv: list[str] | None = None, runner: Callable | None = None, sleep=time.sleep) -> int:
     p = argparse.ArgumentParser(prog="python -m indiafacts.snapshots", description="Precompute analysis snapshots (education only).")
     p.add_argument("--out", default="snapshots", help="output directory")
@@ -238,7 +345,13 @@ def main(argv: list[str] | None = None, runner: Callable | None = None, sleep=ti
     if a.limit:
         tickers = tickers[:a.limit]
     if real_runner:
-        _prepare_marketlens(Path(a.out))
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            prev = backup_previous(Path(a.out), Path(tmp))
+            _prepare_marketlens(Path(a.out))
+            _prepare_pool_metrics(Path(a.out), tickers)
+            drift_gate(Path(a.out), prev)
     index = run_snapshots(tickers, Path(a.out), runner, a.delay, sleep)
     rate = failure_rate(index, tickers) * 100
     print(f"{len(tickers)} tickers, {rate:.0f}% failed (limit {a.max_fail_pct:.0f}%)", file=sys.stderr)

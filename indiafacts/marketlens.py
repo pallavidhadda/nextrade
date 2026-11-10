@@ -260,7 +260,28 @@ def target_row(symbol: str, opener: Callable | None = None, now: datetime | None
 
 # ---- facts ------------------------------------------------------------------------------------------------------
 
+_drift: dict = {"key": None, "fields": frozenset()}
+
+
+def disabled_fields() -> frozenset:
+    """Fields the daily drift check found to be placeholders today (drift_report.json named by INDIAFACTS_DRIFT_REPORT); never used. See drift.py."""
+    path = os.environ.get("INDIAFACTS_DRIFT_REPORT", "").strip()
+    if not path:
+        return frozenset()
+    try:
+        key = (path, Path(path.removeprefix("file://")).stat().st_mtime_ns)
+    except OSError:
+        key = (path, None)
+    if _drift["key"] != key:
+        from indiafacts.drift import disabled_marketlens_fields
+
+        _drift.update(key=key, fields=disabled_marketlens_fields(path))
+    return _drift["fields"]
+
+
 def _num(row: dict, key: str) -> float | None:
+    if key in disabled_fields():
+        return None
     v = row.get(key)
     if isinstance(v, bool) or not isinstance(v, (int, float)) or v != v:
         return None
@@ -325,6 +346,92 @@ def facts_for(symbol: str, row: dict, now: datetime | None = None, origin: str =
 
 # Fields deliberately not used: returnOnEquity, revenueGrowth, industryPe, avgVolume (placeholder 0), patGrowth (equals netProfit),
 # netProfit/revenue/opRevenue/totalEquity/totalAssets/borrowings (mixed or unproven units).
+
+
+def fallback_facts(symbol: str, row: dict, now: datetime | None = None, origin: str = "") -> list[Fact]:
+    """The price-side figures Market Lens states, used only when Yahoo is unavailable for the target: last price, 1/3/5-year
+    price returns, 1-year volatility, distance from the 52-week high and the 50/200-day averages. Returns and volatility are
+    stated as percents (divided by 100). Placeholder zeros and nulls produce nothing."""
+    now = now or datetime.now(timezone.utc)
+    key = symbol.upper().removesuffix(".NS") + ".NS"
+    end, ts = _stamp(row, now)
+    sid = row.get("_sectorId") or str(row.get("sector") or "").lower()
+    out: list[Fact] = []
+
+    def add(metric: str, field: str, value: float, unit: str, scale: float = 1.0) -> None:
+        out.append(Fact.make(
+            entity_key=key, metric=metric, value=Decimal(str(round(value / scale, 8))), unit=unit, period_end=end,
+            period_type=PeriodType.point, source=SOURCE, source_field=field, retrieved_at=now, available_from=end,
+            status=Status.ok,
+            evidence=f"NSE Market Lens /api/sectors/{sid}/stocks field {field}, lastUpdated {ts}" + (f"; fetched {origin}" if origin else "")))
+
+    v = _num(row, "closePrice")
+    if v and v > 0:
+        add("price", "closePrice", v, "INR")
+    for n, field in ((1, "oneYearReturn"), (3, "threeYearReturn"), (5, "fiveYearReturn")):
+        v = _num(row, field)
+        if v:
+            add(f"return_{n}y", field, v, "ratio", scale=100.0)
+    v = _num(row, "annVolatility")
+    if v and v > 0:
+        add("volatility_1y", "annVolatility", v, "ratio", scale=100.0)
+    close, hi = _num(row, "closePrice"), _num(row, "week52High")
+    if close and hi and close > 0 and hi > 0:
+        add("pct_from_52w_high", "closePrice/week52High", close / hi - 1.0, "ratio")
+    for k in (50, 200):
+        v = _num(row, f"dma{k}")
+        if v and v > 0:
+            add(f"sma_{k}", f"dma{k}", v, "INR")
+    return out
+
+
+def score_metrics_for(row: dict, nifty_1y: float | None = None) -> dict[str, float]:
+    """The score metrics (scoring metric ids, ratio units) Market Lens can state honestly for one row. 0 and null are placeholders,
+    not values; return on equity, growth, beta and drawdown are never taken from Market Lens. relative_return_1y needs the Nifty 50's
+    1-year return (a ratio) and is left out without it."""
+    out: dict[str, float] = {}
+    v = _num(row, "peRatio")
+    if v and v > 0:
+        out["pe_ttm"] = v
+    v = _num(row, "pbRatio")
+    if v and v > 0:
+        out["pb"] = v
+    v = _num(row, "debtToEquity")
+    if v is not None and (v > 0 or (v == 0 and _num(row, "totalBorrowings") == 0)):
+        out["debt_to_equity"] = v
+    v = _num(row, "oneYearReturn")
+    if v:
+        out["return_1y"] = v / 100.0
+        if nifty_1y is not None:
+            out["relative_return_1y"] = v / 100.0 - nifty_1y
+    v = _num(row, "annVolatility")
+    if v and v > 0:
+        out["volatility_1y"] = v / 100.0
+    close, hi = _num(row, "closePrice"), _num(row, "week52High")
+    if close and hi and close > 0 and hi > 0:
+        out["pct_from_52w_high"] = close / hi - 1.0
+    return out
+
+
+def row_as_of(row: dict, now: datetime | None = None) -> date:
+    return _stamp(row, now or datetime.now(timezone.utc))[0]
+
+
+def sector_members(sym: str, rows: dict, min_sector: int = 8) -> tuple[list[str], str, str] | None:
+    """Symbols in the target's Market Lens sector; if fewer than min_sector, its sub-sector. Returns (symbols, kind, name)
+    with kind 'sector' or 'subSector', or None when the target has no row. The target is always included."""
+    row = (rows or {}).get(sym)
+    if not row:
+        return None
+    sector, sub = row.get("sector") or None, row.get("subSector") or None
+    if sector:
+        got = sorted(s for s, r in rows.items() if r.get("sector") == sector)
+        if len(got) >= min_sector or not sub:
+            return (got if sym in got else sorted(got + [sym])), "sector", sector
+    if sub:
+        got = sorted(s for s, r in rows.items() if r.get("subSector") == sub)
+        return (got if sym in got else sorted(got + [sym])), "subSector", sub
+    return None
 
 
 def peer_factset(symbol: str, row: dict, now: datetime | None = None):

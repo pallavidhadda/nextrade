@@ -62,17 +62,22 @@ def test_filing_for_other_company_rejected(filing):
         build_factset("TCS.NS", client=FakeClient(), filing_path=filing, **NS)
 
 
-def test_ebitda_derived_from_filing(filing):
+def test_filing_ebitda_replaces_ebitda_derived(filing):
     fs = build_factset("RELIANCE.NS", client=FakeClient(), filing_path=filing, **NS)
-    [d] = [f for f in fs.facts if f.metric == "ebitda_derived"]
-    assert d.value == Decimal("540670000000") and d.source == "computed" and d.status == "ok"   # PBT + finance costs + depreciation
+    [d] = [f for f in fs.facts if f.metric == "ebitda" and f.source == "computed:filing_ebitda"]
+    assert d.value == Decimal("540670000000") and d.status == "ok"   # PBT + finance costs + depreciation
     assert len(d.related_fact_ids) == 3
+    assert not [f for f in fs.facts if f.metric.startswith("ebitda_derived")]
 
 
 def test_yahoo_ebitda_that_equals_ebit_is_flagged_and_demoted(filing):
     fs = build_factset("RELIANCE.NS", client=FakeClient(), filing_path=filing, **NS)
-    [chk] = [f for f in fs.facts if f.metric == "ebitda_derived_source_check"]
-    assert chk.status == "conflict" and "EBIT" in chk.reason
+    [chk] = [f for f in fs.facts if f.metric == "ebitda_source_check"]
+    assert chk.status == "ok" and chk.reason.startswith("different definition") and "EBIT" in chk.reason   # not a disagreement
+    from indiafacts.completeness import attention_items, data_notes, definition_differences
+
+    assert not [f for f in attention_items(list(fs.facts)) if "ebitda" in f.metric and f.status == "conflict"]
+    assert "1 figures that sources define differently" in data_notes([], definition_differences(list(fs.facts)))
     yahoo = [f for f in fs.facts if f.source == "yahoo" and f.metric == "ebitda" and f.period_type == "Q"]
     assert yahoo and all(f.status == "unverified" and "EBIT" in f.reason for f in yahoo if f.value is not None)
 
@@ -81,8 +86,8 @@ def test_plausible_yahoo_ebitda_not_demoted(filing):
     stmt = QUARTERLY.copy()
     stmt.loc["EBITDA", stmt.columns[0]] = 540000000000.0
     fs = build_factset("RELIANCE.NS", client=FakeClient(stmt=stmt, info=INFO), filing_path=filing, **NS)
-    [chk] = [f for f in fs.facts if f.metric == "ebitda_derived_source_check"]
-    assert chk.status == "ok"
+    [chk] = [f for f in fs.facts if f.metric == "ebitda_source_check"]
+    assert chk.status == "ok" and chk.reason == ""
     assert all(f.status == "ok" for f in fs.facts if f.source == "yahoo" and f.metric == "ebitda" and f.value is not None)
 
 
