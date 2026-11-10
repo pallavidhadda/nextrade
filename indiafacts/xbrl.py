@@ -18,6 +18,9 @@ SOURCE = "nse_xbrl"
 MAX_BYTES = 20 * 1024 * 1024
 _TS = re.compile(r"_(\d{2})(\d{2})(\d{4})\d{6}(?:_WEB)?\.xml$", re.I)
 _XBRLI = "{http://www.xbrl.org/2003/instance}"
+# The three coverage/leverage ratios sit in the file as a hundredth of the figure the company publishes (RELIANCE Q2 FY27 file:
+# D/E 0.0041, the results page and Market Lens: 0.41). EPS and money are not touched.
+RATIO_FILE_FACTOR = Decimal(100)
 
 # concept -> (metric, unit kind)
 _PL = {
@@ -127,12 +130,15 @@ def facts_from_nse_xbrl(path: Path, retrieved_at: datetime | None = None) -> Fac
         v = _dec(vals.get((concept, ctx), ""))
         if v is None:
             return
+        raw = v
+        if unit == "ratio":
+            v = v * RATIO_FILE_FACTOR
         facts.append(Fact.make(
             entity_key=ticker, metric=metric, value=v, unit=unit, period_start=start, period_end=stop, period_type=ptype,
             fiscal_label=fiscal_label(stop, ptype.value) if ptype != PeriodType.point else None, basis=basis, source=SOURCE,
             source_field=f"in-bse-fin:{concept} [{audit or 'audit status unknown'}]", retrieved_at=now, available_from=avail,
             availability_kind=AvailabilityKind.filed if avail else AvailabilityKind.unknown, status=status, reason=reason,
-            evidence=f"{document} | in-bse-fin:{concept} @ {ctx}", reported_value=v, reported_unit=unit, audit_status=audit, filing_id=filing_id))
+            evidence=f"{document} | in-bse-fin:{concept} @ {ctx}", reported_value=raw, reported_unit=unit, audit_status=audit, filing_id=filing_id))
 
     year_note = "year-to-date value read from context FourD; the file's own dates repeat the quarter, so confirm against the results page"
     have_owner = ("ProfitOrLossAttributableToOwnersOfParent", "OneD") in vals
