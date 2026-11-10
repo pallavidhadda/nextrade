@@ -34,6 +34,8 @@ export type Summary = {
     contributions?: Record<string, { score: number; base_weight: number; effective_weight: number; contribution: number; coverage: number; n_metrics: number }>;
     missing_factors?: { factor: string; base_weight: number; reason: string }[];
     pool_failed?: number;
+    comparison?: "sector" | "pool"; set_size?: number | null; set_name?: string | null; set_kind?: "sector" | "subSector" | null;
+    metric_sources?: Record<string, { source: string | null; covered: number; of: number }> | null;
   };
   completeness?: null | {
     as_of: string; level: "High" | "Medium" | "Low" | "Insufficient"; reason: string; overall_coverage_pct: number;
@@ -44,6 +46,7 @@ export type Summary = {
   };
   stamp?: null | { report_id: string; ticker: string; as_of: string; pool_size: number; params_hash: string; commit: string; llm_model: string | null };
   scenario_reason?: string;
+  yahoo_unavailable?: boolean;
   served_from?: "snapshot" | "live";
   snapshot_as_of?: string;
   peers?: null | Peers;

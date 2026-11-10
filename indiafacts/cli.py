@@ -292,7 +292,7 @@ def _sector_scorecard(args, fs, profile) -> dict | None:
     return {"peers": group, "peer_comparisons": comparisons, "result": results.get(target), "n": len(factsets), "failed": {},
             "pool": label, "checklist": checklist(fs), "checklist_summary": summarize(checklist(fs)), "target_fs": fs,
             "members": sorted(factsets), "config_overdue": cfg.overdue, "default_pool": False, "pool_label": label,
-            "comparison": "sector", "metric_sources": sources}
+            "comparison": "sector", "metric_sources": sources, "set_name": name, "set_kind": kind}
 
 
 def _scorecard(args, fs, profile, client, sleep, price_client, tej_store=None) -> dict:

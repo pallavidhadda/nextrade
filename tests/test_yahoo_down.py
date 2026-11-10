@@ -61,3 +61,29 @@ def test_cli_exit_5_only_when_nothing(monkeypatch):
     monkeypatch.setenv("INDIAFACTS_YAHOO_DISABLED", "1")
     rc = main(["NOSUCHCO.NS", "--no-remember", "--no-tej", "--no-feed"], client=FakeClient(), sleep=lambda s: None)
     assert rc == 5
+
+
+def test_comparison_view_plain_words():
+    from indiafacts.render import comparison_view
+
+    sc = {"comparison": "sector", "set_size": 40, "set_name": "Petroleum Products", "set_kind": "sector",
+          "metric_sources": {"pe_ttm": {"source": "nse_marketlens", "covered": 40, "of": 40},
+                             "revenue_yoy": {"source": "pool_store", "covered": 32, "of": 40},
+                             "beta_1y": {"source": None, "covered": 10, "of": 40}}}
+    v = comparison_view(sc)
+    assert v["heading"] == "Compared with 40 companies in Petroleum Products (NSE Market Lens sector)"
+    assert v["sources"] == ["P/E: NSE Market Lens for all 40 companies", "Revenue growth: our own calculation for 32 of 40",
+                            "Sensitivity to the market (beta): not scored (only 10 of 40 companies had a usable figure)"]
+    assert comparison_view({"comparison": "pool", "set_size": 12}) is None
+
+
+def test_text_and_html_say_not_available_when_yahoo_down():
+    from indiafacts.htmlreport import build_html
+    from indiafacts.render import YAHOO_DOWN_LINE
+
+    fs = build_factset("RELIANCE.NS", client=DeadClient(), marketlens_rows=_rows(), prices=True, **NS)
+    txt = render(fs)
+    assert txt.count(YAHOO_DOWN_LINE) == 1 and "PRICE HISTORY: not available this run" in txt
+    html = build_html(fs)
+    assert "Not available this run" in html and html.count(YAHOO_DOWN_LINE) == 1
+

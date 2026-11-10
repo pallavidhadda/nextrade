@@ -1,11 +1,11 @@
 "use client";
 import { factorLabel, formatValue, metricLabel } from "@/lib/format";
 import type { Summary } from "@/lib/types";
-import { execView, levelFormula } from "@/lib/exec";
+import { execView, levelFormula, YAHOO_DOWN_LINE } from "@/lib/exec";
 
 export function Decomposition({ s }: { s: Summary }) {
   const x = execView(s);
-  if (x.rows.length === 0 && x.rankNotes.length === 0) return null;
+  if (x.rows.length === 0 && x.rankNotes.length === 0 && !x.comparison) return null;
   const overall = s.score?.overall;
   return (
     <>
@@ -21,6 +21,13 @@ export function Decomposition({ s }: { s: Summary }) {
       )}
       {x.sentence && <p className="helper">{x.sentence}</p>}
       {x.rankNotes.map((n) => <p className="helper" key={n}>{n}</p>)}
+      {x.comparison && x.comparison.sources.length > 0 && (
+        <>
+          <h3>Where each measure comes from</h3>
+          <p className="helper">The same source is used for every company compared.</p>
+          <ul className="plain">{x.comparison.sources.map((t) => <li key={t}>{t}</li>)}</ul>
+        </>
+      )}
     </>
   );
 }
@@ -140,9 +147,10 @@ const fmtPeer = (v: number | null) => (v === null ? "n/a" : Number(v.toPrecision
 export function PeerSpread({ s }: { s: Summary }) {
   const p = s.peers;
   if (!p) return null;
+  const cmp = execView(s).comparison;
   return (
     <section className="entry" data-r aria-labelledby="peer-h">
-      <header><h2 id="peer-h">Peer comparison</h2><span className="note">{p.n_peers} peers used</span></header>
+      <header><h2 id="peer-h">{cmp?.heading ?? "Peer comparison"}</h2><span className="note">{p.n_peers} peers used</span></header>
       <div className="body">
         {p.unavailable_reason || p.n_peers === 0 ? <p>No comparison companies could be matched for this report.</p> : (
           <>
@@ -230,7 +238,8 @@ export function Gaps({ s }: { s: Summary }) {
             <tbody>{s.gaps.map((g, i) => (<tr key={i}><td>{metricLabel(g.metric)}</td><td className="num" style={{ textAlign: "left" }}>{g.period}</td><td>{g.reason}</td></tr>))}</tbody>
           </table>
         )}
-        {s.notices.length > 0 && <ul className="claims">{s.notices.map((n, i) => <li key={i} style={{ gridTemplateColumns: "1fr" }}>{n}</li>)}</ul>}
+        {s.yahoo_unavailable && <p className="helper">{YAHOO_DOWN_LINE}</p>}
+        {s.notices.filter((n) => n !== YAHOO_DOWN_LINE).length > 0 && <ul className="claims">{s.notices.filter((n) => n !== YAHOO_DOWN_LINE).map((n, i) => <li key={i} style={{ gridTemplateColumns: "1fr" }}>{n}</li>)}</ul>}
       </div>
     </section>
   );
