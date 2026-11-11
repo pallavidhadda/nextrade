@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-10T20:05:34+00:00",
+ "generated_at": "2026-11-11T20:05:40+00:00",
  "status": "warning",
  "checks": [
   {
@@ -7,28 +7,28 @@
    "check": "range",
    "field": "marketCap",
    "severity": "warning",
-   "detail": "195 of 2227 values outside 1000000000.0..1000000000000000.0 (e.g. 843478900)"
+   "detail": "193 of 2229 values outside 1000000000.0..1000000000000000.0 (e.g. 843478900)"
   },
   {
    "source": "marketlens",
    "check": "placeholder",
    "field": "beta",
    "severity": "info",
-   "detail": "the single value 1 in 2227 of 2227 rows; not scored today"
+   "detail": "the single value 1 in 2229 of 2229 rows; not scored today"
   },
   {
    "source": "marketlens",
    "check": "placeholder",
    "field": "returnOnEquity",
    "severity": "info",
-   "detail": "0 or null in 2227 of 2227 rows; not scored today"
+   "detail": "0 or null in 2229 of 2229 rows; not scored today"
   },
   {
    "source": "marketlens",
    "check": "placeholder",
    "field": "revenueGrowth",
    "severity": "info",
-   "detail": "0 or null in 2227 of 2227 rows; not scored today"
+   "detail": "0 or null in 2229 of 2229 rows; not scored today"
   },
   {
    "source": "marketlens",
@@ -42,7 +42,7 @@
    "check": "gaps_per_report",
    "field": null,
    "severity": "info",
-   "detail": "median 3 gaps per report, 33% of 486 reports have more than 5 (no earlier figure)"
+   "detail": "median 3 gaps per report, 33% of 486 reports have more than 5; yesterday median 3, 33% thin"
   }
  ],
  "disabled_fields": [
@@ -53,14 +53,14 @@
  "gaps": {
   "reports": 486,
   "median": 3.0,
-  "p90": 17.0,
-  "max": 58,
+  "p90": 18.0,
+  "max": 52,
   "over": 5,
-  "share_over": 0.3313,
+  "share_over": 0.3333,
   "worst": [
    [
     "KWIL.NS",
-    58
+    52
    ],
    [
     "VISL.NS",
@@ -75,8 +75,8 @@
     45
    ],
    [
-    "LIQUID1.NS",
-    43
+    "MEESHO.NS",
+    42
    ]
   ],
   "top_metrics": [
@@ -101,11 +101,11 @@
     105
    ],
    [
-    "net_income_yoy",
+    "implied_growth_r14_n5",
     87
    ],
    [
-    "implied_growth_r14_n5",
+    "net_income_yoy",
     86
    ],
    [
