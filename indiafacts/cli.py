@@ -247,6 +247,21 @@ class _MemoPrices:
         return hit
 
 
+FULL_DATA_MIN = 8          # smallest comparison set worth ranking in
+
+
+def _full_data_members(symbols: list[str], target: str, store: dict, policy: dict) -> tuple[list[str], bool]:
+    """(members, narrowed). When too few sector members have our own comparison data for quality, growth and cash-flow measures
+    to qualify (below the policy's min_coverage), rank inside the members that do, if there are at least FULL_DATA_MIN of them;
+    otherwise keep the whole sector (scored on Market Lens measures only)."""
+    have = set((store or {}).get("metrics") or {})
+    full = [s for s in symbols if s + ".NS" in have or s == target]
+    need = float((policy or {}).get("min_coverage", 0.6))
+    if len(full) < len(symbols) and len(full) / max(len(symbols), 1) < need and len(full) >= FULL_DATA_MIN:
+        return full, True
+    return symbols, False
+
+
 def _sector_scorecard(args, fs, profile) -> dict | None:
     """Rank the target inside its NSE Market Lens sector (sub-sector if the sector has fewer than 8) from the published comparison
     data: nothing is fetched per member. One source per metric for every member (data/source_policy.json). None means 'use the pool':
@@ -266,6 +281,8 @@ def _sector_scorecard(args, fs, profile) -> dict | None:
         if got is None or store is None:
             return None
         symbols, kind, name = got
+        policy = load_source_policy()
+        total, symbols, narrowed = len(symbols), *_full_data_members(symbols, sym, store, policy)
         row, _origin, _why = marketlens.target_row(sym)
         if row is not None:
             rows = {**rows, sym: row}
@@ -277,7 +294,7 @@ def _sector_scorecard(args, fs, profile) -> dict | None:
         except (KeyError, ValueError, TypeError):
             store_at = None
         factsets, sources = factsets_from_sources(
-            [s + ".NS" for s in symbols], fs, store, rows, load_source_policy(), cfg, as_of, now,
+            [s + ".NS" for s in symbols], fs, store, rows, policy, cfg, as_of, now,
             nifty_1y=(nifty or {}).get("value"), store_at=store_at)
     except Exception:
         return None
@@ -289,6 +306,9 @@ def _sector_scorecard(args, fs, profile) -> dict | None:
         peers = None
     group, comparisons = peers if peers is not None else (select_peers(fs, {target: fs}), [])
     label = f"NSE Market Lens {'sector' if kind == 'sector' else 'sub-sector'} '{name}' ({len(factsets)} companies)"
+    if narrowed:
+        label = (f"NSE Market Lens {'sector' if kind == 'sector' else 'sub-sector'} '{name}': the {len(factsets)} companies with full "
+                 f"comparison data (of {total} in the sector)")
     return {"peers": group, "peer_comparisons": comparisons, "result": results.get(target), "n": len(factsets), "failed": {},
             "pool": label, "checklist": checklist(fs), "checklist_summary": summarize(checklist(fs)), "target_fs": fs,
             "members": sorted(factsets), "config_overdue": cfg.overdue, "default_pool": False, "pool_label": label,
