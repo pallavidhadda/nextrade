@@ -22,8 +22,12 @@ CAVEATS = (
     "Costs are an assumption (round trip on the replaced share of the top bucket); no taxes, market impact or liquidity limits.",
     "A name that stopped trading before the period ended keeps its last available price (carried), which can flatter or hurt results.",
     "Adjusted prices include splits, bonuses and dividends; a demerger or merger is not scaled, so such names can mislead.",
-    "The benchmark is the equal-weight average of the same universe, not an index; symbols are matched by name, so renamed companies split into two series.",
+    "Excess is measured against the equal-weight average of the same universe; the Nifty 50 line (when shown) is the price index, "
+    "which leaves out dividends (roughly 1 to 1.5% a year), so it flatters every bucket by about that much.",
+    "Renamed companies are joined into one series by ISIN; a join is refused when the price jumps more than 20% at the rename "
+    "(the two names were adjusted differently), and those pairs stay split.",
 )
+JOIN_MAX_JUMP = 0.20
 
 
 class PanelSource(Protocol):
@@ -63,6 +67,7 @@ class SignalResult:
     net_excess_mean: float = float("nan")
     turnover_mean: float = float("nan")
     halves: list[Half] = field(default_factory=list)
+    top_vs_benchmark: float = float("nan")     # top-quintile mean minus the benchmark's return, per period
     in_sample: Half | None = None
     out_of_sample: Half | None = None
 
@@ -77,6 +82,35 @@ class BacktestResult:
     carried: int
     universe_sizes: list[int]
     signals: dict[str, SignalResult]
+    joined: int = 0
+    join_refused: list[str] = field(default_factory=list)
+    benchmark: str = ""
+
+
+def stitch_by_isin(px: pd.DataFrame, history: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str], list[str]]:
+    """Join the price columns of one ISIN's successive symbols into its newest symbol. Returns (prices, old->new aliases, refused pairs).
+    A join is refused when the first new close is more than JOIN_MAX_JUMP away from the last old close."""
+    px = px.copy()
+    alias: dict[str, str] = {}
+    refused: list[str] = []
+    for _, g in history.groupby("isin"):
+        syms = [str(x) for x in g.sort_values("valid_from")["symbol"]]
+        syms = [x for i, x in enumerate(syms) if x in px.columns and x not in syms[:i]]
+        if len(syms) < 2:
+            continue
+        new = syms[-1]
+        for old in reversed(syms[:-1]):
+            a, b = px[old].dropna(), px[new].dropna()
+            if a.empty or b.empty:
+                continue
+            first_new = b[b.index > a.index[-1]]
+            if first_new.empty or abs(first_new.iloc[0] / a.iloc[-1] - 1) > JOIN_MAX_JUMP:
+                refused.append(f"{old}->{new}")
+                continue
+            px[new] = px[new].combine_first(px[old])
+            px = px.drop(columns=[old])
+            alias[old] = new
+    return px, alias, refused
 
 
 def compute_signals(px: pd.DataFrame) -> dict[str, pd.DataFrame]:
@@ -115,8 +149,12 @@ def _half(rows: list[dict]) -> Half:
                 rows[0].get("date"), rows[-1].get("date"))
 
 
-def run_backtest(source: PanelSource, cfg: BacktestConfig) -> BacktestResult:
+def run_backtest(source: PanelSource, cfg: BacktestConfig, aliases: dict[str, str] | None = None,
+                 benchmark: pd.Series | None = None, benchmark_label: str = "") -> BacktestResult:
+    """`aliases` maps a member's old symbol to the joined column (see stitch_by_isin); `benchmark` is an index level series."""
     px = source.prices(cfg.start, cfg.end)
+    aliases = aliases or {}
+    bench = benchmark.reindex(px.index).ffill() if benchmark is not None else None
     sigs = compute_signals(px)
     rows: dict[str, list[dict]] = {k: [] for k in SIGNALS}
     prev: dict[str, set] = {k: set() for k in SIGNALS}
@@ -126,7 +164,7 @@ def run_backtest(source: PanelSource, cfg: BacktestConfig) -> BacktestResult:
     min_names = 2 * cfg.quantiles
     for i in range(LOOKBACK, len(px) - cfg.horizon_days, cfg.horizon_days):
         d = px.index[i].date()
-        mem = set(source.members(d)) & set(px.columns)
+        mem = {aliases.get(m, m) for m in source.members(d)} & set(px.columns)
         fr, _ = forward_returns(px, i, cfg.horizon_days)
         gone = px.iloc[i + cfg.horizon_days].isna()
         elig = [s for s in fr.index if s in mem]
@@ -151,7 +189,12 @@ def run_backtest(source: PanelSource, cfg: BacktestConfig) -> BacktestResult:
             cost = 2 * replaced * cfg.cost_bps / 1e4
             gross = means[-1] - float(f.mean())
             ic = float(s.rank().corr(f.rank()))
-            rows[name].append({"date": d, "ic": ic, "means": means, "gross": gross, "net": gross - cost, "turn": replaced})
+            row = {"date": d, "ic": ic, "means": means, "gross": gross, "net": gross - cost, "turn": replaced}
+            if bench is not None:
+                b0, b1 = bench.iloc[i], bench.iloc[i + cfg.horizon_days]
+                if b0 == b0 and b1 == b1 and b0 > 0:
+                    row["vs_bench"] = means[-1] - (b1 / b0 - 1)
+            rows[name].append(row)
     out: dict[str, SignalResult] = {}
     for name, rs in rows.items():
         r = SignalResult(name, periods=len(rs))
@@ -166,13 +209,16 @@ def run_backtest(source: PanelSource, cfg: BacktestConfig) -> BacktestResult:
             r.gross_excess_mean = float(np.mean([x["gross"] for x in rs]))
             r.net_excess_mean = float(np.mean([x["net"] for x in rs]))
             r.turnover_mean = float(np.mean([x["turn"] for x in rs]))
+            vb = [x["vs_bench"] for x in rs if "vs_bench" in x]
+            r.top_vs_benchmark = float(np.mean(vb)) if vb else float("nan")
             h = len(rs) // 2
             r.halves = [_half(rs[:h]), _half(rs[h:])]
             if cfg.oos_start:
                 r.in_sample = _half([x for x in rs if x["date"] < cfg.oos_start])
                 r.out_of_sample = _half([x for x in rs if x["date"] >= cfg.oos_start])
         out[name] = r
-    return BacktestResult(cfg, first, last, used, skipped, carried_total, sizes, out)
+    return BacktestResult(cfg, first, last, used, skipped, carried_total, sizes, out,
+                          benchmark=(benchmark_label or "Nifty 50 price index") if bench is not None else "")
 
 
 def _pct(x: float) -> str:
@@ -195,6 +241,13 @@ def render_backtest(res: BacktestResult) -> str:
         halves = " / ".join(_pct(h.net_excess_mean) for h in r.halves) or "n/a"
         lines.append(f"{n:<10} {r.ic_mean:>7.3f} {r.ic_t:>6.1f} {_pct(r.spread):>8} {r.hit_rate * 100 if r.hit_rate == r.hit_rate else float('nan'):>4.0f}% "
                      f"{_pct(r.gross_excess_mean):>8} {_pct(r.net_excess_mean):>8} {r.turnover_mean:>5.2f}  {halves}")
+    if res.joined or res.join_refused:
+        lines.append(f"Renamed companies joined by ISIN: {res.joined}; joins refused for a price jump: {len(res.join_refused)}"
+                     + (f" ({', '.join(res.join_refused[:6])}{'...' if len(res.join_refused) > 6 else ''})" if res.join_refused else "") + ".")
+    if res.benchmark:
+        lines += ["", f"Top quintile against the {res.benchmark} (excludes dividends, so this flatters the top quintile by about "
+                  "1 to 1.5% a year, roughly 0.1% a month), mean per period:",
+                  "  " + "   ".join(f"{n}: {_pct(res.signals[n].top_vs_benchmark)}" for n in SIGNALS)]
     if c.oos_start:
         lines += ["", f"Split at {c.oos_start} (chosen before this run): in-sample before, out-of-sample from that date. "
                   "The signals were first seen on the full history, so this split is not untouched evidence.",
@@ -235,6 +288,10 @@ class TejPanelSource:
             px = px[px.index <= pd.Timestamp(end)]
         return px
 
+    def joined_prices(self, start, end):
+        """(prices, aliases, refused) with renamed companies joined by ISIN."""
+        return stitch_by_isin(self.prices(start, end), self.store.load("symbol_history/nse.parquet"))
+
     def members(self, as_of: date) -> list[str]:
         from indiafacts.tej import universe_members
 
@@ -243,7 +300,30 @@ class TejPanelSource:
         return [m.symbol for m in universe_members(self._uni, as_of, self.top_n)]
 
 
-def main(argv: list[str] | None = None, store=None) -> int:
+class _Fixed:
+    def __init__(self, px, members):
+        self._px, self.members = px, members
+
+    def prices(self, start, end):
+        return self._px
+
+
+def _nifty_levels(client=None) -> pd.Series | None:
+    """Daily Nifty 50 closes (^NSEI, price index) from Yahoo, or None when unavailable."""
+    from indiafacts.prices import YfinancePriceClient
+
+    try:
+        df = (client or YfinancePriceClient()).history("^NSEI")
+    except Exception:
+        return None
+    if df is None or df.empty or "Close" not in df:
+        return None
+    s = df["Close"].copy()
+    s.index = pd.DatetimeIndex([pd.Timestamp(t).tz_localize(None) if pd.Timestamp(t).tzinfo else pd.Timestamp(t) for t in s.index]).normalize()
+    return s[~s.index.duplicated(keep="last")].sort_index()
+
+
+def main(argv: list[str] | None = None, store=None, price_client=None) -> int:
     p = argparse.ArgumentParser(prog="indiafacts.backtest", description="Price-signal scorecard on TejHQ data (education only).")
     p.add_argument("--from-year", type=int, default=2016)
     p.add_argument("--to-year", type=int, default=date.today().year)
@@ -251,13 +331,24 @@ def main(argv: list[str] | None = None, store=None) -> int:
     p.add_argument("--cost-bps", type=float, default=30.0)
     p.add_argument("--top-n", type=int, default=500)
     p.add_argument("--oos-start", type=date.fromisoformat, default=None, help="YYYY-MM-DD: report in-sample and out-of-sample separately")
+    p.add_argument("--no-join", action="store_true", help="do not join renamed companies by ISIN")
+    p.add_argument("--benchmark", action="store_true", help="also compare the top quintile with the Nifty 50 price index (Yahoo ^NSEI)")
     a = p.parse_args(argv)
     if store is None:
         from indiafacts.tej import TejStore
 
         store = TejStore()
     src = TejPanelSource(store, range(a.from_year - 1, a.to_year + 1), a.top_n)
-    res = run_backtest(src, BacktestConfig(horizon_days=a.horizon_days, cost_bps=a.cost_bps, oos_start=a.oos_start))
+    aliases, refused = {}, []
+    if not a.no_join:
+        px, aliases, refused = src.joined_prices(None, None)
+        src = _Fixed(px, src.members)
+    bench = None
+    if a.benchmark:
+        bench = _nifty_levels(price_client)
+    res = run_backtest(src, BacktestConfig(horizon_days=a.horizon_days, cost_bps=a.cost_bps, oos_start=a.oos_start),
+                       aliases=aliases, benchmark=bench)
+    res.joined, res.join_refused = len(aliases), refused
     print(render_backtest(res))
     return 0
 

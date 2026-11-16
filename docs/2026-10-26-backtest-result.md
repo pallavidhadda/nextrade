@@ -38,3 +38,14 @@ Not financial, investment or trading advice. A historical test of simple price s
 | composite | 0.077 | +0.45% | 82 | 0.057 | -0.04% | 44 |
 
 Momentum kept its sign and size after 2023; low volatility and the composite faded. Still a hint, not evidence.
+
+## v2 run (2026-11-16): renamed companies joined by ISIN, Nifty 50 comparison
+Run: `python -m indiafacts.backtest --from-year 2016 --oos-start 2023-01-01 --benchmark`. Window 2016-01-07 to 2026-10-14, 128 rebalances, universe 472-500 names, carried returns 228 (was 284: joining renames removed part of the false "stopped trading" cases).
+
+- 386 renamed companies were joined into one series by ISIN; 32 joins were refused because the price jumped more than 20% at the rename (the two symbols were adjusted differently) and stay split.
+- Full period, net of the cost assumption, top quintile minus the equal-weight universe per month: mom_12_1 +0.52%, low_vol -0.15%, near_high +0.21%, composite +0.34%. IC 0.051 / 0.059 / 0.056 / 0.078.
+- Top quintile against the Nifty 50 price index per month: mom_12_1 +0.98%, low_vol +0.21%, near_high +0.80%, composite +0.79%. The index leaves out dividends (about 0.1% a month), and the top quintile is mostly mid and small caps, so part of this is a size effect, not skill.
+- Out of sample from 2023 (split fixed before the first run, so not untouched): momentum kept its edge (+0.71% net a month, IC 0.052); low volatility (-0.46%), near-high (-0.06%) and the composite (-0.11%) did not.
+- Rating buckets (price-only composite in fifths): Sell +0.38%, Underweight +1.30%, Hold +1.47%, Overweight +1.66%, Buy +1.82% a month; the order rises left to right.
+
+Reading: same conclusion as v1, now with renames handled. Price momentum is the only signal that held after 2023; the composite that feeds the price side of the rating faded out of sample. Still open: returns for delisted names (carried at last price), the Nifty 50 total-return index (not freely available as a series), a volatility-matched comparison, and a test of the full pool score, which needs a history of fundamentals this project does not have.

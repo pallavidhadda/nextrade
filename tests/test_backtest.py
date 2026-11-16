@@ -159,3 +159,49 @@ def test_b16_render_maps_the_composite_buckets_to_the_five_ratings():
     for r in ("Sell", "Underweight", "Hold", "Overweight", "Buy"):
         assert r in text
     assert "price-only" in text.lower() and "not the full rating" in text.lower()
+
+
+def _history(rows):
+    return pd.DataFrame(rows, columns=["exchange", "isin", "symbol", "valid_from", "valid_to", "trading_days"])
+
+
+def test_b17_renamed_symbols_join_into_one_series():
+    from indiafacts.backtest import stitch_by_isin
+
+    idx = pd.DatetimeIndex(_dates(6))
+    px = pd.DataFrame({"OLD": [10, 11, 12, np.nan, np.nan, np.nan], "NEW": [np.nan, np.nan, np.nan, 12.1, 12.5, 13]}, index=idx, dtype=float)
+    hist = _history([("NSE", "INE1", "OLD", str(idx[0].date()), str(idx[2].date()), 3),
+                     ("NSE", "INE1", "NEW", str(idx[3].date()), str(idx[5].date()), 3)])
+    out, alias, refused = stitch_by_isin(px, hist)
+    assert list(out.columns) == ["NEW"] and out["NEW"].tolist() == [10, 11, 12, 12.1, 12.5, 13]
+    assert alias == {"OLD": "NEW"} and refused == []
+
+
+def test_b18_join_refused_when_the_price_jumps_at_the_rename():
+    from indiafacts.backtest import stitch_by_isin
+
+    idx = pd.DatetimeIndex(_dates(4))
+    px = pd.DataFrame({"OLD": [10, 10, np.nan, np.nan], "NEW": [np.nan, np.nan, 2.0, 2.1]}, index=idx, dtype=float)
+    hist = _history([("NSE", "INE1", "OLD", str(idx[0].date()), str(idx[1].date()), 2),
+                     ("NSE", "INE1", "NEW", str(idx[2].date()), str(idx[3].date()), 2)])
+    out, alias, refused = stitch_by_isin(px, hist)
+    assert set(out.columns) == {"OLD", "NEW"} and alias == {} and refused == ["OLD->NEW"]
+
+
+def test_b19_members_follow_the_join():
+    """A member listed under its old name at the rebalance date must be found in the joined (new-name) column."""
+    px = _predictive_panel()
+    px = px.rename(columns={"S9": "NEW9"})
+    src = FakeSource(px, members=lambda d: [c if c != "NEW9" else "OLD9" for c in px.columns])
+    res = run_backtest(src, BacktestConfig(cost_bps=0), aliases={"OLD9": "NEW9"})
+    assert max(res.universe_sizes) == 10
+
+
+def test_b20_benchmark_excess_reported():
+    px = _predictive_panel()
+    bench = px.mean(axis=1) * 0 + 100.0          # a flat index: excess over it equals the bucket's raw return
+    res = run_backtest(FakeSource(px), BacktestConfig(cost_bps=0), benchmark=bench)
+    r = res.signals["mom_12_1"]
+    assert r.top_vs_benchmark == pytest.approx(r.bucket_means[-1], rel=1e-9)
+    text = render_backtest(res)
+    assert "Nifty 50" in text and "dividends" in text
