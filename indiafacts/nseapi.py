@@ -45,6 +45,7 @@ MAX_RETRIES = 2
 COPY_TTL = 3600
 COPY_MISS_TTL = 300
 COPY_VERSION = 1
+COPY_MAX_AGE_DAYS = 10            # the job runs daily; a copy this old means it has been failing for over a week
 COPY_ROW_KEYS = ("date", "pr_and_prgrp", "recordId", "xbrl", "broadcastDate", "submissionDate")
 COPY_ROWS = 8
 _copy_cache: dict[str, tuple[float, dict | None]] = {}   # url -> (time, document); shared by every client in this process
@@ -57,6 +58,17 @@ def enabled() -> bool:
 
 def live_enabled() -> bool:
     return enabled() and os.environ.get("INDIAFACTS_NSE_API_LIVE", "1").strip() != "0"
+
+
+def _today() -> date:
+    return datetime.now(timezone.utc).date()
+
+
+def copy_max_age() -> int:
+    try:
+        return int(os.environ.get("INDIAFACTS_NSE_COPY_MAX_AGE_DAYS", COPY_MAX_AGE_DAYS))
+    except ValueError:
+        return COPY_MAX_AGE_DAYS
 
 
 def copy_base() -> str:
@@ -416,7 +428,12 @@ class NseApi:
                     doc = d
         except Exception:
             doc = None
-        if doc is None:
+        stale = False
+        if doc is not None and (_today() - date.fromisoformat(str(doc["generated_at"])[:10])).days > copy_max_age():
+            doc, stale = None, True
+        if stale:
+            self.reasons.append(f"the daily copy of NSE filings is older than {copy_max_age()} days, so it was not used")
+        elif doc is None:
             self.reasons.append("no daily copy of NSE filings available")
         _copy_cache[url] = (now, doc)
         return doc
