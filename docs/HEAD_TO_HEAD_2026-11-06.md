@@ -1,21 +1,21 @@
-# Head-to-head, 2026-11-06 (27 tickers with both systems complete)
+# Head-to-head, 2026-11-06 (29 tickers with both systems complete)
 Research/education only; not financial, investment or trading advice. Same Gemini key and model for both. TradingAgents ran with market, news and fundamentals analysts (social needs keys); NexTrade ran with the score, news and one Gemini narration. One run per ticker.
 
 | | TradingAgents | NexTrade |
 |---|---|---|
 | Model calls per ticker (mean) | 16.3 | 1 |
-| Tokens per ticker (mean / median) | 58,923 / 60,279 | 2,293 / 2,246 |
-| Seconds per ticker (mean) | 90 | 18 (includes the shared pool fetch) |
-| Ticker reports with no usable fundamentals | 26 of 27 | 0 of 27 have no business-health rows |
-| Numbers in the final decision found in none of its own reports | 68 of 175 | not applicable: AI claims are machine-checked against the digest |
-| Rating mix | Buy 0, Overweight 16, Hold 11, Underweight 0, Sell 0 | Buy 4, Overweight 8, Hold 13, Underweight 2, Sell 0 |
-| Same direction (bullish, neutral, bearish) | 44% of tickers | |
+| Tokens per ticker (mean / median) | 59,181 / 60,415 | 2,291 / 2,246 |
+| Seconds per ticker (mean) | 89 | 17 (includes the shared pool fetch) |
+| Ticker reports with no usable fundamentals | 28 of 29 | 0 of 29 have no business-health rows |
+| Numbers in the final decision found in none of its own reports | 74 of 194 | not applicable: AI claims are machine-checked against the digest |
+| Rating mix | Buy 0, Overweight 17, Hold 12, Underweight 0, Sell 0 | Buy 4, Overweight 8, Hold 14, Underweight 2, Sell 0 |
+| Same direction (bullish, neutral, bearish) | 41% of tickers | |
 
 Outcome quality is not judged here: record both ratings with `--record`, then run `--settle` after 21 trading sessions to score each system's ratings against the Nifty 50.
 
 
 ## Reading the numbers (added by hand, 2026-11-07)
-**Status:** 27 of 30 tickers have a complete pair. Not finished: M&M.NS (TradingAgents rejected the ticker: it refuses any symbol containing "&" as an invalid file-path name, so it cannot analyse Mahindra & Mahindra at all; NexTrade handled it), TECHM.NS (TradingAgents run hit the Gemini free-tier quota) and the last ticker in the list (not started). Rerun `python headtohead/orchestrate.py --date 2026-11-06` after the quota resets or with another key to finish.
+**Status (updated 2026-11-16):** 29 of 30 tickers have a complete pair. TECHM.NS and JSWSTEEL.NS were finished on 2026-11-16 with the same analysis date; their NexTrade side ran on the newer code (sector comparison), so those two are not strictly like-for-like with the other 27. M&M.NS can never complete: TradingAgents refuses any symbol containing "&" as an invalid file-path name. The analysis below was written on the 27 pairs; the table above is the 29-pair result and moves only slightly. All 58 ratings were recorded in the local journals on 2026-11-16 (`report.py --record`); settle with `report.py --settle` on or after 8 December 2026.
 
 **What the run supports**
 - Cost: TradingAgents used about 16 calls and 59k tokens per ticker, NexTrade 1 call and 2.3k (about 26 times fewer tokens, 5 times faster).
@@ -61,3 +61,16 @@ Bottom line: NexTrade is clearly better on cost, coverage of Indian fundamentals
 1. **A readable plan for every ticker.** New scenario plan (`indiafacts/scenario.py`) for every rating, not only bullish ones: reference levels (entry area, confirmation, invalidation, or upside and downside triggers for a neutral rating), a staged exposure ceiling (thirds of the risk-lens ceiling, halved when confidence is low, a third at most for a cautious rating), the next results date, and what would turn the view more positive or more cautious. All arithmetic on measured prices and stated limits; no price targets; it avoids the words in the advice filter, and a test enforces it.
 2. **A two-sided argument that reads well.** New `indiafacts/narrative.py` joins the bull and bear points into short paragraphs grouped by theme, names the side that carries most weight and says how the rating was weighed. No model needed. For readers who want a real debate there is an optional three-call mode (bull advocate, bear advocate who answers it, referee) with the user's own key, validated like every other answer; about 8k tokens against about 59k for TradingAgents.
 Not yet tested against a live model: Gemini returned a 429 quota error today, so the debate mode is tested with a fake model only. The scenario plan and prose are deterministic and were checked on real data (TCS.NS).
+
+
+## Follow-up: the four Buys checked (2026-11-16)
+The worry was that AXISBANK, SBIN, ICICIBANK and COALINDIA scored Buy only because of the mixed 12-company pool. Re-run with today's code, which ranks each company inside its NSE Market Lens sector (40 banks; 20 energy companies with full data):
+
+| Ticker | 6 Nov (12-name mixed pool) | 16 Nov (sector pool) | What changed |
+|---|---|---|---|
+| AXISBANK | Buy 65.6, value 92 | Overweight 51.3, value 27 | The value score was the artefact: banks look cheap on P/E and P/B next to consumer and IT names |
+| SBIN | Buy 64.1, value 100 | Buy 56.9, value 36 | Value fell; still Buy on quality 72 and risk 80 inside the banks, plus 9 supporting points and none against |
+| ICICIBANK | Buy 72.3, value 54 | Buy 64.2, value 11 | Still Buy, now on quality 91 and risk 96; it is the most expensive bank in the group |
+| COALINDIA | Buy 64.5, value 94 | Buy 65.4, value 64 | Holds up inside the energy group: quality 72, risk 90, free cash flow 12.5% of market value |
+
+Findings: (1) the mixed-pool value artefact was real and the sector comparison removes it; (2) one more artefact was found and fixed: SBIN earned a supporting point for "debt is lower than equity (debt-to-equity 0.00)", which means nothing for a bank, so the debt check is now not applicable for lenders; (3) official quarterly results and shareholding had silently stopped downloading because NSE's listings moved their file links to `nsearchives.nseindia.in`; fixed, and lenders now get gross and net NPA, CET1 and net interest income from the standalone filing. The remaining Buys are sector-relative readings, not proven calls; the 8 December settlement is the first real test.

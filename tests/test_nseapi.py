@@ -229,3 +229,19 @@ def test_as_of_run_skips_api(tmp_path):
     op = FakeNse()
     build_factset("RELIANCE.NS", as_of=date(2026, 1, 1), client=FakeClient(), sleep=lambda s: None, nse_client=api(op, tmp_path))
     assert op.calls == []
+
+
+def test_files_from_the_in_archive_host(tmp_path):
+    """NSE's listings moved their XBRL links to nsearchives.nseindia.in (seen 2026-11-16); those must download like .com ones."""
+    in_url = SHP_URL.replace("nseindia.com", "nseindia.in")
+    op = FakeNse({in_url: shp_xml("2026-09-30", prom=0.5044, sym="RELIANCE")})
+    a = nseapi.NseApi(opener=op, cache=tmp_path, sleep=lambda s: None, clock=lambda: 1000.0)
+    p, why = a.get_file(in_url)
+    assert p is not None and why == ""
+
+
+def test_other_hosts_still_refused(tmp_path):
+    a = nseapi.NseApi(opener=FakeNse(), cache=tmp_path, sleep=lambda s: None, clock=lambda: 1000.0)
+    for bad in ("https://nsearchives.nseindia.in.evil.example/x.xml", "http://nsearchives.nseindia.in/x.xml",
+                "https://example.com/corporate/xbrl/x.xml"):
+        assert a.get_file(bad) == (None, "not an NSE archive URL")

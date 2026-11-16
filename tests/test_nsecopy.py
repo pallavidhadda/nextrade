@@ -156,3 +156,32 @@ def test_snapshot_job_sets_live_first_and_copy_dirs(tmp_path, monkeypatch):
 def test_xbrl_unchanged_by_copy(tmp_path):
     from tests.test_nseapi import FX
     assert facts_from_nse_xbrl(FX / "nse_ifr_cons_RELIANCE_2026Q2.xml").facts
+
+
+def test_copy_older_than_the_limit_is_ignored(tmp_path, monkeypatch):
+    out, path, *_ = make_copy(tmp_path, monkeypatch)
+    doc = json.loads(path.read_text())
+    doc["generated_at"] = "2026-01-01T00:00:00+00:00"
+    path.write_text(json.dumps(doc))
+    monkeypatch.setenv("INDIAFACTS_NSE_COPY_BASE", out.as_uri())
+    monkeypatch.setenv("INDIAFACTS_NSE_COPY_FIRST", "1")
+    monkeypatch.setenv("INDIAFACTS_NSE_API_LIVE", "0")
+    monkeypatch.setattr(nseapi, "_today", lambda: __import__("datetime").date(2026, 1, 20))
+    a = api(FakeNse(), tmp_path / "old")
+    assert a.quarterly_filings("RELIANCE")[0] == []
+    assert any("older than 10 days" in r for r in a.reasons)
+    nseapi._copy_cache.clear()
+    monkeypatch.setattr(nseapi, "_today", lambda: __import__("datetime").date(2026, 1, 8))
+    assert api(FakeNse(), tmp_path / "fresh").quarterly_filings("RELIANCE")[0]
+
+
+def test_prune_drops_copies_outside_the_universe(tmp_path):
+    from indiafacts.snapshots import prune_nse_copy
+
+    d = tmp_path / "nse"
+    d.mkdir()
+    for s in ("RELIANCE", "TCS", "OLDCO"):
+        (d / f"{s}.json").write_text("{}")
+    (d / "notes.txt").write_text("keep")
+    assert prune_nse_copy(tmp_path, ["RELIANCE.NS", "TCS.NS"]) == ["OLDCO"]
+    assert sorted(p.name for p in d.iterdir()) == ["RELIANCE.json", "TCS.json", "notes.txt"]

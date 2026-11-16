@@ -11,6 +11,7 @@ HINDUNILVR.NS,ok,Hold,Medium,36.2673,2169,18.7,11,24,gemini:gemini-3.1-flash-lit
 ICICIBANK.NS,ok,Buy,High,72.2727,2114,13.4,5,55,gemini:gemini-3.1-flash-lite,ok,Overweight,16,48284,71.3,True,1,3,True
 INFY.NS,ok,Hold,High,47.4198,2358,13.7,11,23,gemini:gemini-3.1-flash-lite,ok,Overweight,17,60917,76.3,True,3,7,False
 ITC.NS,ok,Hold,High,57.1045,2221,14.4,11,25,gemini:gemini-3.1-flash-lite,ok,Hold,17,60279,76.3,True,2,8,True
+JSWSTEEL.NS,ok,No rating,n/a,,2208,16.5,11,12,gemini:gemini-3.1-flash-lite,ok,Hold,17,63648,76.9,True,2,8,False
 KOTAKBANK.NS,ok,Overweight,High,55.0657,2357,17.2,5,56,gemini:gemini-3.1-flash-lite,ok,Hold,17,60602,78.1,True,2,6,False
 LT.NS,ok,Hold,High,37.8974,2392,14.7,11,25,gemini:gemini-3.1-flash-lite,ok,Overweight,14,42091,83.0,False,3,6,False
 M&M.NS,ok,Hold,High,45.1959,2176,14.0,11,20,gemini:gemini-3.1-flash-lite,error,,,0,,,0,0,
@@ -24,7 +25,7 @@ SBIN.NS,ok,Buy,High,64.101,2139,13.7,5,43,gemini:gemini-3.1-flash-lite,ok,Overwe
 SUNPHARMA.NS,ok,Overweight,High,46.4686,2225,21.8,11,12,gemini:gemini-3.1-flash-lite,ok,Overweight,18,62596,142.4,True,3,5,True
 TATASTEEL.NS,ok,Hold,High,32.791,2473,14.1,11,15,gemini:gemini-3.1-flash-lite,ok,Overweight,17,65155,87.7,True,3,5,False
 TCS.NS,ok,Hold,High,50.6659,2261,27.1,11,7,gemini:gemini-3.1-flash-lite,ok,Hold,17,84194,82.5,True,0,2,True
-TECHM.NS,ok,Hold,High,36.8377,2321,13.4,11,25,gemini:gemini-3.1-flash-lite,quota,,,0,,,0,0,
+TECHM.NS,ok,Hold,High,36.8377,2321,13.4,11,25,gemini:gemini-3.1-flash-lite,ok,Overweight,17,61680,75.7,True,4,11,False
 TITAN.NS,ok,Overweight,High,44.7603,2244,15.9,11,7,gemini:gemini-3.1-flash-lite,ok,Overweight,18,69822,121.2,True,4,9,True
 ULTRACEMCO.NS,ok,Hold,High,36.105,2321,19.7,11,25,gemini:gemini-3.1-flash-lite,ok,Hold,16,50594,195.7,True,2,4,True
 WIPRO.NS,ok,Hold,High,47.1976,2267,13.8,11,19,gemini:gemini-3.1-flash-lite,ok,Overweight,17,61993,76.0,True,3,7,False

@@ -4,36 +4,40 @@
  "error": "valueerror: ticker contains characters not allowed in a filesystem path: 'm&m.ns'",
  "calls": [
   {
-   "input": 1746,
-   "output": 46
-  },
-  {
    "input": 1040,
    "output": 144
   },
   {
-   "input": 1525,
-   "output": 156
+   "input": 1746,
+   "output": 46
   },
   {
-   "input": 3132,
-   "output": 38
+   "input": 1525,
+   "output": 178
+  },
+  {
+   "input": 476,
+   "output": 93
   },
   {
    "input": 1749,
-   "output": 384
+   "output": 670
   },
   {
-   "input": 2609,
-   "output": 24
+   "input": 3132,
+   "output": 244
   },
   {
-   "input": 3281,
-   "output": 40
+   "input": 1967,
+   "output": 19
   },
   {
-   "input": 2706,
-   "output": 600
+   "input": 4119,
+   "output": 39
+  },
+  {
+   "input": 2059,
+   "output": 440
   }
  ]
 }
