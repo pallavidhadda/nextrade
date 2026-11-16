@@ -39,8 +39,13 @@ LENDER = [
     ("pb", "Price to book value", "x", None, "Market value against the accounting value of equity."),
     ("fy_equity_multiplier", "Assets per rupee of equity", "x", None,
      "How much the lender has borrowed against its own money."),
-    ("nim", "Net interest margin", "pct", None, "Spread the lender earns on its loans."),
-    ("gross_npa_ratio", "Gross bad loans", "pct", None, "Share of loans that stopped paying."),
+    ("nii_to_assets", "Net interest income to assets", "pct", None,
+     "Interest earned minus interest paid, a year's worth, per rupee of assets. A stand-in for net interest margin, which banks "
+     "measure on interest-earning assets only, so their own figure is higher."),
+    ("gross_npa_ratio", "Gross bad loans (NPA)", "pct", [(0.02, "low"), (0.05, "moderate"), (9, "high")],
+     "Share of loans that stopped paying, from the standalone results filing."),
+    ("net_npa_ratio", "Net bad loans after provisions", "pct", None, "Bad loans left after the money already set aside for them."),
+    ("cet1_ratio", "Core capital (CET1)", "pct", None, "The bank's own highest-quality capital against its risk-weighted assets."),
     ("fy_net_income_cagr_3y", "Profit growth, 3-year yearly average", "pct", [(0.0, "shrinking"), (0.08, "slow"), (0.18, "healthy"), (9, "fast")],
      "How fast profit grew each year over three years."),
 ]

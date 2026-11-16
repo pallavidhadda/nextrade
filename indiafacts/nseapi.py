@@ -337,12 +337,26 @@ class NseApi:
             pairs.append((e, p))
         if failed:
             notes.append(f"{failed} of {min(n, len(chosen))} results files could not be downloaded")
+        if cons and pairs and "BANKING" in pairs[0][0]["xbrl"].upper():
+            extra = self._bank_asset_quality(entries, pairs[0][0]["end"])
+            if extra:
+                pairs.append(extra)
+                notes.append("asset quality (gross and net NPA, CET1) read from the standalone filing for the same quarter; "
+                             "banks report these only there")
         return pairs, notes
+
+    def _bank_asset_quality(self, entries: list[dict], end):
+        """(entry, path) of the standalone filing for quarter `end`, or None. Only its asset-quality figures are kept (see quarterly_filings)."""
+        st = [e for e in entries if e["basis"] == "standalone" and e["end"] == end]
+        if not st:
+            return None
+        p, _ = self.get_file(st[0]["xbrl"])
+        return ({**st[0], "asset_quality_only": True}, p) if p else None
 
     def quarterly_xbrl(self, symbol: str, n: int = RESULT_QUARTERS):
         """(paths, notes) of the newest n quarters' XBRL files, live from NSE."""
         pairs, notes = self._live_results(symbol, n)
-        return [p for _, p in pairs], notes
+        return [p for e, p in pairs if not e.get("asset_quality_only")], notes
 
     def quarterly_filings(self, symbol: str, n: int = RESULT_QUARTERS):
         """(list of parsed FactSets, notes): the quarterly results as Facts, live or from the daily copy (same order as latest_shareholding)."""
@@ -356,9 +370,17 @@ class NseApi:
 
             pairs, notes = self._live_results(symbol, n)
             kept = []
+            from indiafacts.xbrl import ASSET_QUALITY
+
             for e, p in pairs:
                 try:
-                    parsed.append(facts_from_nse_xbrl(p))
+                    fs = facts_from_nse_xbrl(p)
+                    if e.get("asset_quality_only"):
+                        keep = [f for f in fs.facts if f.metric in ASSET_QUALITY.values()]
+                        if not keep:
+                            continue
+                        fs = fs.model_copy(update={"facts": keep})
+                    parsed.append(fs)
                     kept.append((e, parsed[-1]))
                 except (ValueError, OSError) as exc:
                     notes.append(f"skipped filing {Path(p).name}: {exc}")
