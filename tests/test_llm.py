@@ -222,3 +222,29 @@ def test_valid_json_wrapped_in_a_sentence_is_still_accepted(digest):
     assert ok is not None and len(ok.claims) == 2
     cut, reasons = validate_llm_output(good(d)[:40], d)      # a truncated answer is still rejected
     assert cut is None and reasons == ["output is not the requested JSON"]
+
+
+def test_intensity_words_need_a_number(digest):
+    """'strong revenue growth' with no figure is vague; the same word next to a digest figure is fine."""
+    d, sc, fs = digest
+    base = json.loads(good(d))
+    rid = d.by_key["fact:revenue"]
+    base["claims"].append({"type": "inference", "text": "The company shows strong revenue growth.", "ids": [rid]})
+    base["claims"].append({"type": "inference", "text": "Revenue of ₹3.12 lakh cr is a strong quarter.", "ids": [rid]})
+    out, reasons = validate_llm_output(json.dumps(base), d)
+    texts = [c.text for c in out.claims]
+    assert "The company shows strong revenue growth." not in texts and any("3.12" in t for t in texts)
+    assert any("vague wording 'strong'" in r for r in reasons)
+
+
+def test_summary_with_bare_intensity_word_falls_back(digest):
+    d, sc, fs = digest
+    base = json.loads(good(d))
+    base["summary"] = "A robust business with impressive momentum."
+    out, reasons = validate_llm_output(json.dumps(base), d)
+    assert out.summary != base["summary"]
+
+
+def test_prompt_states_the_intensity_rule():
+    from indiafacts.llm import PROMPT_VERSION, SYSTEM_PROMPT
+    assert "intensity" in SYSTEM_PROMPT and PROMPT_VERSION != "v1"
