@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-17T21:24:28+00:00",
+ "generated_at": "2026-11-18T21:00:34+00:00",
  "status": "warning",
  "checks": [
   {
@@ -7,28 +7,28 @@
    "check": "range",
    "field": "marketCap",
    "severity": "warning",
-   "detail": "190 of 2229 values outside 1000000000.0..1000000000000000.0 (e.g. 968258010)"
+   "detail": "192 of 2231 values outside 1000000000.0..1000000000000000.0 (e.g. 967491211)"
   },
   {
    "source": "marketlens",
    "check": "placeholder",
    "field": "beta",
    "severity": "info",
-   "detail": "the single value 1 in 2229 of 2229 rows; not scored today"
+   "detail": "the single value 1 in 2231 of 2231 rows; not scored today"
   },
   {
    "source": "marketlens",
    "check": "placeholder",
    "field": "returnOnEquity",
    "severity": "info",
-   "detail": "0 or null in 2229 of 2229 rows; not scored today"
+   "detail": "0 or null in 2231 of 2231 rows; not scored today"
   },
   {
    "source": "marketlens",
    "check": "placeholder",
    "field": "revenueGrowth",
    "severity": "info",
-   "detail": "0 or null in 2229 of 2229 rows; not scored today"
+   "detail": "0 or null in 2231 of 2231 rows; not scored today"
   },
   {
    "source": "marketlens",
@@ -56,7 +56,7 @@
   "p90": 17.0,
   "max": 49,
   "over": 5,
-  "share_over": 0.3333,
+  "share_over": 0.3313,
   "worst": [
    [
     "KWIL.NS",
@@ -82,19 +82,19 @@
   "top_metrics": [
    [
     "benchmark_return_5y",
-    112
+    111
    ],
    [
     "max_drawdown_5y",
-    112
+    111
    ],
    [
     "relative_return_5y",
-    112
+    111
    ],
    [
     "return_5y",
-    112
+    111
    ],
    [
     "net_income_source_check",
