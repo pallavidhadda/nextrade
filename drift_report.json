@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-18T21:00:34+00:00",
+ "generated_at": "2026-11-19T21:02:25+00:00",
  "status": "warning",
  "checks": [
   {
@@ -7,7 +7,7 @@
    "check": "range",
    "field": "marketCap",
    "severity": "warning",
-   "detail": "192 of 2231 values outside 1000000000.0..1000000000000000.0 (e.g. 967491211)"
+   "detail": "194 of 2231 values outside 1000000000.0..1000000000000000.0 (e.g. 913187900)"
   },
   {
    "source": "marketlens",
@@ -54,13 +54,13 @@
   "reports": 486,
   "median": 3.0,
   "p90": 17.0,
-  "max": 49,
+  "max": 48,
   "over": 5,
   "share_over": 0.3313,
   "worst": [
    [
     "KWIL.NS",
-    49
+    48
    ],
    [
     "VISL.NS",
@@ -102,11 +102,11 @@
    ],
    [
     "net_income_yoy",
-    91
+    92
    ],
    [
     "implied_growth_r14_n5",
-    86
+    87
    ],
    [
     "gross_npa_ratio",
