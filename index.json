@@ -1,3409 +1,3409 @@
 {
  "360ONE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:48:02+00:00",
+  "generated_at": "2026-11-20T21:38:39+00:00",
   "ok": true
  },
  "63MOONS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:12:27+00:00",
+  "generated_at": "2026-11-20T22:02:50+00:00",
   "ok": true
  },
  "AARTIIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:27:23+00:00",
+  "generated_at": "2026-11-20T22:17:53+00:00",
   "ok": true
  },
  "AARTIPHARM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:15:23+00:00",
+  "generated_at": "2026-11-20T22:05:45+00:00",
   "ok": true
  },
  "ABB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:27:40+00:00",
+  "generated_at": "2026-11-20T21:18:17+00:00",
   "ok": true
  },
  "ABCAPITAL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:45:13+00:00",
+  "generated_at": "2026-11-20T21:35:56+00:00",
   "ok": true
  },
  "ACE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:27:34+00:00",
+  "generated_at": "2026-11-20T22:18:06+00:00",
   "ok": true
  },
  "ACMESOLAR.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:03:00+00:00",
+  "generated_at": "2026-11-20T21:53:29+00:00",
   "ok": true
  },
  "ACUTAAS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:51:14+00:00",
+  "generated_at": "2026-11-20T21:41:41+00:00",
   "ok": true
  },
  "ADANIENSOL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:16:41+00:00",
+  "generated_at": "2026-11-20T21:06:59+00:00",
   "ok": true
  },
  "ADANIENT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:02:25+00:00",
+  "generated_at": "2026-11-20T20:52:31+00:00",
   "ok": true
  },
  "ADANIGREEN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:22:35+00:00",
+  "generated_at": "2026-11-20T21:12:58+00:00",
   "ok": true
  },
  "ADANIPORTS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:02:39+00:00",
+  "generated_at": "2026-11-20T20:52:46+00:00",
   "ok": true
  },
  "ADANIPOWER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:15:54+00:00",
+  "generated_at": "2026-11-20T21:06:12+00:00",
   "ok": true
  },
  "AEGISLOG.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:34:34+00:00",
+  "generated_at": "2026-11-20T21:25:12+00:00",
   "ok": true
  },
  "AEGISVOPAK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:22:58+00:00",
+  "generated_at": "2026-11-20T22:13:27+00:00",
   "ok": true
  },
  "AEQUS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:45:50+00:00",
+  "generated_at": "2026-11-20T21:36:33+00:00",
   "ok": true
  },
  "AEROFLEX.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:13:14+00:00",
+  "generated_at": "2026-11-20T22:03:38+00:00",
   "ok": true
  },
  "AETHER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:26:48+00:00",
+  "generated_at": "2026-11-20T22:17:18+00:00",
   "ok": true
  },
  "AFCONS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:28:32+00:00",
+  "generated_at": "2026-11-20T22:19:03+00:00",
   "ok": true
  },
  "AFFLE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:24:29+00:00",
+  "generated_at": "2026-11-20T22:15:00+00:00",
   "ok": true
  },
  "AGARWALEYE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:29:06+00:00",
+  "generated_at": "2026-11-20T22:19:38+00:00",
   "ok": true
  },
  "AGIIL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:29:30+00:00",
+  "generated_at": "2026-11-20T22:20:01+00:00",
   "ok": true
  },
  "ALKEM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:09:35+00:00",
+  "generated_at": "2026-11-20T21:59:57+00:00",
   "ok": true
  },
  "AMAGI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:34:16+00:00",
+  "generated_at": "2026-11-20T22:24:39+00:00",
   "ok": true
  },
  "AMBER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:33:59+00:00",
+  "generated_at": "2026-11-20T21:24:37+00:00",
   "ok": true
  },
  "AMBUJACEM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:03:47+00:00",
+  "generated_at": "2026-11-20T21:54:14+00:00",
   "ok": true
  },
  "ANANDRATHI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:17:43+00:00",
+  "generated_at": "2026-11-20T22:08:05+00:00",
   "ok": true
  },
  "ANANTRAJ.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:38:03+00:00",
+  "generated_at": "2026-11-20T21:28:47+00:00",
   "ok": true
  },
  "ANGELONE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:33:47+00:00",
+  "generated_at": "2026-11-20T21:24:24+00:00",
   "ok": true
  },
  "ANTELOPUS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:37:40+00:00",
+  "generated_at": "2026-11-20T21:28:23+00:00",
   "ok": true
  },
  "ANTHEM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:12:16+00:00",
+  "generated_at": "2026-11-20T22:02:39+00:00",
   "ok": true
  },
  "ANURAS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:31:42+00:00",
+  "generated_at": "2026-11-20T22:22:10+00:00",
   "ok": true
  },
  "APARINDS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:25:42+00:00",
+  "generated_at": "2026-11-20T21:16:11+00:00",
   "ok": true
  },
  "APLAPOLLO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:46:38+00:00",
+  "generated_at": "2026-11-20T21:37:20+00:00",
   "ok": true
  },
  "APOLLO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:21:13+00:00",
+  "generated_at": "2026-11-20T21:11:35+00:00",
   "ok": true
  },
  "APOLLOHOSP.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:02:51+00:00",
+  "generated_at": "2026-11-20T20:52:58+00:00",
   "ok": true
  },
  "ARE&M.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:09:11+00:00",
+  "generated_at": "2026-11-20T21:59:35+00:00",
   "ok": true
  },
  "ASHOKLEY.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:24:20+00:00",
+  "generated_at": "2026-11-20T21:14:45+00:00",
   "ok": true
  },
  "ASIANPAINT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:03:03+00:00",
+  "generated_at": "2026-11-20T20:53:10+00:00",
   "ok": true
  },
  "ASIANTILES.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:31:30+00:00",
+  "generated_at": "2026-11-20T22:21:57+00:00",
   "ok": true
  },
  "ASKAUTOLTD.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:33:17+00:00",
+  "generated_at": "2026-11-20T22:23:41+00:00",
   "ok": true
  },
  "ASTERDM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:31:03+00:00",
+  "generated_at": "2026-11-20T21:21:39+00:00",
   "ok": true
  },
  "ASTRAL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:45:24+00:00",
+  "generated_at": "2026-11-20T21:36:09+00:00",
   "ok": true
  },
  "ASTRAMICRO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:08:25+00:00",
+  "generated_at": "2026-11-20T21:58:49+00:00",
   "ok": true
  },
  "ATGL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:51:48+00:00",
+  "generated_at": "2026-11-20T21:42:15+00:00",
   "ok": true
  },
  "ATHERENERG.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:12:59+00:00",
+  "generated_at": "2026-11-20T21:03:15+00:00",
   "ok": true
  },
  "AUBANK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:37:06+00:00",
+  "generated_at": "2026-11-20T21:27:48+00:00",
   "ok": true
  },
  "AUROPHARMA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:41:14+00:00",
+  "generated_at": "2026-11-20T21:32:00+00:00",
   "ok": true
  },
  "AVALON.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:50:13+00:00",
+  "generated_at": "2026-11-20T21:40:45+00:00",
   "ok": true
  },
  "AWL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:27:46+00:00",
+  "generated_at": "2026-11-20T22:18:18+00:00",
   "ok": true
  },
  "AXISBANK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:03:15+00:00",
+  "generated_at": "2026-11-20T20:53:21+00:00",
   "ok": true
  },
  "AZAD.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:29:03+00:00",
+  "generated_at": "2026-11-20T21:19:39+00:00",
   "ok": true
  },
  "BAJAJ-AUTO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:03:26+00:00",
+  "generated_at": "2026-11-20T20:53:33+00:00",
   "ok": true
  },
  "BAJAJCON.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:32:53+00:00",
+  "generated_at": "2026-11-20T22:23:18+00:00",
   "ok": true
  },
  "BAJAJFINSV.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:03:38+00:00",
+  "generated_at": "2026-11-20T20:53:45+00:00",
   "ok": true
  },
  "BAJAJHIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:17:19+00:00",
+  "generated_at": "2026-11-20T22:07:41+00:00",
   "ok": true
  },
  "BAJAJHLDNG.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:29:18+00:00",
+  "generated_at": "2026-11-20T22:19:49+00:00",
   "ok": true
  },
  "BAJFINANCE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:03:50+00:00",
+  "generated_at": "2026-11-20T20:53:57+00:00",
   "ok": true
  },
  "BALAMINES.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:21:59+00:00",
+  "generated_at": "2026-11-20T22:12:25+00:00",
   "ok": true
  },
  "BALKRISIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:52:25+00:00",
+  "generated_at": "2026-11-20T21:42:52+00:00",
   "ok": true
  },
  "BALRAMCHIN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:26:29+00:00",
+  "generated_at": "2026-11-20T21:17:04+00:00",
   "ok": true
  },
  "BALUFORGE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:08:48+00:00",
+  "generated_at": "2026-11-20T21:59:12+00:00",
   "ok": true
  },
  "BANDHANBNK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:24:55+00:00",
+  "generated_at": "2026-11-20T21:15:22+00:00",
   "ok": true
  },
  "BANKBARODA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:27:05+00:00",
+  "generated_at": "2026-11-20T21:17:40+00:00",
   "ok": true
  },
  "BANKINDIA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:59:01+00:00",
+  "generated_at": "2026-11-20T21:49:33+00:00",
   "ok": true
  },
  "BBTC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:32:17+00:00",
+  "generated_at": "2026-11-20T22:22:43+00:00",
   "ok": true
  },
  "BDL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:36:43+00:00",
+  "generated_at": "2026-11-20T21:27:25+00:00",
   "ok": true
  },
  "BECTORFOOD.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:49:49+00:00",
+  "generated_at": "2026-11-20T21:40:21+00:00",
   "ok": true
  },
  "BEL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:04:02+00:00",
+  "generated_at": "2026-11-20T20:54:09+00:00",
   "ok": true
  },
  "BELRISE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:58:03+00:00",
+  "generated_at": "2026-11-20T21:48:36+00:00",
   "ok": true
  },
  "BEML.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:10:34+00:00",
+  "generated_at": "2026-11-20T22:00:55+00:00",
   "ok": true
  },
  "BEPL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:21:23+00:00",
+  "generated_at": "2026-11-20T22:11:51+00:00",
   "ok": true
  },
  "BHARATFORG.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:27:53+00:00",
+  "generated_at": "2026-11-20T21:18:29+00:00",
   "ok": true
  },
  "BHARTIARTL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:04:13+00:00",
+  "generated_at": "2026-11-20T20:54:21+00:00",
   "ok": true
  },
  "BHEL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:17:28+00:00",
+  "generated_at": "2026-11-20T21:07:47+00:00",
   "ok": true
  },
  "BIOCON.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:33:12+00:00",
+  "generated_at": "2026-11-20T21:23:49+00:00",
   "ok": true
  },
  "BLS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:35:15+00:00",
+  "generated_at": "2026-11-20T22:25:37+00:00",
   "ok": true
  },
  "BLUEJET.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:34:40+00:00",
+  "generated_at": "2026-11-20T22:25:03+00:00",
   "ok": true
  },
  "BLUESTARCO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:05:43+00:00",
+  "generated_at": "2026-11-20T21:56:08+00:00",
   "ok": true
  },
  "BLUESTONE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:18:49+00:00",
+  "generated_at": "2026-11-20T21:09:10+00:00",
   "ok": true
  },
  "BOSCHLTD.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:38:28+00:00",
+  "generated_at": "2026-11-20T21:29:12+00:00",
   "ok": true
  },
  "BPCL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:35:32+00:00",
+  "generated_at": "2026-11-20T21:26:12+00:00",
   "ok": true
  },
  "BRITANNIA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:40:15+00:00",
+  "generated_at": "2026-11-20T21:31:00+00:00",
   "ok": true
  },
  "BSE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:04:25+00:00",
+  "generated_at": "2026-11-20T20:54:32+00:00",
   "ok": true
  },
  "BSOFT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:30:17+00:00",
+  "generated_at": "2026-11-20T22:20:47+00:00",
   "ok": true
  },
  "CAMS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:01:25+00:00",
+  "generated_at": "2026-11-20T21:51:55+00:00",
   "ok": true
  },
  "CANBK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:26:40+00:00",
+  "generated_at": "2026-11-20T21:17:16+00:00",
   "ok": true
  },
  "CAPLIPOINT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:34:04+00:00",
+  "generated_at": "2026-11-20T22:24:27+00:00",
   "ok": true
  },
  "CARTRADE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:38:41+00:00",
+  "generated_at": "2026-11-20T21:29:25+00:00",
   "ok": true
  },
  "CASTROLIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:31:05+00:00",
+  "generated_at": "2026-11-20T22:21:35+00:00",
   "ok": true
  },
  "CDSL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:30:02+00:00",
+  "generated_at": "2026-11-20T21:20:40+00:00",
   "ok": true
  },
  "CEMPRO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:19:37+00:00",
+  "generated_at": "2026-11-20T22:10:03+00:00",
   "ok": true
  },
  "CGCL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:46:14+00:00",
+  "generated_at": "2026-11-20T21:36:56+00:00",
   "ok": true
  },
  "CGPOWER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:22:24+00:00",
+  "generated_at": "2026-11-20T21:12:46+00:00",
   "ok": true
  },
  "CHENNPETRO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:20:24+00:00",
+  "generated_at": "2026-11-20T21:10:45+00:00",
   "ok": true
  },
  "CHOICEIN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:27:57+00:00",
+  "generated_at": "2026-11-20T22:18:29+00:00",
   "ok": true
  },
  "CHOLAFIN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:24:08+00:00",
+  "generated_at": "2026-11-20T21:14:32+00:00",
   "ok": true
  },
  "CIPLA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:04:36+00:00",
+  "generated_at": "2026-11-20T20:54:44+00:00",
   "ok": true
  },
  "CLEANMAX.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:13:37+00:00",
+  "generated_at": "2026-11-20T22:04:01+00:00",
   "ok": true
  },
  "CMPDI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:30:29+00:00",
+  "generated_at": "2026-11-20T22:20:58+00:00",
   "ok": true
  },
  "COALINDIA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:04:48+00:00",
+  "generated_at": "2026-11-20T20:54:56+00:00",
   "ok": true
  },
  "COCHINSHIP.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:35:09+00:00",
+  "generated_at": "2026-11-20T21:25:48+00:00",
   "ok": true
  },
  "COFORGE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:15:19+00:00",
+  "generated_at": "2026-11-20T21:05:36+00:00",
   "ok": true
  },
  "COHANCE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:33:05+00:00",
+  "generated_at": "2026-11-20T22:23:29+00:00",
   "ok": true
  },
  "COLPAL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:09:59+00:00",
+  "generated_at": "2026-11-20T22:00:20+00:00",
   "ok": true
  },
  "CONCOR.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:00:49+00:00",
+  "generated_at": "2026-11-20T21:51:20+00:00",
   "ok": true
  },
  "CPPLUS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:04:34+00:00",
+  "generated_at": "2026-11-20T21:55:00+00:00",
   "ok": true
  },
  "CRAFTSMAN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:21:48+00:00",
+  "generated_at": "2026-11-20T22:12:14+00:00",
   "ok": true
  },
  "CREDITACC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:37:04+00:00",
+  "generated_at": "2026-11-20T22:27:23+00:00",
   "ok": true
  },
  "CROMPTON.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:07:05+00:00",
+  "generated_at": "2026-11-20T21:57:29+00:00",
   "ok": true
  },
  "CUB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:14:47+00:00",
+  "generated_at": "2026-11-20T22:05:10+00:00",
   "ok": true
  },
  "CUMMINSIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:26:06+00:00",
+  "generated_at": "2026-11-20T21:16:36+00:00",
   "ok": true
  },
  "CUPID.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:12:36+00:00",
+  "generated_at": "2026-11-20T21:02:51+00:00",
   "ok": true
  },
  "CYIENT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:03:24+00:00",
+  "generated_at": "2026-11-20T21:53:52+00:00",
   "ok": true
  },
  "CYIENTDLM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:16:21+00:00",
+  "generated_at": "2026-11-20T22:06:42+00:00",
   "ok": true
  },
  "DABUR.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:06:06+00:00",
+  "generated_at": "2026-11-20T21:56:31+00:00",
   "ok": true
  },
  "DATAPATTNS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:18:38+00:00",
+  "generated_at": "2026-11-20T21:08:58+00:00",
   "ok": true
  },
  "DEEPAKFERT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:32:05+00:00",
+  "generated_at": "2026-11-20T22:22:32+00:00",
   "ok": true
  },
  "DEEPAKNTR.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:23:09+00:00",
+  "generated_at": "2026-11-20T22:13:38+00:00",
   "ok": true
  },
  "DELHIVERY.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:36:54+00:00",
+  "generated_at": "2026-11-20T21:27:36+00:00",
   "ok": true
  },
  "DEVYANI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:26:37+00:00",
+  "generated_at": "2026-11-20T22:17:07+00:00",
   "ok": true
  },
  "DIACABS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:52:00+00:00",
+  "generated_at": "2026-11-20T21:42:28+00:00",
   "ok": true
  },
  "DIVISLAB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:16:52+00:00",
+  "generated_at": "2026-11-20T21:07:11+00:00",
   "ok": true
  },
  "DIXON.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:13:45+00:00",
+  "generated_at": "2026-11-20T21:04:01+00:00",
   "ok": true
  },
  "DLF.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:23:34+00:00",
+  "generated_at": "2026-11-20T21:13:56+00:00",
   "ok": true
  },
  "DMART.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:28:16+00:00",
+  "generated_at": "2026-11-20T21:18:54+00:00",
   "ok": true
  },
  "DRREDDY.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:05:01+00:00",
+  "generated_at": "2026-11-20T20:55:09+00:00",
   "ok": true
  },
  "DYCL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:19:03+00:00",
+  "generated_at": "2026-11-20T22:09:29+00:00",
   "ok": true
  },
  "E2E.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:13:26+00:00",
+  "generated_at": "2026-11-20T22:03:49+00:00",
   "ok": true
  },
  "ECLERX.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:21:11+00:00",
+  "generated_at": "2026-11-20T22:11:39+00:00",
   "ok": true
  },
  "EDELWEISS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:07:39+00:00",
+  "generated_at": "2026-11-20T21:58:03+00:00",
   "ok": true
  },
  "EICHERMOT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:05:14+00:00",
+  "generated_at": "2026-11-20T20:55:21+00:00",
   "ok": true
  },
  "ELECON.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:26:13+00:00",
+  "generated_at": "2026-11-20T22:16:44+00:00",
   "ok": true
  },
  "EMAMILTD.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:28:08+00:00",
+  "generated_at": "2026-11-20T22:18:40+00:00",
   "ok": true
  },
  "EMIL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:51:02+00:00",
+  "generated_at": "2026-11-20T21:41:29+00:00",
   "ok": true
  },
  "EMMVEE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:05:20+00:00",
+  "generated_at": "2026-11-20T21:55:46+00:00",
   "ok": true
  },
  "EMUDHRA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:24:07+00:00",
+  "generated_at": "2026-11-20T22:14:38+00:00",
   "ok": true
  },
  "ENGINERSIN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:48:50+00:00",
+  "generated_at": "2026-11-20T21:39:24+00:00",
   "ok": true
  },
  "ENRIN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:31:39+00:00",
+  "generated_at": "2026-11-20T21:22:15+00:00",
   "ok": true
  },
  "EPL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:57:40+00:00",
+  "generated_at": "2026-11-20T21:48:14+00:00",
   "ok": true
  },
  "ETERNAL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:05:26+00:00",
+  "generated_at": "2026-11-20T20:55:33+00:00",
   "ok": true
  },
  "EXIDEIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:34:46+00:00",
+  "generated_at": "2026-11-20T21:25:24+00:00",
   "ok": true
  },
  "FACT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:18:29+00:00",
+  "generated_at": "2026-11-20T22:08:54+00:00",
   "ok": true
  },
  "FCL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:03:12+00:00",
+  "generated_at": "2026-11-20T21:53:40+00:00",
   "ok": true
  },
  "FEDERALBNK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:28:40+00:00",
+  "generated_at": "2026-11-20T21:19:16+00:00",
   "ok": true
  },
  "FILATEX.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:32:30+00:00",
+  "generated_at": "2026-11-20T22:22:55+00:00",
   "ok": true
  },
  "FINCABLES.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:39:16+00:00",
+  "generated_at": "2026-11-20T21:30:00+00:00",
   "ok": true
  },
  "FINOPB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:31:54+00:00",
+  "generated_at": "2026-11-20T22:22:21+00:00",
   "ok": true
  },
  "FIRSTCRY.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:13:48+00:00",
+  "generated_at": "2026-11-20T22:04:13+00:00",
   "ok": true
  },
  "FLUOROCHEM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:06:30+00:00",
+  "generated_at": "2026-11-20T21:56:55+00:00",
   "ok": true
  },
  "FMGOETZE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:11:53+00:00",
+  "generated_at": "2026-11-20T22:02:16+00:00",
   "ok": true
  },
  "FORCEMOT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:42:16+00:00",
+  "generated_at": "2026-11-20T21:32:59+00:00",
   "ok": true
  },
  "FORTIS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:47:02+00:00",
+  "generated_at": "2026-11-20T21:37:43+00:00",
   "ok": true
  },
  "FSL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:00:24+00:00",
+  "generated_at": "2026-11-20T21:50:57+00:00",
   "ok": true
  },
  "GABRIEL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:04:10+00:00",
+  "generated_at": "2026-11-20T21:54:37+00:00",
   "ok": true
  },
  "GAIL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:40:27+00:00",
+  "generated_at": "2026-11-20T21:31:12+00:00",
   "ok": true
  },
  "GANDHAR.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:11:31+00:00",
+  "generated_at": "2026-11-20T22:01:53+00:00",
   "ok": true
  },
  "GENUSPOWER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:10:57+00:00",
+  "generated_at": "2026-11-20T22:01:19+00:00",
   "ok": true
  },
  "GESHIP.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:47:14+00:00",
+  "generated_at": "2026-11-20T21:37:54+00:00",
   "ok": true
  },
  "GLAND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:32:26+00:00",
+  "generated_at": "2026-11-20T21:23:03+00:00",
   "ok": true
  },
  "GLENMARK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:46:50+00:00",
+  "generated_at": "2026-11-20T21:37:31+00:00",
   "ok": true
  },
  "GMDCLTD.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:19:25+00:00",
+  "generated_at": "2026-11-20T22:09:51+00:00",
   "ok": true
  },
  "GMRAIRPORT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:43:38+00:00",
+  "generated_at": "2026-11-20T21:34:22+00:00",
   "ok": true
  },
  "GODFRYPHLP.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:12:50+00:00",
+  "generated_at": "2026-11-20T22:03:15+00:00",
   "ok": true
  },
  "GODREJCP.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:41:51+00:00",
+  "generated_at": "2026-11-20T21:32:35+00:00",
   "ok": true
  },
  "GODREJPROP.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:43:14+00:00",
+  "generated_at": "2026-11-20T21:33:57+00:00",
   "ok": true
  },
  "GRANULES.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:01:01+00:00",
+  "generated_at": "2026-11-20T21:51:32+00:00",
   "ok": true
  },
  "GRAPHITE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:35:44+00:00",
+  "generated_at": "2026-11-20T21:26:24+00:00",
   "ok": true
  },
  "GRASIM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:05:38+00:00",
+  "generated_at": "2026-11-20T20:55:44+00:00",
   "ok": true
  },
  "GREAVESCOT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:28:43+00:00",
+  "generated_at": "2026-11-20T22:19:14+00:00",
   "ok": true
  },
  "GROWW.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:12:48+00:00",
+  "generated_at": "2026-11-20T21:03:02+00:00",
   "ok": true
  },
  "GRSE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:57:17+00:00",
+  "generated_at": "2026-11-20T21:47:50+00:00",
   "ok": true
  },
  "GVT&D.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:18:03+00:00",
+  "generated_at": "2026-11-20T21:08:22+00:00",
   "ok": true
  },
  "HAL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:17:16+00:00",
+  "generated_at": "2026-11-20T21:07:36+00:00",
   "ok": true
  },
  "HAPPSTMNDS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:09:00+00:00",
+  "generated_at": "2026-11-20T21:59:23+00:00",
   "ok": true
  },
  "HAVELLS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:47:50+00:00",
+  "generated_at": "2026-11-20T21:38:28+00:00",
   "ok": true
  },
  "HBLENGINE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:53:14+00:00",
+  "generated_at": "2026-11-20T21:43:40+00:00",
   "ok": true
  },
  "HCC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:21:36+00:00",
+  "generated_at": "2026-11-20T22:12:02+00:00",
   "ok": true
  },
  "HCLTECH.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:05:49+00:00",
+  "generated_at": "2026-11-20T20:55:56+00:00",
   "ok": true
  },
  "HDFCAMC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:27:16+00:00",
+  "generated_at": "2026-11-20T21:17:52+00:00",
   "ok": true
  },
  "HDFCBANK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:06:02+00:00",
+  "generated_at": "2026-11-20T20:56:07+00:00",
   "ok": true
  },
  "HDFCLIFE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:06:14+00:00",
+  "generated_at": "2026-11-20T20:56:19+00:00",
   "ok": true
  },
  "HDFCSILVER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:16:32+00:00",
+  "generated_at": "2026-11-20T22:06:54+00:00",
   "ok": true
  },
  "HEGAM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:49:15+00:00",
+  "generated_at": "2026-11-20T21:39:47+00:00",
   "ok": true
  },
  "HEROMOTOCO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:19:24+00:00",
+  "generated_at": "2026-11-20T21:09:46+00:00",
   "ok": true
  },
  "HFCL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:18:26+00:00",
+  "generated_at": "2026-11-20T21:08:46+00:00",
   "ok": true
  },
  "HINDALCO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:06:26+00:00",
+  "generated_at": "2026-11-20T20:56:31+00:00",
   "ok": true
  },
  "HINDCOPPER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:14:43+00:00",
+  "generated_at": "2026-11-20T21:05:00+00:00",
   "ok": true
  },
  "HINDPETRO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:27:28+00:00",
+  "generated_at": "2026-11-20T21:18:04+00:00",
   "ok": true
  },
  "HINDUNILVR.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:06:37+00:00",
+  "generated_at": "2026-11-20T20:56:44+00:00",
   "ok": true
  },
  "HINDZINC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:21:37+00:00",
+  "generated_at": "2026-11-20T21:12:00+00:00",
   "ok": true
  },
  "HONASA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:09:47+00:00",
+  "generated_at": "2026-11-20T22:00:09+00:00",
   "ok": true
  },
  "HSCL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:15:06+00:00",
+  "generated_at": "2026-11-20T21:05:24+00:00",
   "ok": true
  },
  "HYUNDAI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:37:17+00:00",
+  "generated_at": "2026-11-20T21:28:00+00:00",
   "ok": true
  },
  "ICICIAMC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:39:39+00:00",
+  "generated_at": "2026-11-20T21:30:24+00:00",
   "ok": true
  },
  "ICICIBANK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:06:48+00:00",
+  "generated_at": "2026-11-20T20:56:57+00:00",
   "ok": true
  },
  "ICICIGI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:31:50+00:00",
+  "generated_at": "2026-11-20T21:22:26+00:00",
   "ok": true
  },
  "ICICIPRULI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:05:31+00:00",
+  "generated_at": "2026-11-20T21:55:57+00:00",
   "ok": true
  },
  "IDBI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:52:12+00:00",
+  "generated_at": "2026-11-20T21:42:40+00:00",
   "ok": true
  },
  "IDEA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:14:08+00:00",
+  "generated_at": "2026-11-20T21:04:24+00:00",
   "ok": true
  },
  "IDFCFIRSTB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:36:08+00:00",
+  "generated_at": "2026-11-20T21:26:48+00:00",
   "ok": true
  },
  "IEX.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:24:52+00:00",
+  "generated_at": "2026-11-20T22:15:22+00:00",
   "ok": true
  },
  "IFCI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:14:31+00:00",
+  "generated_at": "2026-11-20T21:04:48+00:00",
   "ok": true
  },
  "IIFL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:39:04+00:00",
+  "generated_at": "2026-11-20T21:29:48+00:00",
   "ok": true
  },
  "INDHOTEL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:36:19+00:00",
+  "generated_at": "2026-11-20T21:27:00+00:00",
   "ok": true
  },
  "INDIANB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:40:39+00:00",
+  "generated_at": "2026-11-20T21:31:25+00:00",
   "ok": true
  },
  "INDIGO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:07:00+00:00",
+  "generated_at": "2026-11-20T20:57:09+00:00",
   "ok": true
  },
  "INDUSINDBK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:29:49+00:00",
+  "generated_at": "2026-11-20T21:20:27+00:00",
   "ok": true
  },
  "INDUSTOWER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:26:53+00:00",
+  "generated_at": "2026-11-20T21:17:28+00:00",
   "ok": true
  },
  "INFY.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:07:12+00:00",
+  "generated_at": "2026-11-20T20:57:21+00:00",
   "ok": true
  },
  "INOXINDIA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:10:46+00:00",
+  "generated_at": "2026-11-20T22:01:07+00:00",
   "ok": true
  },
  "INOXWIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:02:48+00:00",
+  "generated_at": "2026-11-20T21:53:17+00:00",
   "ok": true
  },
  "IOC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:45:00+00:00",
+  "generated_at": "2026-11-20T21:35:45+00:00",
   "ok": true
  },
  "IOLCP.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:02:37+00:00",
+  "generated_at": "2026-11-20T21:53:06+00:00",
   "ok": true
  },
  "IPCALAB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:11:41+00:00",
+  "generated_at": "2026-11-20T22:02:05+00:00",
   "ok": true
  },
  "IREDA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:26:26+00:00",
+  "generated_at": "2026-11-20T22:16:56+00:00",
   "ok": true
  },
  "IRFC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:14:59+00:00",
+  "generated_at": "2026-11-20T22:05:22+00:00",
   "ok": true
  },
  "ITC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:07:23+00:00",
+  "generated_at": "2026-11-20T20:57:34+00:00",
   "ok": true
  },
  "ITDC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:39:27+00:00",
+  "generated_at": "2026-11-20T21:30:12+00:00",
   "ok": true
  },
  "J&KBANK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:13:59+00:00",
+  "generated_at": "2026-11-20T22:04:24+00:00",
   "ok": true
  },
  "JAINREC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:29:42+00:00",
+  "generated_at": "2026-11-20T22:20:13+00:00",
   "ok": true
  },
  "JAYNECOIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:37:16+00:00",
+  "generated_at": "2026-11-20T22:27:35+00:00",
   "ok": true
  },
  "JINDALSAW.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:18:40+00:00",
+  "generated_at": "2026-11-20T22:09:06+00:00",
   "ok": true
  },
  "JINDALSTEL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:58:15+00:00",
+  "generated_at": "2026-11-20T21:48:47+00:00",
   "ok": true
  },
  "JINDRILL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:06:18+00:00",
+  "generated_at": "2026-11-20T21:56:43+00:00",
   "ok": true
  },
  "JINDWORLD.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:57:29+00:00",
+  "generated_at": "2026-11-20T21:48:01+00:00",
   "ok": true
  },
  "JIOFIN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:07:35+00:00",
+  "generated_at": "2026-11-20T20:57:46+00:00",
   "ok": true
  },
  "JPPOWER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:59:13+00:00",
+  "generated_at": "2026-11-20T21:49:44+00:00",
   "ok": true
  },
  "JSFB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:23:20+00:00",
+  "generated_at": "2026-11-20T22:13:50+00:00",
   "ok": true
  },
  "JSL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:27:11+00:00",
+  "generated_at": "2026-11-20T22:17:42+00:00",
   "ok": true
  },
  "JSWENERGY.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:55:57+00:00",
+  "generated_at": "2026-11-20T21:46:27+00:00",
   "ok": true
  },
  "JSWINFRA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:48:26+00:00",
+  "generated_at": "2026-11-20T21:39:02+00:00",
   "ok": true
  },
  "JSWSTEEL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:07:47+00:00",
+  "generated_at": "2026-11-20T20:57:57+00:00",
   "ok": true
  },
  "JUBLFOOD.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:51:25+00:00",
+  "generated_at": "2026-11-20T21:41:53+00:00",
   "ok": true
  },
  "JUSTDIAL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:44:14+00:00",
+  "generated_at": "2026-11-20T21:34:58+00:00",
   "ok": true
  },
  "JYOTICNC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:53:38+00:00",
+  "generated_at": "2026-11-20T21:44:03+00:00",
   "ok": true
  },
  "KALYANKJIL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:12:24+00:00",
+  "generated_at": "2026-11-20T21:02:39+00:00",
   "ok": true
  },
  "KARURVYSYA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:50:49+00:00",
+  "generated_at": "2026-11-20T21:41:18+00:00",
   "ok": true
  },
  "KAYNES.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:16:06+00:00",
+  "generated_at": "2026-11-20T21:06:23+00:00",
   "ok": true
  },
  "KEC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:37:42+00:00",
+  "generated_at": "2026-11-20T22:27:59+00:00",
   "ok": true
  },
  "KEI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:25:19+00:00",
+  "generated_at": "2026-11-20T21:15:47+00:00",
   "ok": true
  },
  "KERNEX.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:19:49+00:00",
+  "generated_at": "2026-11-20T22:10:15+00:00",
   "ok": true
  },
  "KFINTECH.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:00:01+00:00",
+  "generated_at": "2026-11-20T21:50:32+00:00",
   "ok": true
  },
  "KIRIINDUS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:33:53+00:00",
+  "generated_at": "2026-11-20T22:24:16+00:00",
   "ok": true
  },
  "KIRLOSENG.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:45:38+00:00",
+  "generated_at": "2026-11-20T21:36:21+00:00",
   "ok": true
  },
  "KISSHT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:22:34+00:00",
+  "generated_at": "2026-11-20T22:13:03+00:00",
   "ok": true
  },
  "KOTAKBANK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:07:59+00:00",
+  "generated_at": "2026-11-20T20:58:09+00:00",
   "ok": true
  },
  "KPIGREEN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:23:32+00:00",
+  "generated_at": "2026-11-20T22:14:01+00:00",
   "ok": true
  },
  "KPITTECH.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:35:20+00:00",
+  "generated_at": "2026-11-20T21:26:00+00:00",
   "ok": true
  },
  "KTKBANK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:06:52+00:00",
+  "generated_at": "2026-11-20T21:57:17+00:00",
   "ok": true
  },
  "KWIL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:04:23+00:00",
+  "generated_at": "2026-11-20T21:54:49+00:00",
   "ok": true
  },
  "LALPATHLAB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:15:11+00:00",
+  "generated_at": "2026-11-20T22:05:34+00:00",
   "ok": true
  },
  "LANDMARK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:16:56+00:00",
+  "generated_at": "2026-11-20T22:07:17+00:00",
   "ok": true
  },
  "LAURUSLABS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:16:29+00:00",
+  "generated_at": "2026-11-20T21:06:47+00:00",
   "ok": true
  },
  "LENSKART.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:14:19+00:00",
+  "generated_at": "2026-11-20T21:04:36+00:00",
   "ok": true
  },
  "LGEINDIA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:56:44+00:00",
+  "generated_at": "2026-11-20T21:47:16+00:00",
   "ok": true
  },
  "LICHSGFIN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:42:27+00:00",
+  "generated_at": "2026-11-20T21:33:10+00:00",
   "ok": true
  },
  "LICI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:17:40+00:00",
+  "generated_at": "2026-11-20T21:07:59+00:00",
   "ok": true
  },
  "LIQUID1.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:56:55+00:00",
+  "generated_at": "2026-11-20T21:47:28+00:00",
   "ok": true
  },
  "LIQUIDADD.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:24:41+00:00",
+  "generated_at": "2026-11-20T22:15:11+00:00",
   "ok": true
  },
  "LIQUIDCASE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:28:28+00:00",
+  "generated_at": "2026-11-20T21:19:05+00:00",
   "ok": true
  },
  "LIQUIDPLUS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:19:14+00:00",
+  "generated_at": "2026-11-20T22:09:40+00:00",
   "ok": true
  },
  "LLOYDSENGG.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:54:24+00:00",
+  "generated_at": "2026-11-20T21:44:51+00:00",
   "ok": true
  },
  "LLOYDSME.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:01:49+00:00",
+  "generated_at": "2026-11-20T21:52:18+00:00",
   "ok": true
  },
  "LODHA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:22:12+00:00",
+  "generated_at": "2026-11-20T21:12:35+00:00",
   "ok": true
  },
  "LOTUSDEV.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:33:29+00:00",
+  "generated_at": "2026-11-20T22:23:53+00:00",
   "ok": true
  },
  "LT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:08:11+00:00",
+  "generated_at": "2026-11-20T20:58:21+00:00",
   "ok": true
  },
  "LTF.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:33:00+00:00",
+  "generated_at": "2026-11-20T21:23:38+00:00",
   "ok": true
  },
  "LTFOODS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:24:18+00:00",
+  "generated_at": "2026-11-20T22:14:49+00:00",
   "ok": true
  },
  "LTM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:28:52+00:00",
+  "generated_at": "2026-11-20T21:19:28+00:00",
   "ok": true
  },
  "LTTS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:35:51+00:00",
+  "generated_at": "2026-11-20T22:26:12+00:00",
   "ok": true
  },
  "LUMAXTECH.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:36:15+00:00",
+  "generated_at": "2026-11-20T22:26:36+00:00",
   "ok": true
  },
  "LUPIN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:29:27+00:00",
+  "generated_at": "2026-11-20T21:20:04+00:00",
   "ok": true
  },
  "M&M.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:08:22+00:00",
+  "generated_at": "2026-11-20T20:58:33+00:00",
   "ok": true
  },
  "M&MFIN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:43:27+00:00",
+  "generated_at": "2026-11-20T21:34:09+00:00",
   "ok": true
  },
  "MAHABANK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:47:26+00:00",
+  "generated_at": "2026-11-20T21:38:06+00:00",
   "ok": true
  },
  "MANAPPURAM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:30:51+00:00",
+  "generated_at": "2026-11-20T21:21:27+00:00",
   "ok": true
  },
  "MANINDS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:02:12+00:00",
+  "generated_at": "2026-11-20T21:52:41+00:00",
   "ok": true
  },
  "MANKIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:55:10+00:00",
+  "generated_at": "2026-11-20T21:45:39+00:00",
   "ok": true
  },
  "MANORAMA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:06:41+00:00",
+  "generated_at": "2026-11-20T21:57:06+00:00",
   "ok": true
  },
  "MANYAVAR.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:22:46+00:00",
+  "generated_at": "2026-11-20T22:13:15+00:00",
   "ok": true
  },
  "MAPMYINDIA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:27:00+00:00",
+  "generated_at": "2026-11-20T22:17:30+00:00",
   "ok": true
  },
  "MARICO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:42:03+00:00",
+  "generated_at": "2026-11-20T21:32:47+00:00",
   "ok": true
  },
  "MARINE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:30:41+00:00",
+  "generated_at": "2026-11-20T22:21:10+00:00",
   "ok": true
  },
  "MARKSANS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:56:32+00:00",
+  "generated_at": "2026-11-20T21:47:04+00:00",
   "ok": true
  },
  "MARUTI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:08:35+00:00",
+  "generated_at": "2026-11-20T20:58:44+00:00",
   "ok": true
  },
  "MAXHEALTH.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:08:46+00:00",
+  "generated_at": "2026-11-20T20:58:56+00:00",
   "ok": true
  },
  "MAZDOCK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:32:49+00:00",
+  "generated_at": "2026-11-20T21:23:26+00:00",
   "ok": true
  },
  "MCX.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:13:11+00:00",
+  "generated_at": "2026-11-20T21:03:27+00:00",
   "ok": true
  },
  "MEESHO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:19:12+00:00",
+  "generated_at": "2026-11-20T21:09:35+00:00",
   "ok": true
  },
  "MFSL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:43:02+00:00",
+  "generated_at": "2026-11-20T21:33:45+00:00",
   "ok": true
  },
  "MIDHANI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:08:13+00:00",
+  "generated_at": "2026-11-20T21:58:38+00:00",
   "ok": true
  },
  "MOREPENLAB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:29:15+00:00",
+  "generated_at": "2026-11-20T21:19:51+00:00",
   "ok": true
  },
  "MOSCHIP.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:12:38+00:00",
+  "generated_at": "2026-11-20T22:03:03+00:00",
   "ok": true
  },
  "MOTHERSON.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:24:31+00:00",
+  "generated_at": "2026-11-20T21:14:57+00:00",
   "ok": true
  },
  "MOTILALOFS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:54:58+00:00",
+  "generated_at": "2026-11-20T21:45:27+00:00",
   "ok": true
  },
  "MOTISONS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:01:37+00:00",
+  "generated_at": "2026-11-20T21:52:06+00:00",
   "ok": true
  },
  "MPHASIS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:48:38+00:00",
+  "generated_at": "2026-11-20T21:39:13+00:00",
   "ok": true
  },
  "MRF.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:23:55+00:00",
+  "generated_at": "2026-11-20T22:14:25+00:00",
   "ok": true
  },
  "MRPL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:22:47+00:00",
+  "generated_at": "2026-11-20T21:13:10+00:00",
   "ok": true
  },
  "MTARTECH.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:57:06+00:00",
+  "generated_at": "2026-11-20T21:47:39+00:00",
   "ok": true
  },
  "MUTHOOTFIN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:21:49+00:00",
+  "generated_at": "2026-11-20T21:12:11+00:00",
   "ok": true
  },
  "NAM-INDIA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:47:38+00:00",
+  "generated_at": "2026-11-20T21:38:17+00:00",
   "ok": true
  },
  "NATIONALUM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:25:07+00:00",
+  "generated_at": "2026-11-20T21:15:34+00:00",
   "ok": true
  },
  "NAUKRI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:23:22+00:00",
+  "generated_at": "2026-11-20T21:13:45+00:00",
   "ok": true
  },
  "NAVINFLUOR.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:37:52+00:00",
+  "generated_at": "2026-11-20T21:28:35+00:00",
   "ok": true
  },
  "NAZARA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:07:16+00:00",
+  "generated_at": "2026-11-20T21:57:41+00:00",
   "ok": true
  },
  "NBCC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:25:14+00:00",
+  "generated_at": "2026-11-20T22:15:45+00:00",
   "ok": true
  },
  "NESTLEIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:08:59+00:00",
+  "generated_at": "2026-11-20T20:59:07+00:00",
   "ok": true
  },
  "NETWEB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:13:22+00:00",
+  "generated_at": "2026-11-20T21:03:38+00:00",
   "ok": true
  },
  "NEULANDLAB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:42:39+00:00",
+  "generated_at": "2026-11-20T21:33:22+00:00",
   "ok": true
  },
  "NEWGEN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:39:51+00:00",
+  "generated_at": "2026-11-20T21:30:36+00:00",
   "ok": true
  },
  "NH.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:29:53+00:00",
+  "generated_at": "2026-11-20T22:20:25+00:00",
   "ok": true
  },
  "NHPC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:05:08+00:00",
+  "generated_at": "2026-11-20T21:55:35+00:00",
   "ok": true
  },
  "NIACL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:50:38+00:00",
+  "generated_at": "2026-11-20T21:41:07+00:00",
   "ok": true
  },
  "NLCINDIA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:28:20+00:00",
+  "generated_at": "2026-11-20T22:18:52+00:00",
   "ok": true
  },
  "NMDC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:44:49+00:00",
+  "generated_at": "2026-11-20T21:35:33+00:00",
   "ok": true
  },
  "NTPC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:09:10+00:00",
+  "generated_at": "2026-11-20T20:59:18+00:00",
   "ok": true
  },
  "NUVAMA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:12:04+00:00",
+  "generated_at": "2026-11-20T22:02:27+00:00",
   "ok": true
  },
  "NUVOCO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:20:25+00:00",
+  "generated_at": "2026-11-20T22:10:51+00:00",
   "ok": true
  },
  "NYKAA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:32:14+00:00",
+  "generated_at": "2026-11-20T21:22:51+00:00",
   "ok": true
  },
  "OBEROIRLTY.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:02:00+00:00",
+  "generated_at": "2026-11-20T21:52:29+00:00",
   "ok": true
  },
  "OFSS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:19:37+00:00",
+  "generated_at": "2026-11-20T21:09:59+00:00",
   "ok": true
  },
  "OIL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:46:02+00:00",
+  "generated_at": "2026-11-20T21:36:44+00:00",
   "ok": true
  },
  "OLAELEC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:22:59+00:00",
+  "generated_at": "2026-11-20T21:13:22+00:00",
   "ok": true
  },
  "OLECTRA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:31:17+00:00",
+  "generated_at": "2026-11-20T22:21:46+00:00",
   "ok": true
  },
  "OMNI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:10:23+00:00",
+  "generated_at": "2026-11-20T22:00:43+00:00",
   "ok": true
  },
  "ONESOURCE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:35:03+00:00",
+  "generated_at": "2026-11-20T22:25:26+00:00",
   "ok": true
  },
  "ONGC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:09:23+00:00",
+  "generated_at": "2026-11-20T20:59:30+00:00",
   "ok": true
  },
  "OPTIEMUS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:36:50+00:00",
+  "generated_at": "2026-11-20T22:27:12+00:00",
   "ok": true
  },
  "PAGEIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:53:02+00:00",
+  "generated_at": "2026-11-20T21:43:28+00:00",
   "ok": true
  },
  "PAISALO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:50:01+00:00",
+  "generated_at": "2026-11-20T21:40:33+00:00",
   "ok": true
  },
  "PARADEEP.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:55:21+00:00",
+  "generated_at": "2026-11-20T21:45:51+00:00",
   "ok": true
  },
  "PARAS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:33:36+00:00",
+  "generated_at": "2026-11-20T21:24:12+00:00",
   "ok": true
  },
  "PATANJALI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:28:04+00:00",
+  "generated_at": "2026-11-20T21:18:42+00:00",
   "ok": true
  },
  "PAYTM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:13:33+00:00",
+  "generated_at": "2026-11-20T21:03:50+00:00",
   "ok": true
  },
  "PCBL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:14:23+00:00",
+  "generated_at": "2026-11-20T22:04:48+00:00",
   "ok": true
  },
  "PCJEWELLER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:15:31+00:00",
+  "generated_at": "2026-11-20T21:05:48+00:00",
   "ok": true
  },
  "PERSISTENT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:21:01+00:00",
+  "generated_at": "2026-11-20T21:11:23+00:00",
   "ok": true
  },
  "PETRONET.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:28:54+00:00",
+  "generated_at": "2026-11-20T22:19:26+00:00",
   "ok": true
  },
  "PFC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:20:36+00:00",
+  "generated_at": "2026-11-20T21:10:57+00:00",
   "ok": true
  },
  "PFOCUS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:32:41+00:00",
+  "generated_at": "2026-11-20T22:23:06+00:00",
   "ok": true
  },
  "PGEL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:59:37+00:00",
+  "generated_at": "2026-11-20T21:50:07+00:00",
   "ok": true
  },
  "PHOENIXLTD.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:52:50+00:00",
+  "generated_at": "2026-11-20T21:43:16+00:00",
   "ok": true
  },
  "PIDILITIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:41:40+00:00",
+  "generated_at": "2026-11-20T21:32:24+00:00",
   "ok": true
  },
  "PIIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:17:54+00:00",
+  "generated_at": "2026-11-20T22:08:18+00:00",
   "ok": true
  },
  "PINELABS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:14:55+00:00",
+  "generated_at": "2026-11-20T21:05:12+00:00",
   "ok": true
  },
  "PIRAMALFIN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:07:28+00:00",
+  "generated_at": "2026-11-20T21:57:52+00:00",
   "ok": true
  },
  "PNB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:34:57+00:00",
+  "generated_at": "2026-11-20T21:25:36+00:00",
   "ok": true
  },
  "PNBHOUSING.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:54:47+00:00",
+  "generated_at": "2026-11-20T21:45:15+00:00",
   "ok": true
  },
  "POLICYBZR.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:16:17+00:00",
+  "generated_at": "2026-11-20T21:06:35+00:00",
   "ok": true
  },
  "POLYCAB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:20:12+00:00",
+  "generated_at": "2026-11-20T21:10:34+00:00",
   "ok": true
  },
  "POONAWALLA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:18:17+00:00",
+  "generated_at": "2026-11-20T22:08:43+00:00",
   "ok": true
  },
  "POWERGRID.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:09:34+00:00",
+  "generated_at": "2026-11-20T20:59:42+00:00",
   "ok": true
  },
  "POWERINDIA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:18:14+00:00",
+  "generated_at": "2026-11-20T21:08:35+00:00",
   "ok": true
  },
  "PPLPHARMA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:54:01+00:00",
+  "generated_at": "2026-11-20T21:44:27+00:00",
   "ok": true
  },
  "PREMIERENE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:49:38+00:00",
+  "generated_at": "2026-11-20T21:40:10+00:00",
   "ok": true
  },
  "PRESTIGE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:58:49+00:00",
+  "generated_at": "2026-11-20T21:49:21+00:00",
   "ok": true
  },
  "PROTEAN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:35:27+00:00",
+  "generated_at": "2026-11-20T22:25:49+00:00",
   "ok": true
  },
  "PTCIL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:20:01+00:00",
+  "generated_at": "2026-11-20T22:10:27+00:00",
   "ok": true
  },
  "PVRINOX.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:17:07+00:00",
+  "generated_at": "2026-11-20T22:07:29+00:00",
   "ok": true
  },
  "PWL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:33:24+00:00",
+  "generated_at": "2026-11-20T21:24:01+00:00",
   "ok": true
  },
  "QUADFUTURE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:23:43+00:00",
+  "generated_at": "2026-11-20T22:14:13+00:00",
   "ok": true
  },
  "RADICO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:38:52+00:00",
+  "generated_at": "2026-11-20T21:29:36+00:00",
   "ok": true
  },
  "RAIN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:54:12+00:00",
+  "generated_at": "2026-11-20T21:44:39+00:00",
   "ok": true
  },
  "RAMCOSYS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:37:29+00:00",
+  "generated_at": "2026-11-20T22:27:47+00:00",
   "ok": true
  },
  "RATNAVEER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:30:14+00:00",
+  "generated_at": "2026-11-20T21:20:51+00:00",
   "ok": true
  },
  "RAYMOND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:25:54+00:00",
+  "generated_at": "2026-11-20T21:16:24+00:00",
   "ok": true
  },
  "RAYMONDREL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:07:51+00:00",
+  "generated_at": "2026-11-20T21:58:15+00:00",
   "ok": true
  },
  "RBA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:04:45+00:00",
+  "generated_at": "2026-11-20T21:55:12+00:00",
   "ok": true
  },
  "RBLBANK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:34:22+00:00",
+  "generated_at": "2026-11-20T21:25:00+00:00",
   "ok": true
  },
  "RECLTD.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:30:27+00:00",
+  "generated_at": "2026-11-20T21:21:03+00:00",
   "ok": true
  },
  "REDINGTON.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:25:30+00:00",
+  "generated_at": "2026-11-20T21:15:59+00:00",
   "ok": true
  },
  "RELIANCE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:09:47+00:00",
+  "generated_at": "2026-11-20T20:59:53+00:00",
   "ok": true
  },
  "RITES.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:08:37+00:00",
+  "generated_at": "2026-11-20T21:59:01+00:00",
   "ok": true
  },
  "RKFORGE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:01:13+00:00",
+  "generated_at": "2026-11-20T21:51:42+00:00",
   "ok": true
  },
  "ROLEXRINGS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:20:13+00:00",
+  "generated_at": "2026-11-20T22:10:40+00:00",
   "ok": true
  },
  "ROUTE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:34:51+00:00",
+  "generated_at": "2026-11-20T22:25:15+00:00",
   "ok": true
  },
  "RRKABEL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:40:50+00:00",
+  "generated_at": "2026-11-20T21:31:36+00:00",
   "ok": true
  },
  "RSYSTEMS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:10:10+00:00",
+  "generated_at": "2026-11-20T22:00:32+00:00",
   "ok": true
  },
  "RUBICON.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:26:02+00:00",
+  "generated_at": "2026-11-20T22:16:32+00:00",
   "ok": true
  },
  "RVNL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:58:26+00:00",
+  "generated_at": "2026-11-20T21:48:59+00:00",
   "ok": true
  },
  "SAGILITY.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:57:52+00:00",
+  "generated_at": "2026-11-20T21:48:25+00:00",
   "ok": true
  },
  "SAIL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:19:48+00:00",
+  "generated_at": "2026-11-20T21:10:10+00:00",
   "ok": true
  },
  "SAILIFE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:03:35+00:00",
+  "generated_at": "2026-11-20T21:54:03+00:00",
   "ok": true
  },
  "SAMBHV.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:33:41+00:00",
+  "generated_at": "2026-11-20T22:24:05+00:00",
   "ok": true
  },
  "SAMMAANCAP.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:56:09+00:00",
+  "generated_at": "2026-11-20T21:46:39+00:00",
   "ok": true
  },
  "SANSERA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:56:21+00:00",
+  "generated_at": "2026-11-20T21:46:52+00:00",
   "ok": true
  },
  "SBCL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:22:23+00:00",
+  "generated_at": "2026-11-20T22:12:51+00:00",
   "ok": true
  },
  "SBICARD.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:44:25+00:00",
+  "generated_at": "2026-11-20T21:35:10+00:00",
   "ok": true
  },
  "SBILIFE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:09:59+00:00",
+  "generated_at": "2026-11-20T21:00:05+00:00",
   "ok": true
  },
  "SBIN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:10:12+00:00",
+  "generated_at": "2026-11-20T21:00:16+00:00",
   "ok": true
  },
  "SCI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:16:09+00:00",
+  "generated_at": "2026-11-20T22:06:31+00:00",
   "ok": true
  },
  "SEDEMAC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:25:38+00:00",
+  "generated_at": "2026-11-20T22:16:08+00:00",
   "ok": true
  },
  "SHADOWFAX.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:29:38+00:00",
+  "generated_at": "2026-11-20T21:20:16+00:00",
   "ok": true
  },
  "SHAILY.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:22:11+00:00",
+  "generated_at": "2026-11-20T22:12:37+00:00",
   "ok": true
  },
  "SHAKTIPUMP.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:30:52+00:00",
+  "generated_at": "2026-11-20T22:21:23+00:00",
   "ok": true
  },
  "SHAREINDIA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:54:36+00:00",
+  "generated_at": "2026-11-20T21:45:03+00:00",
   "ok": true
  },
  "SHILPAMED.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:44:37+00:00",
+  "generated_at": "2026-11-20T21:35:22+00:00",
   "ok": true
  },
  "SHREECEM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:13:02+00:00",
+  "generated_at": "2026-11-20T22:03:26+00:00",
   "ok": true
  },
  "SHREEJISPG.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:15:35+00:00",
+  "generated_at": "2026-11-20T22:05:57+00:00",
   "ok": true
  },
  "SHRIRAMFIN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:10:24+00:00",
+  "generated_at": "2026-11-20T21:00:33+00:00",
   "ok": true
  },
  "SHYAMMETL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:21:00+00:00",
+  "generated_at": "2026-11-20T22:11:27+00:00",
   "ok": true
  },
  "SIEMENS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:43:50+00:00",
+  "generated_at": "2026-11-20T21:34:35+00:00",
   "ok": true
  },
  "SKIPPER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:25:49+00:00",
+  "generated_at": "2026-11-20T22:16:20+00:00",
   "ok": true
  },
  "SMLMAH.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:03:58+00:00",
+  "generated_at": "2026-11-20T21:54:25+00:00",
   "ok": true
  },
  "SOLARINDS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:19:00+00:00",
+  "generated_at": "2026-11-20T21:09:22+00:00",
   "ok": true
  },
  "SONACOMS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:31:15+00:00",
+  "generated_at": "2026-11-20T21:21:52+00:00",
   "ok": true
  },
  "SONATSOFTW.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:18:52+00:00",
+  "generated_at": "2026-11-20T22:09:18+00:00",
   "ok": true
  },
  "SOTL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:20:36+00:00",
+  "generated_at": "2026-11-20T22:11:03+00:00",
   "ok": true
  },
  "SOUTHBANK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:18:06+00:00",
+  "generated_at": "2026-11-20T22:08:31+00:00",
   "ok": true
  },
  "SRF.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:59:49+00:00",
+  "generated_at": "2026-11-20T21:50:20+00:00",
   "ok": true
  },
  "SSWL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:20:48+00:00",
+  "generated_at": "2026-11-20T22:11:15+00:00",
   "ok": true
  },
  "STLTECH.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:42:51+00:00",
+  "generated_at": "2026-11-20T21:33:33+00:00",
   "ok": true
  },
  "SUNPHARMA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:10:36+00:00",
+  "generated_at": "2026-11-20T21:00:45+00:00",
   "ok": true
  },
  "SUNTV.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:14:11+00:00",
+  "generated_at": "2026-11-20T22:04:36+00:00",
   "ok": true
  },
  "SUPREMEIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:16:43+00:00",
+  "generated_at": "2026-11-20T22:07:05+00:00",
   "ok": true
  },
  "SUZLON.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:23:45+00:00",
+  "generated_at": "2026-11-20T21:14:08+00:00",
   "ok": true
  },
  "SWANCORP.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:25:26+00:00",
+  "generated_at": "2026-11-20T22:15:56+00:00",
   "ok": true
  },
  "SWIGGY.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:13:57+00:00",
+  "generated_at": "2026-11-20T21:04:12+00:00",
   "ok": true
  },
  "SYRMA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:22:00+00:00",
+  "generated_at": "2026-11-20T21:12:23+00:00",
   "ok": true
  },
  "TANLA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:15:58+00:00",
+  "generated_at": "2026-11-20T22:06:19+00:00",
   "ok": true
  },
  "TARIL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:11:08+00:00",
+  "generated_at": "2026-11-20T22:01:31+00:00",
   "ok": true
  },
  "TATACAP.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:25:03+00:00",
+  "generated_at": "2026-11-20T22:15:34+00:00",
   "ok": true
  },
  "TATACHEM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:53:26+00:00",
+  "generated_at": "2026-11-20T21:43:51+00:00",
   "ok": true
  },
  "TATACOMM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:36:03+00:00",
+  "generated_at": "2026-11-20T22:26:24+00:00",
   "ok": true
  },
  "TATACONSUM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:10:48+00:00",
+  "generated_at": "2026-11-20T21:00:57+00:00",
   "ok": true
  },
  "TATAELXSI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:52:38+00:00",
+  "generated_at": "2026-11-20T21:43:04+00:00",
   "ok": true
  },
  "TATAINVEST.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:14:35+00:00",
+  "generated_at": "2026-11-20T22:04:59+00:00",
   "ok": true
  },
  "TATAPOWER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:38:15+00:00",
+  "generated_at": "2026-11-20T21:28:59+00:00",
   "ok": true
  },
  "TATASTEEL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:11:00+00:00",
+  "generated_at": "2026-11-20T21:01:13+00:00",
   "ok": true
  },
  "TATATECH.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:51:37+00:00",
+  "generated_at": "2026-11-20T21:42:04+00:00",
   "ok": true
  },
  "TBZ.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:59:25+00:00",
+  "generated_at": "2026-11-20T21:49:55+00:00",
   "ok": true
  },
  "TCS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:11:12+00:00",
+  "generated_at": "2026-11-20T21:01:26+00:00",
   "ok": true
  },
  "TDPOWERSYS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:31:27+00:00",
+  "generated_at": "2026-11-20T21:22:03+00:00",
   "ok": true
  },
  "TECHM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:11:24+00:00",
+  "generated_at": "2026-11-20T21:01:38+00:00",
   "ok": true
  },
  "TEGA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:09:23+00:00",
+  "generated_at": "2026-11-20T21:59:46+00:00",
   "ok": true
  },
  "TEJASNET.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:37:28+00:00",
+  "generated_at": "2026-11-20T21:28:12+00:00",
   "ok": true
  },
  "TENNIND.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:00:13+00:00",
+  "generated_at": "2026-11-20T21:50:47+00:00",
   "ok": true
  },
  "TFCILTD.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:36:31+00:00",
+  "generated_at": "2026-11-20T21:27:13+00:00",
   "ok": true
  },
  "THANGAMAYL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:53:49+00:00",
+  "generated_at": "2026-11-20T21:44:15+00:00",
   "ok": true
  },
  "THERMAX.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:00:36+00:00",
+  "generated_at": "2026-11-20T21:51:09+00:00",
   "ok": true
  },
  "TI.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:35:38+00:00",
+  "generated_at": "2026-11-20T22:26:00+00:00",
   "ok": true
  },
  "TIINDIA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:04:56+00:00",
+  "generated_at": "2026-11-20T21:55:23+00:00",
   "ok": true
  },
  "TIMETECHNO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:15:46+00:00",
+  "generated_at": "2026-11-20T22:06:08+00:00",
   "ok": true
  },
  "TITAN.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:11:37+00:00",
+  "generated_at": "2026-11-20T21:01:51+00:00",
   "ok": true
  },
  "TMCV.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:20:00+00:00",
+  "generated_at": "2026-11-20T21:10:22+00:00",
   "ok": true
  },
  "TMPV.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:11:49+00:00",
+  "generated_at": "2026-11-20T21:02:03+00:00",
   "ok": true
  },
  "TORNTPHARM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:23:10+00:00",
+  "generated_at": "2026-11-20T21:13:34+00:00",
   "ok": true
  },
  "TRANSRAILL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:34:28+00:00",
+  "generated_at": "2026-11-20T22:24:50+00:00",
   "ok": true
  },
  "TRENT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:12:01+00:00",
+  "generated_at": "2026-11-20T21:02:15+00:00",
   "ok": true
  },
  "TVSMOTOR.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:17:04+00:00",
+  "generated_at": "2026-11-20T21:07:24+00:00",
   "ok": true
  },
  "UJJIVANSFB.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:48:14+00:00",
+  "generated_at": "2026-11-20T21:38:50+00:00",
   "ok": true
  },
  "ULTRACEMCO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:12:12+00:00",
+  "generated_at": "2026-11-20T21:02:27+00:00",
   "ok": true
  },
  "UNIONBANK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:26:18+00:00",
+  "generated_at": "2026-11-20T21:16:48+00:00",
   "ok": true
  },
  "UNITDSPR.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:49:26+00:00",
+  "generated_at": "2026-11-20T21:39:58+00:00",
   "ok": true
  },
  "UNOMINDA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:02:24+00:00",
+  "generated_at": "2026-11-20T21:52:53+00:00",
   "ok": true
  },
  "UPL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:49:02+00:00",
+  "generated_at": "2026-11-20T21:39:35+00:00",
   "ok": true
  },
  "URBANCO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:41:27+00:00",
+  "generated_at": "2026-11-20T21:32:12+00:00",
   "ok": true
  },
  "VAML.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:17:52+00:00",
+  "generated_at": "2026-11-20T21:08:11+00:00",
   "ok": true
  },
  "VBL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:21:25+00:00",
+  "generated_at": "2026-11-20T21:11:48+00:00",
   "ok": true
  },
  "VEDL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:20:48+00:00",
+  "generated_at": "2026-11-20T21:11:09+00:00",
   "ok": true
  },
  "VEDPOWER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:08:02+00:00",
+  "generated_at": "2026-11-20T21:58:27+00:00",
   "ok": true
  },
  "VIKRAMSOLR.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:17:31+00:00",
+  "generated_at": "2026-11-20T22:07:52+00:00",
   "ok": true
  },
  "VISL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:46:26+00:00",
+  "generated_at": "2026-11-20T21:37:08+00:00",
   "ok": true
  },
  "VIYASH.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:50:26+00:00",
+  "generated_at": "2026-11-20T21:40:56+00:00",
   "ok": true
  },
  "VMM.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:44:02+00:00",
+  "generated_at": "2026-11-20T21:34:46+00:00",
   "ok": true
  },
  "VOGL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:32:37+00:00",
+  "generated_at": "2026-11-20T21:23:15+00:00",
   "ok": true
  },
  "VOLTAS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:58:38+00:00",
+  "generated_at": "2026-11-20T21:49:10+00:00",
   "ok": true
  },
  "WAAREEENER.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:34:11+00:00",
+  "generated_at": "2026-11-20T21:24:49+00:00",
   "ok": true
  },
  "WABAG.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:41:02+00:00",
+  "generated_at": "2026-11-20T21:31:48+00:00",
   "ok": true
  },
  "WAKEFIT.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:36:27+00:00",
+  "generated_at": "2026-11-20T22:26:47+00:00",
   "ok": true
  },
  "WEL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:36:39+00:00",
+  "generated_at": "2026-11-20T22:26:59+00:00",
   "ok": true
  },
  "WELCORP.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:15:42+00:00",
+  "generated_at": "2026-11-20T21:06:00+00:00",
   "ok": true
  },
  "WELSPUNLIV.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:55:45+00:00",
+  "generated_at": "2026-11-20T21:46:15+00:00",
   "ok": true
  },
  "WHEELS.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:11:20+00:00",
+  "generated_at": "2026-11-20T22:01:42+00:00",
   "ok": true
  },
  "WHIRLPOOL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:55:33+00:00",
+  "generated_at": "2026-11-20T21:46:03+00:00",
   "ok": true
  },
  "WIPRO.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:24:43+00:00",
+  "generated_at": "2026-11-20T21:15:09+00:00",
   "ok": true
  },
  "WOCKPHARMA.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:32:02+00:00",
+  "generated_at": "2026-11-20T21:22:38+00:00",
   "ok": true
  },
  "YATHARTH.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:30:05+00:00",
+  "generated_at": "2026-11-20T22:20:37+00:00",
   "ok": true
  },
  "YESBANK.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:40:03+00:00",
+  "generated_at": "2026-11-20T21:30:48+00:00",
   "ok": true
  },
  "ZEEL.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:23:57+00:00",
+  "generated_at": "2026-11-20T21:14:20+00:00",
   "ok": true
  },
  "ZENSARTECH.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:30:38+00:00",
+  "generated_at": "2026-11-20T21:21:15+00:00",
   "ok": true
  },
  "ZENTEC.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T22:05:55+00:00",
+  "generated_at": "2026-11-20T21:56:20+00:00",
   "ok": true
  },
  "ZYDUSLIFE.NS": {
-  "as_of": "2026-11-19",
+  "as_of": "2026-11-20",
   "commit": "f7f2356",
   "error": null,
-  "generated_at": "2026-11-19T21:35:56+00:00",
+  "generated_at": "2026-11-20T21:26:36+00:00",
   "ok": true
  },
  "_meta": {
   "drift_breaking": [],
-  "drift_checked_at": "2026-11-19T21:02:25+00:00",
+  "drift_checked_at": "2026-11-20T20:52:31+00:00",
   "drift_status": "warning"
  }
 }

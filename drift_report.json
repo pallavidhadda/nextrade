@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-19T21:02:25+00:00",
+ "generated_at": "2026-11-20T20:52:31+00:00",
  "status": "warning",
  "checks": [
   {
@@ -7,7 +7,7 @@
    "check": "range",
    "field": "marketCap",
    "severity": "warning",
-   "detail": "194 of 2231 values outside 1000000000.0..1000000000000000.0 (e.g. 913187900)"
+   "detail": "192 of 2231 values outside 1000000000.0..1000000000000000.0 (e.g. 874150860)"
   },
   {
    "source": "marketlens",
@@ -106,7 +106,7 @@
    ],
    [
     "implied_growth_r14_n5",
-    87
+    88
    ],
    [
     "gross_npa_ratio",
