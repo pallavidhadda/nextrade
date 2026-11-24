@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-20T20:52:31+00:00",
+ "generated_at": "2026-11-24T00:30:38+00:00",
  "status": "warning",
  "checks": [
   {
@@ -7,28 +7,28 @@
    "check": "range",
    "field": "marketCap",
    "severity": "warning",
-   "detail": "192 of 2231 values outside 1000000000.0..1000000000000000.0 (e.g. 874150860)"
+   "detail": "195 of 2242 values outside 1000000000.0..1000000000000000.0 (e.g. 874150860)"
   },
   {
    "source": "marketlens",
    "check": "placeholder",
    "field": "beta",
    "severity": "info",
-   "detail": "the single value 1 in 2231 of 2231 rows; not scored today"
+   "detail": "the single value 1 in 2242 of 2242 rows; not scored today"
   },
   {
    "source": "marketlens",
    "check": "placeholder",
    "field": "returnOnEquity",
    "severity": "info",
-   "detail": "0 or null in 2231 of 2231 rows; not scored today"
+   "detail": "0 or null in 2242 of 2242 rows; not scored today"
   },
   {
    "source": "marketlens",
    "check": "placeholder",
    "field": "revenueGrowth",
    "severity": "info",
-   "detail": "0 or null in 2231 of 2231 rows; not scored today"
+   "detail": "0 or null in 2242 of 2242 rows; not scored today"
   },
   {
    "source": "marketlens",
@@ -53,7 +53,7 @@
  "gaps": {
   "reports": 486,
   "median": 3.0,
-  "p90": 17.0,
+  "p90": 16.0,
   "max": 48,
   "over": 5,
   "share_over": 0.3313,
@@ -67,16 +67,16 @@
     46
    ],
    [
+    "LIQUID1.NS",
+    43
+   ],
+   [
     "VAML.NS",
     43
    ],
    [
     "VEDPOWER.NS",
     42
-   ],
-   [
-    "MEESHO.NS",
-    40
    ]
   ],
   "top_metrics": [
