@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-24T22:53:27+00:00",
+ "generated_at": "2026-11-25T22:10:10+00:00",
  "status": "warning",
  "checks": [
   {
@@ -7,28 +7,28 @@
    "check": "range",
    "field": "marketCap",
    "severity": "warning",
-   "detail": "194 of 2242 values outside 1000000000.0..1000000000000000.0 (e.g. 874150860)"
+   "detail": "197 of 2243 values outside 1000000000.0..1000000000000000.0 (e.g. 871362500)"
   },
   {
    "source": "marketlens",
    "check": "placeholder",
    "field": "beta",
    "severity": "info",
-   "detail": "the single value 1 in 2242 of 2242 rows; not scored today"
+   "detail": "the single value 1 in 2243 of 2243 rows; not scored today"
   },
   {
    "source": "marketlens",
    "check": "placeholder",
    "field": "returnOnEquity",
    "severity": "info",
-   "detail": "0 or null in 2242 of 2242 rows; not scored today"
+   "detail": "0 or null in 2243 of 2243 rows; not scored today"
   },
   {
    "source": "marketlens",
    "check": "placeholder",
    "field": "revenueGrowth",
    "severity": "info",
-   "detail": "0 or null in 2242 of 2242 rows; not scored today"
+   "detail": "0 or null in 2243 of 2243 rows; not scored today"
   },
   {
    "source": "marketlens",
@@ -42,7 +42,7 @@
    "check": "gaps_per_report",
    "field": null,
    "severity": "info",
-   "detail": "median 3 gaps per report, 34% of 486 reports have more than 5; yesterday median 3, 33% thin"
+   "detail": "median 3 gaps per report, 33% of 486 reports have more than 5; yesterday median 3, 34% thin"
   }
  ],
  "disabled_fields": [
@@ -53,10 +53,10 @@
  "gaps": {
   "reports": 486,
   "median": 3.0,
-  "p90": 18.0,
+  "p90": 17.0,
   "max": 48,
   "over": 5,
-  "share_over": 0.3436,
+  "share_over": 0.3313,
   "worst": [
    [
     "KWIL.NS",
@@ -106,11 +106,11 @@
    ],
    [
     "implied_growth_r14_n5",
-    88
+    87
    ],
    [
-    "revenue",
-    74
+    "gross_npa_ratio",
+    82
    ]
   ]
  }
