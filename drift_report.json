@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-24T00:30:38+00:00",
+ "generated_at": "2026-11-24T22:53:27+00:00",
  "status": "warning",
  "checks": [
   {
@@ -7,7 +7,7 @@
    "check": "range",
    "field": "marketCap",
    "severity": "warning",
-   "detail": "195 of 2242 values outside 1000000000.0..1000000000000000.0 (e.g. 874150860)"
+   "detail": "194 of 2242 values outside 1000000000.0..1000000000000000.0 (e.g. 874150860)"
   },
   {
    "source": "marketlens",
@@ -42,7 +42,7 @@
    "check": "gaps_per_report",
    "field": null,
    "severity": "info",
-   "detail": "median 3 gaps per report, 33% of 486 reports have more than 5; yesterday median 3, 33% thin"
+   "detail": "median 3 gaps per report, 34% of 486 reports have more than 5; yesterday median 3, 33% thin"
   }
  ],
  "disabled_fields": [
@@ -53,10 +53,10 @@
  "gaps": {
   "reports": 486,
   "median": 3.0,
-  "p90": 16.0,
+  "p90": 18.0,
   "max": 48,
   "over": 5,
-  "share_over": 0.3313,
+  "share_over": 0.3436,
   "worst": [
    [
     "KWIL.NS",
@@ -67,16 +67,16 @@
     46
    ],
    [
-    "LIQUID1.NS",
-    43
-   ],
-   [
     "VAML.NS",
     43
    ],
    [
     "VEDPOWER.NS",
     42
+   ],
+   [
+    "MEESHO.NS",
+    40
    ]
   ],
   "top_metrics": [
@@ -109,8 +109,8 @@
     88
    ],
    [
-    "gross_npa_ratio",
-    82
+    "revenue",
+    74
    ]
   ]
  }
