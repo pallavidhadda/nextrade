@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-25T22:10:10+00:00",
+ "generated_at": "2026-11-26T22:08:46+00:00",
  "status": "warning",
  "checks": [
   {
@@ -7,7 +7,7 @@
    "check": "range",
    "field": "marketCap",
    "severity": "warning",
-   "detail": "197 of 2243 values outside 1000000000.0..1000000000000000.0 (e.g. 871362500)"
+   "detail": "194 of 2243 values outside 1000000000.0..1000000000000000.0 (e.g. 871362500)"
   },
   {
    "source": "marketlens",
@@ -42,7 +42,7 @@
    "check": "gaps_per_report",
    "field": null,
    "severity": "info",
-   "detail": "median 3 gaps per report, 33% of 486 reports have more than 5; yesterday median 3, 34% thin"
+   "detail": "median 3 gaps per report, 33% of 486 reports have more than 5; yesterday median 3, 33% thin"
   }
  ],
  "disabled_fields": [
@@ -106,7 +106,7 @@
    ],
    [
     "implied_growth_r14_n5",
-    87
+    90
    ],
    [
     "gross_npa_ratio",
