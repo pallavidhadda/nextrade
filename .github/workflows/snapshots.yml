@@ -98,6 +98,11 @@ jobs:
           [ -d .git ] || { git init -q -b snapshots; git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"; }
           git config user.name "nextrade-snapshots"
           git config user.email "actions@users.noreply.github.com"
+          # Data-only branch: tell Vercel not to deploy it (it has no web app, so every push was a failed build).
+          # Vercel reads vercel.json from the project's root directory (web/), so write it there and at the top.
+          mkdir -p web
+          printf '{"git": {"deploymentEnabled": false}}\n' > vercel.json
+          cp vercel.json web/vercel.json
           git add -A
           git diff --cached --quiet || git commit -q -m "snapshots: $(date -u +%F)"
           git push origin snapshots
