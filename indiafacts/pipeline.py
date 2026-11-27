@@ -22,6 +22,24 @@ def default_symbol_changes() -> Path:
     return Path.home() / ".indiafacts" / "symbolchange.csv"
 
 
+def _symbol_canonicalizer(symbol_changes: Path | None):
+    """Map a filing's symbol to the company's current symbol using the rename list (NSE symbolchange.csv) and the curated
+    demerger table. A rename collapses to its successor. A demerger ('split') is NOT collapsed: the app does not guess which
+    successor a filing belongs to, so such filings still refuse to merge. Without a rename list, returns None and only
+    punctuation-insensitive matching applies."""
+    path = symbol_changes or default_symbol_changes()
+    if not Path(path).exists():
+        return None
+    changes = load_symbol_changes(Path(path))
+    curated = load_curated(strict=False)
+
+    def canonical(sym: str) -> str:
+        r = resolve_symbol(sym, changes, curated)
+        return r.symbols[0] if r.kind == "renamed" and len(r.symbols) == 1 else sym
+
+    return canonical
+
+
 class AmbiguousSymbol(ValueError):
     """The symbol maps to several successor companies; the user must choose."""
 
@@ -79,7 +97,7 @@ def build_factset(ticker: str, as_of: date | None = None, client=None, sleep=tim
         parsed.append(pf)
     filing = None
     if parsed:
-        filing, merge_notes = merge_filings(parsed)
+        filing, merge_notes = merge_filings(parsed, canonical=_symbol_canonicalizer(symbol_changes))
         notices.extend(merge_notes)
     filing_dates = {f.period_end: f.available_from for f in filing.facts
                     if f.source in ("nse_filing", "nse_xbrl") and f.availability_kind == AvailabilityKind.filed and f.available_from} if filing else None
@@ -365,7 +383,7 @@ def _fundamental_facts(fs, facts, client, notices: list[str]):
         notices.append(f"annual statements could not be fetched ({type(exc).__name__}); year figures, free cash flow and EV/EBITDA are unavailable")
         return []
     new = annual_facts(fs.entity.ticker, statements, fs.entity.sector, fs.entity.industry, now=fs.retrieved_at,
-                       notices=notices)
+                       notices=notices, reported_ccy=(info or {}).get("financialCurrency"))
     new += holding_facts(fs.entity.ticker, info or {}, now=fs.retrieved_at)
     probe = fs.model_copy(update={"facts": list(facts) + new})
     checks = []

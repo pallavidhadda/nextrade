@@ -19,6 +19,7 @@ import hashlib
 import json
 import os
 import re
+import sys
 import time
 from dataclasses import asdict
 from datetime import date, datetime, timezone
@@ -461,7 +462,11 @@ class NseApi:
         earlier copy's version of it. Writes nothing when live produced nothing. Never raises."""
         try:
             out = out or copy_out()
-            if out is None or not self._live:
+            if out is None:
+                return None
+            if not self._live:
+                print(f"NSE copy for {symbol} not written: no live NSE results this run ({'; '.join(self.reasons) or 'no reason recorded'})",
+                      file=sys.stderr)
                 return None
             sym = symbol.upper().removesuffix(".NS")
             path = Path(out) / f"{sym}.json"
@@ -486,7 +491,8 @@ class NseApi:
             tmp.write_text(json.dumps(doc, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
             tmp.replace(path)
             return path
-        except Exception:
+        except Exception as exc:
+            print(f"NSE copy for {symbol} not written: {type(exc).__name__}: {exc}", file=sys.stderr)
             return None
 
 

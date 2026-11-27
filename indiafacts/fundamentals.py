@@ -87,12 +87,20 @@ def _has_values(statements: dict[str, pd.DataFrame | None], col) -> bool:
     return False
 
 
+def _ccy_reason(reported_ccy: str | None) -> str:
+    """Why a Yahoo figure cannot be used as INR, or '' when it can. Yahoo reports many Indian companies in USD; we have no
+    dated FX rate, so such figures are kept visible but unverified and never compared as if they were rupees."""
+    return f"reported in {reported_ccy}, not INR; not converted" if reported_ccy and reported_ccy != "INR" else ""
+
+
 def annual_facts(ticker: str, statements: dict[str, pd.DataFrame | None], sector: str | None = None,
                  industry: str | None = None, now: datetime | None = None, max_years: int = 5,
-                 notices: list[str] | None = None) -> list[Fact]:
-    """Year figures from Yahoo's annual statements. Empty cells become unavailable facts with a reason."""
+                 notices: list[str] | None = None, reported_ccy: str | None = None) -> list[Fact]:
+    """Year figures from Yahoo's annual statements. Empty cells become unavailable facts with a reason. Figures in a currency
+    other than INR are unverified, not converted."""
     now = now or datetime.now(timezone.utc)
     lender = is_lender(sector, industry)
+    wrong_ccy = _ccy_reason(reported_ccy)
     out: list[Fact] = []
     cols = []
     for s in statements.values():
@@ -128,7 +136,8 @@ def annual_facts(ticker: str, statements: dict[str, pd.DataFrame | None], sector
                                      reason=f"Yahoo has no '{names[0]}' for the year ending {end}",
                                      source_field=names[0], **common))
             else:
-                out.append(Fact.make(value=v, status=Status.ok, source_field=row,
+                out.append(Fact.make(value=v, status=Status.unverified if wrong_ccy else Status.ok, reason=wrong_ccy,
+                                     source_field=row,
                                      evidence=f"yfinance Ticker.{ {'income': 'income_stmt', 'balance': 'balance_sheet', 'cashflow': 'cashflow'}[st_name] } row '{row}', column {end}",
                                      **common))
         for metric, (st_name, names) in OPTIONAL_ROWS.items():
@@ -140,7 +149,8 @@ def annual_facts(ticker: str, statements: dict[str, pd.DataFrame | None], sector
                 out.append(Fact.make(entity_key=ticker, metric=metric, unit="INR", period_end=end, period_type=PeriodType.FY,
                                      fiscal_label=fiscal_label(end, "FY"), source=SOURCE, retrieved_at=now,
                                      available_from=available_from(end, "FY"), availability_kind=AvailabilityKind.deadline_estimate,
-                                     value=abs(v), status=Status.ok, source_field=row,
+                                     value=abs(v), status=Status.unverified if wrong_ccy else Status.ok, reason=wrong_ccy,
+                                     source_field=row,
                                      evidence=f"yfinance Ticker.cashflow row '{row}', column {end} (paid out, shown as a positive amount)"))
     return out
 
