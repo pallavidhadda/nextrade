@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import time
 from datetime import date
 from pathlib import Path
@@ -19,7 +20,9 @@ FLOW_METRICS = ("net_income", "ebitda", "interest_expense", "eps_diluted")
 
 
 def default_symbol_changes() -> Path:
-    return Path.home() / ".indiafacts" / "symbolchange.csv"
+    """NSE symbolchange.csv: INDIAFACTS_SYMBOL_CHANGES if set (the daily job sets it), else ~/.indiafacts/symbolchange.csv."""
+    env = os.environ.get("INDIAFACTS_SYMBOL_CHANGES", "").strip()
+    return Path(env) if env else Path.home() / ".indiafacts" / "symbolchange.csv"
 
 
 def _symbol_canonicalizer(symbol_changes: Path | None):

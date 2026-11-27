@@ -391,6 +391,15 @@ def main(argv: list[str] | None = None, runner: Callable | None = None, sleep=ti
     if real_runner:
         import tempfile
 
+        from indiafacts.pipeline import default_symbol_changes
+        from indiafacts.securitymaster import download_symbol_changes
+
+        # NSE's public rename list, fetched fresh each run; the per-company runs read it through INDIAFACTS_SYMBOL_CHANGES.
+        sc_path = Path(os.environ.get("INDIAFACTS_SYMBOL_CHANGES") or default_symbol_changes())
+        os.environ["INDIAFACTS_SYMBOL_CHANGES"] = str(sc_path)
+        got = download_symbol_changes(sc_path)
+        print(f"symbol-change list: {'refreshed from NSE' if got else 'NOT refreshed (NSE unreachable); using the copy already on disk, if any'}", flush=True)
+
         with tempfile.TemporaryDirectory() as tmp:
             prev = backup_previous(Path(a.out), Path(tmp))
             _prepare_marketlens(Path(a.out))

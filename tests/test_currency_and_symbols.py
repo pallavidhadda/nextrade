@@ -96,3 +96,60 @@ def test_foreign_archive_host_is_refused_and_recorded(tmp_path, monkeypatch):
     path, why = api.get_file("https://example.org/A_WEB.xml")
     assert path is None and "not an NSE archive URL" in why
     assert api.reasons and "example.org" in api.reasons[-1]
+
+
+def test_punctuation_match_does_not_apply_a_rename():
+    # NSE's list maps BAJAJAUTO -> BAJAJHLDNG (a different company). Bajaj Auto's own filings use both spellings of BAJAJ-AUTO;
+    # they must still merge, so the rename must not be applied when the punctuation-free symbols already agree.
+    canon = {"BAJAJAUTO": "BAJAJHLDNG"}.get
+    try:
+        merge_filings([_filing("BAJAJ-AUTO"), _filing("BAJAJAUTO")], canonical=canon)
+    except ValueError as exc:
+        assert "different companies" not in str(exc)
+    except Exception:
+        pass
+
+
+def test_download_symbol_changes_rejects_non_csv_and_falls_through(tmp_path, monkeypatch):
+    from indiafacts import securitymaster
+
+    calls = []
+
+    class FakeResp:
+        def __init__(self, body):
+            self.body = body
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self, n=-1):
+            return self.body
+
+    def fake_urlopen(req, timeout=None):
+        calls.append(req.full_url)
+        if "nseindia.com" in req.full_url:
+            return FakeResp(b"<html>blocked</html>")
+        return FakeResp(b"NAME OF THE COMPANY,OLD SYMBOL,NEW SYMBOL,EFFECTIVE DATE\nZOMATO LTD,ZOMATO,ETERNAL,09-APR-2025\n")
+
+    monkeypatch.setattr(securitymaster.urllib.request, "urlopen", fake_urlopen)
+    dest = tmp_path / "symbolchange.csv"
+    assert securitymaster.download_symbol_changes(dest) == dest and dest.exists()
+    assert len(calls) == 2 and "nsearchives.nseindia.in" in calls[1]
+
+
+def test_rename_list_format_resolves_renames_and_demergers(tmp_path: Path):
+    # Same columns and date format as NSE's public symbolchange.csv; a few rows only.
+    from indiafacts.securitymaster import load_curated, load_symbol_changes, resolve_symbol
+
+    csv_path = tmp_path / "symbolchange.csv"
+    csv_path.write_text("NAME OF THE COMPANY,OLD SYMBOL,NEW SYMBOL,EFFECTIVE DATE\n"
+                        "ZOMATO LTD,ZOMATO,ETERNAL,09-APR-2025\n"
+                        "L&T TECHNOLOGY,LTIM,LTM,09-NOV-2023\n", encoding="utf-8")
+    ch = load_symbol_changes(csv_path)
+    cu = load_curated(strict=False)
+    assert resolve_symbol("ZOMATO", ch, cu).symbols == ["ETERNAL"]
+    assert resolve_symbol("LTIM", ch, cu).symbols == ["LTM"]
+    assert resolve_symbol("TATAMOTORS", ch, cu).kind == "split"

@@ -235,9 +235,11 @@ def merge_filings(filings: list[FactSet], canonical: Callable[[str], str] | None
     canonical symbols still differ are refused, never merged by guess."""
     if not filings:
         raise ValueError("no filings given")
-    canon = canonical or (lambda s: s)
     names = {f.entity.nse_symbol.value for f in filings}
-    if len({_company_key(canon(s)) for s in names}) > 1:
+    keys = {_company_key(s) for s in names}
+    if len(keys) > 1 and canonical is not None:          # renames only when the symbols still disagree, so a rename can never
+        keys = {_company_key(canonical(s)) for s in names}   # pull a same-company filing away from its own symbol
+    if len(keys) > 1:
         raise ValueError(f"filings are for different companies: {', '.join(sorted(names))}")
     groups: dict[tuple, list[tuple[int, FactSet]]] = {}
     for i, fs in enumerate(filings):
