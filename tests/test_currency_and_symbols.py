@@ -71,3 +71,28 @@ def test_merge_still_refuses_when_canonical_symbols_differ():
 
 def test_canonicalizer_is_none_without_a_rename_list(tmp_path: Path):
     assert _symbol_canonicalizer(tmp_path / "missing.csv") is None
+
+
+def test_nse_archive_on_either_host_is_downloaded(tmp_path, monkeypatch):
+    from indiafacts import nseapi
+
+    monkeypatch.setattr(nseapi, "enabled", lambda: True)
+    monkeypatch.setattr(nseapi, "live_enabled", lambda: True)
+    api = nseapi.NseApi(cache=tmp_path)
+    monkeypatch.setattr(api, "_request", lambda url, accept: (b"<?xml version='1.0'?><x/>", ""))
+    for url in ("https://nsearchives.nseindia.in/corporate/xbrl/A_WEB.xml",
+                "https://nsearchives.nseindia.com/corporate/xbrl/A_WEB.xml"):
+        path, why = api.get_file(url)
+        assert path is not None and why == "", url
+    assert api.reasons == []
+
+
+def test_foreign_archive_host_is_refused_and_recorded(tmp_path, monkeypatch):
+    from indiafacts import nseapi
+
+    monkeypatch.setattr(nseapi, "enabled", lambda: True)
+    monkeypatch.setattr(nseapi, "live_enabled", lambda: True)
+    api = nseapi.NseApi(cache=tmp_path)
+    path, why = api.get_file("https://example.org/A_WEB.xml")
+    assert path is None and "not an NSE archive URL" in why
+    assert api.reasons and "example.org" in api.reasons[-1]

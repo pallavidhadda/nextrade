@@ -34,7 +34,8 @@ from indiafacts import published
 BASE = "https://www.nseindia.com/api"
 RESULT_QUARTERS = 8      # year-on-year needs 5 quarters and TTM 4; 8 leaves room for a late, restated or unreadable filing
 HOME = "https://www.nseindia.com/"
-ARCHIVE_HOST = "nsearchives.nseindia.com"
+# NSE serves filing archives from both hosts; the API switched to .in around 13-14 Nov 2026. Both are NSE's own.
+ARCHIVE_HOSTS = ("nsearchives.nseindia.com", "nsearchives.nseindia.in")
 USER_AGENT = "NexTrade-research/0.1 (education; permitted use of NSE data)"
 BROWSER_UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) "
               "Chrome/124.0 Safari/537.36")
@@ -209,8 +210,9 @@ class NseApi:
             self.reasons.append("live NSE access is off (INDIAFACTS_NSE_API_LIVE=0)")
             return None, self.reasons[-1]
         parsed = urlparse(url)
-        if parsed.scheme != "https" or parsed.hostname != ARCHIVE_HOST:
-            return None, "not an NSE archive URL"
+        if parsed.scheme != "https" or parsed.hostname not in ARCHIVE_HOSTS:
+            self.reasons.append(f"not an NSE archive URL ({parsed.hostname})")
+            return None, self.reasons[-1]
         name = re.sub(r"[^A-Za-z0-9._-]", "_", Path(parsed.path).name)[:120] or "file.xml"
         path = self.cache / "files" / f"{self._key(url)[:8]}_{name}"
         if path.exists() and path.stat().st_size > 0:
