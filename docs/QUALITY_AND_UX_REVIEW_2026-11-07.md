@@ -1,4 +1,5 @@
 # Quality, analyst and UX review (2026-11-07)
+> Note 2026-11-16: the Streamlit app mentioned below was removed on 2026-11-10; the Vercel web app replaced it. Bank NPA and CET1 now come from filings; glossary tips, saved companies and a first-run guide are in the web app.
 Research/education only; not financial, investment or trading advice. Reviewed as a small team: product manager, investment analyst, UX designer, developer.
 
 ## 1. Where official NSE data comes from, for free

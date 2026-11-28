@@ -19,7 +19,7 @@ class Check:
     metric: str
     test: Callable[[float], bool]
     threshold: str
-    kind: str = "num"            # inr | pct | num
+    kind: str = "num"            # inr | pct (signed change) | share (unsigned proportion) | num
     fallback: str = ""           # annual metric used when the quarterly one is unavailable (labelled as such)
     group: str = ""
 
@@ -37,6 +37,11 @@ CHECKS = [
     Check("beats_nifty_1y", "Price did better than the Nifty 50 over a year", "relative_return_1y", lambda v: v > 0, "> 0%", "pct", group=T),
     Check("near_52w_high", "Price is within 25% of its 52-week high", "pct_from_52w_high", lambda v: v >= -0.25, ">= -25%", "pct", group=T),
 ]
+# A lender borrows for a living, so debt-to-equity and interest cover say nothing about it; it gets a bad-loans check instead.
+# The 3% line is this project's own reading of "a clean loan book", not a regulatory threshold.
+LENDER_SKIP = ("debt_moderate", "interest_cover")
+LENDER_CHECK = Check("bad_loans_low", "Gross bad loans (gross NPA) are under 3% of loans", "gross_npa_ratio", lambda v: v < 0.03, "< 3%",
+                     "share", group=B)
 # No existing check is a valuation test, so the Valuation group is empty and not shown (no check is invented to fill it).
 GROUP_ORDER = ("Fundamentals", "Balance sheet", "Valuation", "Price trend")
 
@@ -58,9 +63,18 @@ def _latest(fs: FactSet, metric: str) -> Fact | None:
     return max(c, key=lambda f: (f.period_end, f.retrieved_at)) if c else None
 
 
+def checks_for(fs: FactSet) -> list[Check]:
+    from indiafacts.fundamentals import is_lender
+
+    if not is_lender(fs.entity.sector, fs.entity.industry):
+        return CHECKS
+    out = [c for c in CHECKS if c.id not in LENDER_SKIP]
+    return out[:4] + [LENDER_CHECK] + out[4:]
+
+
 def checklist(fs: FactSet) -> list[CheckResult]:
     out = []
-    for c in CHECKS:
+    for c in checks_for(fs):
         f = _latest(fs, c.metric)
         annual = False
         if f is None and c.fallback:
@@ -71,7 +85,7 @@ def checklist(fs: FactSet) -> list[CheckResult]:
                                    fact_ids=[], reason=f"no data for {c.metric}"))
             continue
         v = float(f.value)
-        shown = (format_inr(Decimal(str(f.value))) if c.kind == "inr" else f"{v:+.1%}" if c.kind == "pct" else f"{v:.2f}")
+        shown = (format_inr(Decimal(str(f.value))) if c.kind == "inr" else f"{v:+.1%}" if c.kind == "pct" else f"{v:.1%}" if c.kind == "share" else f"{v:.2f}")
         out.append(CheckResult(id=c.id, group=c.group, label=c.label, result="pass" if c.test(v) else "fail", value=v,
                                threshold=c.threshold, display=shown + (" (last financial year)" if annual else ""),
                                fact_ids=[f.fact_id]))
@@ -134,6 +148,9 @@ def point_text(r: CheckResult) -> str:
                 else f"Over the past year the share did {_pp(v)} percentage points worse than the Nifty 50.")
     if r.id == "near_52w_high":
         return "The share price is close to its 52-week high." if ok else f"The share price is {abs(v):.0%} below its 52-week high."
+    if r.id == "bad_loans_low":
+        return (f"Gross bad loans are {v:.1%} of loans, under 3%." if ok
+                else f"Gross bad loans are {v:.1%} of loans, 3% or more.")
     return r.label
 
 
@@ -150,6 +167,8 @@ def watch_text(r: CheckResult) -> str:
         return f"Whether profit covers interest costs at least 3 times (it is {v:.1f} times now)."
     if r.id == "debt_moderate":
         return f"Whether debt comes down below shareholders' equity (debt-to-equity is {v:.2f} now)."
+    if r.id == "bad_loans_low":
+        return f"Whether gross bad loans fall below 3% of loans (they are {v:.1%} now)."
     if r.id == "positive_1y_return":
         return f"Whether the price climbs back above where it was a year ago (it is {abs(v):.1%} lower now)."
     if r.id == "beats_nifty_1y":

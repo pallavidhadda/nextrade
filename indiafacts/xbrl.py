@@ -47,6 +47,9 @@ _CASH = {
     "CashFlowsFromUsedInInvestingActivities": "investing_cash_flow",
     "CashFlowsFromUsedInFinancingActivities": "financing_cash_flow",
 }
+# Bank asset quality, filed as a fraction (0.0139 = 1.39%) at the quarter end. Banks fill these in the standalone filing only; the
+# consolidated filing carries 0, which means "not reported here", so a 0 is never kept.
+ASSET_QUALITY = {"PercentageOfGrossNpa": "gross_npa_ratio", "PercentageOfNpa": "net_npa_ratio", "CET1Ratio": "cet1_ratio"}
 _BALANCE = {"Assets": "total_assets", "Liabilities": "total_liabilities", "Equity": "total_equity",
             "EquityAttributableToOwnersOfParent": "equity_owners", "CashAndCashEquivalents": "cash_and_equivalents"}
 
@@ -160,6 +163,30 @@ def facts_from_nse_xbrl(path: Path, retrieved_at: datetime | None = None) -> Fac
     if inst and inst["instant"]:
         for concept, metric in _BALANCE.items():
             add(metric, concept, "OneI", PeriodType.point, None, inst["instant"], "INR")
+    for concept, metric in ASSET_QUALITY.items():
+        v = _dec(one(concept))
+        if v is not None and v > 0:
+            facts.append(Fact.make(
+                entity_key=ticker, metric=metric, value=v, unit="ratio", period_end=end, period_type=PeriodType.point, basis=basis,
+                source=SOURCE, source_field=f"in-bse-fin:{concept} [{audit or 'audit status unknown'}]", retrieved_at=now,
+                available_from=avail, availability_kind=AvailabilityKind.filed if avail else AvailabilityKind.unknown,
+                evidence=f"{document} | in-bse-fin:{concept} @ OneD", reported_value=v, reported_unit="ratio", audit_status=audit,
+                filing_id=filing_id))
+    earned, spent = _dec(one("InterestEarned")), _dec(one("InterestExpended"))
+    assets = _dec(vals.get(("Assets", "OneI"), "")) if inst and inst["instant"] else None
+    if earned is not None and spent is not None:
+        nii = earned - spent
+        common = dict(entity_key=ticker, basis=basis, source=SOURCE, retrieved_at=now, available_from=avail,
+                      availability_kind=AvailabilityKind.filed if avail else AvailabilityKind.unknown, audit_status=audit, filing_id=filing_id)
+        facts.append(Fact.make(metric="net_interest_income", value=nii, unit="INR", period_start=q["start"], period_end=end,
+                               period_type=PeriodType.Q, fiscal_label=fiscal_label(end, "Q"),
+                               source_field="in-bse-fin:InterestEarned - InterestExpended",
+                               evidence=f"{document} | InterestEarned - InterestExpended @ OneD", **common))
+        if assets and assets > 0:
+            facts.append(Fact.make(metric="nii_to_assets", value=(nii * 4 / assets).quantize(Decimal("0.000001")), unit="ratio",
+                                   period_end=end, period_type=PeriodType.point,
+                                   source_field="quarter's net interest income x 4 (annualised) / total assets at quarter end",
+                                   evidence=f"{document} | (InterestEarned - InterestExpended) @ OneD x 4 / Assets @ OneI", **common))
     if not facts:
         raise ValueError("not an NSE XBRL instance: no financial values recognised")
     return FactSet(entity=entity, facts=facts, retrieved_at=now, filings=[meta])

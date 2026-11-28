@@ -33,7 +33,7 @@ from indiafacts import published
 BASE = "https://www.nseindia.com/api"
 RESULT_QUARTERS = 8      # year-on-year needs 5 quarters and TTM 4; 8 leaves room for a late, restated or unreadable filing
 HOME = "https://www.nseindia.com/"
-ARCHIVE_HOST = "nsearchives.nseindia.com"
+ARCHIVE_HOSTS = ("nsearchives.nseindia.com", "nsearchives.nseindia.in")   # NSE listings link to .in since late 2026
 USER_AGENT = "NexTrade-research/0.1 (education; permitted use of NSE data)"
 BROWSER_UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) "
               "Chrome/124.0 Safari/537.36")
@@ -45,6 +45,7 @@ MAX_RETRIES = 2
 COPY_TTL = 3600
 COPY_MISS_TTL = 300
 COPY_VERSION = 1
+COPY_MAX_AGE_DAYS = 10            # the job runs daily; a copy this old means it has been failing for over a week
 COPY_ROW_KEYS = ("date", "pr_and_prgrp", "recordId", "xbrl", "broadcastDate", "submissionDate")
 COPY_ROWS = 8
 _copy_cache: dict[str, tuple[float, dict | None]] = {}   # url -> (time, document); shared by every client in this process
@@ -57,6 +58,17 @@ def enabled() -> bool:
 
 def live_enabled() -> bool:
     return enabled() and os.environ.get("INDIAFACTS_NSE_API_LIVE", "1").strip() != "0"
+
+
+def _today() -> date:
+    return datetime.now(timezone.utc).date()
+
+
+def copy_max_age() -> int:
+    try:
+        return int(os.environ.get("INDIAFACTS_NSE_COPY_MAX_AGE_DAYS", COPY_MAX_AGE_DAYS))
+    except ValueError:
+        return COPY_MAX_AGE_DAYS
 
 
 def copy_base() -> str:
@@ -208,7 +220,7 @@ class NseApi:
             self.reasons.append("live NSE access is off (INDIAFACTS_NSE_API_LIVE=0)")
             return None, self.reasons[-1]
         parsed = urlparse(url)
-        if parsed.scheme != "https" or parsed.hostname != ARCHIVE_HOST:
+        if parsed.scheme != "https" or parsed.hostname not in ARCHIVE_HOSTS:
             return None, "not an NSE archive URL"
         name = re.sub(r"[^A-Za-z0-9._-]", "_", Path(parsed.path).name)[:120] or "file.xml"
         path = self.cache / "files" / f"{self._key(url)[:8]}_{name}"
@@ -337,12 +349,26 @@ class NseApi:
             pairs.append((e, p))
         if failed:
             notes.append(f"{failed} of {min(n, len(chosen))} results files could not be downloaded")
+        if cons and pairs and "BANKING" in pairs[0][0]["xbrl"].upper():
+            extra = self._bank_asset_quality(entries, pairs[0][0]["end"])
+            if extra:
+                pairs.append(extra)
+                notes.append("asset quality (gross and net NPA, CET1) read from the standalone filing for the same quarter; "
+                             "banks report these only there")
         return pairs, notes
+
+    def _bank_asset_quality(self, entries: list[dict], end):
+        """(entry, path) of the standalone filing for quarter `end`, or None. Only its asset-quality figures are kept (see quarterly_filings)."""
+        st = [e for e in entries if e["basis"] == "standalone" and e["end"] == end]
+        if not st:
+            return None
+        p, _ = self.get_file(st[0]["xbrl"])
+        return ({**st[0], "asset_quality_only": True}, p) if p else None
 
     def quarterly_xbrl(self, symbol: str, n: int = RESULT_QUARTERS):
         """(paths, notes) of the newest n quarters' XBRL files, live from NSE."""
         pairs, notes = self._live_results(symbol, n)
-        return [p for _, p in pairs], notes
+        return [p for e, p in pairs if not e.get("asset_quality_only")], notes
 
     def quarterly_filings(self, symbol: str, n: int = RESULT_QUARTERS):
         """(list of parsed FactSets, notes): the quarterly results as Facts, live or from the daily copy (same order as latest_shareholding)."""
@@ -356,9 +382,17 @@ class NseApi:
 
             pairs, notes = self._live_results(symbol, n)
             kept = []
+            from indiafacts.xbrl import ASSET_QUALITY
+
             for e, p in pairs:
                 try:
-                    parsed.append(facts_from_nse_xbrl(p))
+                    fs = facts_from_nse_xbrl(p)
+                    if e.get("asset_quality_only"):
+                        keep = [f for f in fs.facts if f.metric in ASSET_QUALITY.values()]
+                        if not keep:
+                            continue
+                        fs = fs.model_copy(update={"facts": keep})
+                    parsed.append(fs)
                     kept.append((e, parsed[-1]))
                 except (ValueError, OSError) as exc:
                     notes.append(f"skipped filing {Path(p).name}: {exc}")
@@ -394,7 +428,12 @@ class NseApi:
                     doc = d
         except Exception:
             doc = None
-        if doc is None:
+        stale = False
+        if doc is not None and (_today() - date.fromisoformat(str(doc["generated_at"])[:10])).days > copy_max_age():
+            doc, stale = None, True
+        if stale:
+            self.reasons.append(f"the daily copy of NSE filings is older than {copy_max_age()} days, so it was not used")
+        elif doc is None:
             self.reasons.append("no daily copy of NSE filings available")
         _copy_cache[url] = (now, doc)
         return doc

@@ -74,7 +74,7 @@ def test_lender_gets_its_own_metric_set_and_honest_gaps():
     fs = factset("Financial Services", "Banks - Private")
     assert val(fs, "ev_ebitda")[1] == Status.unavailable and "lender" in [x for x in fs.facts if x.metric == "ev_ebitda"][0].reason
     rows = {r["metric"]: r for r in fundamentals_rows(fs)}
-    assert rows["nim"]["display"] == "not available" and "presentation" in rows["nim"]["reason"]
+    assert rows["nii_to_assets"]["display"] == "not available" and "filing" in rows["nii_to_assets"]["reason"]
     assert "fy_roce" not in rows and "ev_ebitda" not in rows
     assert round(float(val(fs, "fy_equity_multiplier")[0]), 2) == 1.8
 

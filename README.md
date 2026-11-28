@@ -55,7 +55,7 @@ Per company, one report with:
 - Source-linked facts and a list of data gaps
 - A pool-relative score and a nine-point checklist
 - What the price implies (reverse-DCF grid, never a target price)
-- Business health from annual statements (free cash flow, net debt, EV/EBITDA, ROCE, 3-year growth, a lender metric set for banks)
+- Business health from annual statements (free cash flow, net debt, EV/EBITDA, ROCE, 3-year growth); for banks a lender set with gross and net NPA, CET1 and net interest income to assets from the official NSE filing
 - Ownership: official NSE shareholding pattern, pledges, quarter-on-quarter change, market-wide FII/DII positioning
 - Bull vs bear case in readable prose, plus a scenario plan for every rating (levels, staged exposure ceiling, what would change the view)
 - Educational rating (Buy / Overweight / Hold / Underweight / Sell) with confidence built from six visible ingredients
@@ -102,17 +102,16 @@ In the head-to-head, NexTrade's confidence label read **"High" on 26 of 27 ticke
 
 - **Whether either system's ratings are accurate.** Outcomes are unmeasured. The decision journal settles each rating against the Nifty 50 after 21 trading sessions; first read is about 8 December 2026.
 - **Whether real users want this.** No user tests yet. Discovery with 5 to 8 beginner investors is the next step, not something I can claim done.
-- **Whether NexTrade's four Buys are artefacts.** They sit in a 12-company comparison pool and all outperformed the Nifty over a year, so they may be momentum.
-- **Data depth.** Free data means thin history compared with Screener.in or Trendlyne. Bank NIM and NPA are still missing.
+- **Whether NexTrade's remaining Buys mean anything.** Re-checked on 16 Nov inside each company's own sector: AXISBANK dropped to Overweight (its Buy was a mixed-pool value artefact); SBIN, ICICIBANK and COALINDIA stay Buy on quality and risk. Only the settlement can say if that matters.
+- **Data depth.** Free data means thin history compared with Screener.in or Trendlyne. Banks now get NPA and CET1 from filings, but net interest margin is a stand-in (net interest income to total assets), and there is no fundamentals history to backtest the full score.
 - **Legal.** Not reviewed by a securities lawyer. Required before any public or commercial launch.
 
 ## 9. What I would do next
 
 1. **Run the 21-session settlement** and publish both systems' hit rates against the Nifty 50. This decides whether the rating is worth keeping.
 2. **Moderated sessions with beginners**: can they find the verdict, explain a gap, and check a claim? Measure time to first useful answer and comprehension, not clicks.
-3. **Expand the comparison pool** from 12 to 25+ companies to make ranks (and confidence) meaningful.
-4. **Bank metrics (NIM, NPA)**, the largest gap for the biggest Indian sector.
-5. **Persistent saved reports and a shareable link**, the first retention feature that doesn't require accounts.
+3. **Build a fundamentals history** (one filing per quarter, kept) so the full score, not only its price side, can be backtested.
+4. **Persistent saved reports and a shareable link**, the first retention feature that doesn't require accounts (companies can already be saved in the browser).
 
 Roadmap: [docs/ROADMAP.md](docs/ROADMAP.md) · Quality and UX review: [docs/QUALITY_AND_UX_REVIEW_2026-11-07.md](docs/QUALITY_AND_UX_REVIEW_2026-11-07.md) · Competitive brief: [COMPETITIVE_BRIEF.md](COMPETITIVE_BRIEF.md) · Product review: [docs/PRODUCT_REVIEW.md](docs/PRODUCT_REVIEW.md)
 
