@@ -13,8 +13,9 @@ from indiafacts.scoring import (extract_facts, factsets_from_sources, load_score
                                 score_universe)
 
 FIX = Path(__file__).parent / "fixtures" / "marketlens_petroleum_products.json"
-TODAY = date(2026, 11, 10)
-NOW = datetime(2026, 11, 10, 9, 0, tzinfo=timezone.utc)
+# Relative to the real clock: the CLI and snapshot paths drop facts older than max_age_days (7).
+TODAY = date.today()
+NOW = datetime.now(timezone.utc)
 ROWS = {r["id"]: r for r in json.loads(FIX.read_text())["data"]}        # 12 companies, sector "Petroleum Products"
 SYMS = sorted(ROWS)
 TARGET = "RELIANCE.NS"
