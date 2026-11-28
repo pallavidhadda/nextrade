@@ -2,6 +2,8 @@
 import { factorLabel, formatValue, metricLabel } from "@/lib/format";
 import type { Summary } from "@/lib/types";
 import { execView, levelFormula, YAHOO_DOWN_LINE } from "@/lib/exec";
+import Info from "@/components/Info";
+import { FACTOR_MEANING, meaning } from "@/lib/glossary";
 
 export function Decomposition({ s }: { s: Summary }) {
   const x = execView(s);
@@ -88,7 +90,7 @@ export function Score({ s }: { s: Summary }) {
             <div className="factors">
               {Object.entries(sc.factors).map(([k, f]) => (
                 <div className="factor" key={k}>
-                  <span>{factorLabel(k)}</span>
+                  <span>{factorLabel(k)}{FACTOR_MEANING[k] && <Info label={factorLabel(k)}>{FACTOR_MEANING[k]}</Info>}</span>
                   {f.score === null ? <span className="na">Not scored: {f.reason || "not enough data"}</span> : (
                     <>
                       <div className="bar-track" role="img" aria-label={`${factorLabel(k)} ${f.score.toFixed(0)} of 100`}><div className="bar-fill" style={{ width: `${Math.max(2, f.score)}%` }} /></div>
@@ -436,7 +438,7 @@ export function AtAGlance({ s }: { s: Summary; onTab?: (t: string) => void }) {
       <div className="glance-row">
         {tiles.map((t) => (
           <div key={t.k} title={t.v === null ? "not available" : undefined}>
-            <span className="glance-k">{t.k}</span>
+            <span className="glance-k">{t.k}{meaning(t.k) && <Info label={t.k}>{meaning(t.k)}</Info>}</span>
             <strong className="glance-v">{t.v ?? "—"}</strong>
             <span className="glance-s">{t.sub}{t.extra && <span className="light warn">Insufficient evidence</span>}</span>
           </div>

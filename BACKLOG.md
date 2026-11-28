@@ -191,3 +191,7 @@ See docs/DATA_PERMISSIONS.md: `indiafacts/nseapi.py` fetches the target's filed 
 
 ## NSE filings daily copy (added 2026-11-10)
 See docs/SNAPSHOTS.md: the snapshot job publishes `nse/<SYMBOL>.json` (parsed shareholding and results facts); `nseapi.py` reads it when NSE answers 403 (set INDIAFACTS_NSE_COPY_BASE on Render, optionally INDIAFACTS_NSE_COPY_FIRST=1). Next: check the real size after the first run; add a staleness limit on copies older than a few days; drop copies of delisted tickers.
+
+## Backlog sweep (2026-11-16)
+Done, see docs/MOSCOW_PRIORITIES.md "Added 2026-11-16": `.in` archive host fix, bank asset quality from filings, lender checklist, head-to-head 29/30 with ratings recorded, Buys re-checked, intensity-word validator (prompt v2), backtest ISIN joins and Nifty comparison, NSE copy age limit and pruning, review-date test, web glossary/saved list/guide/mobile tables. Streamlit was removed on 2026-11-10; the Vercel app is the only web front end.
+Next: settle the head-to-head on or after 8 Dec 2026; keep one filing per quarter so a fundamentals history builds up for a full-score backtest; true NIM needs interest-earning assets, which the filing does not tag.

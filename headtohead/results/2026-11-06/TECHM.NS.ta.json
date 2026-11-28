@@ -1,7 +1,9 @@
 {
  "ticker": "TECHM.NS",
- "status": "quota",
- "error": "googleratelimiterror: error calling model 'gemini-3.1-flash-lite' (resource_exhausted): 429 resource_exhausted. {'error': {'code': 429, 'message': 'you exceeded your current quota, please check your plan and billing details. for more information on this error, head to: https://aistudio.google.com/docs/rate-limits. to monitor your current usage, head to: https://ai.dev/rate-limit. \\n* quota exceede",
+ "date": "2026-11-06",
+ "status": "ok",
+ "decision": "Overweight",
+ "final_trade_decision": "**Rating**: Overweight\n\n**Executive Summary**: We initiate a scaled exposure to TECHM.NS, taking an initial 0.25x position at current levels of 1,831.00 to capture ongoing momentum. We will scale in an additional 0.25x upon a decisive breakout above 1,835.00 or a constructive pullback to 1,750.00, utilizing a tightened stop-loss at 1,730.00 to manage downside risk.\n\n**Investment Thesis**: The bullish technical structure, characterized by the stock trading well above both the 50-day (1,618.66) and 200-day (1,498.33) SMAs, outweighs the short-term overbought concerns suggested by the RSI of 70.65. While the conservative argument correctly highlights the risk of an 11% drawdown, the neutral analyst\u2019s proposal effectively addresses this by tightening the stop-loss to 1,730.00, which protects capital while acknowledging the strong institutional support evidenced by the current 1,770\u20131,830 consolidation range. This strategy avoids the opportunity cost of total inaction while mitigating the risks of an overextended move. We would pivot to a bearish view if the 1,730.00 support level is breached, indicating a failed breakout and potential distribution.\n\n**Price Target**: not provided\n\n**Time Horizon**: 3-6 months",
  "calls": [
   {
    "input": 1743,
@@ -17,23 +19,69 @@
   },
   {
    "input": 4282,
-   "output": 40
+   "output": 38
   },
   {
    "input": 1744,
-   "output": 627
+   "output": 653
   },
   {
-   "input": 2698,
-   "output": 682
+   "input": 2034,
+   "output": 502
   },
   {
-   "input": 4980,
-   "output": 704
+   "input": 5293,
+   "output": 39
   },
   {
-   "input": 2414,
-   "output": 871
+   "input": 6325,
+   "output": 33
+  },
+  {
+   "input": 6749,
+   "output": 874
+  },
+  {
+   "input": 2430,
+   "output": 854
+  },
+  {
+   "input": 4141,
+   "output": 831
+  },
+  {
+   "input": 2121,
+   "output": 280
+  },
+  {
+   "input": 1594,
+   "output": 145
+  },
+  {
+   "input": 2705,
+   "output": 499
+  },
+  {
+   "input": 3674,
+   "output": 619
+  },
+  {
+   "input": 4876,
+   "output": 597
+  },
+  {
+   "input": 2736,
+   "output": 340
   }
- ]
+ ],
+ "llm_calls": 17,
+ "input_tokens": 55006,
+ "output_tokens": 6674,
+ "seconds": 75.7,
+ "reports": {
+  "market_report": "### Market Analysis Report: TECHM.NS (as of 2026-11-06)\n\nThis report provides a detailed analysis of `TECHM.NS` based on recent price action and technical indicator trends.\n\n#### Trend Overview\n`TECHM.NS` is currently in a strong, well-defined uptrend. The stock is trading significantly above both its 50-day Simple Moving Average (SMA) and 200-day SMA, confirming a bullish structure.\n*   **50 SMA:** 1,618.66\n*   **200 SMA:** 1,498.33\nThe persistent upward slope of these averages, combined with the stock's current price of 1,831.00, underscores that the intermediate and long-term momentum is decisively positive.\n\n#### Momentum and Volatility\nThe Relative Strength Index (RSI) as of 2026-11-06 is **70.65**. This places the stock just inside \"overbought\" territory (>70). While a high RSI often signals a potential pullback, it is important to note that in strong, aggressive trending markets, the RSI can remain in the overbought zone for extended periods as the asset displays sustained buying pressure.\n\nThe price action from mid-October shows an explosive move, jumping from the 1,400s to the 1,800s. Since the local high reached on 2026-10-21 (1,819.65), the stock has spent the last two weeks consolidating gains in the 1,770\u20131,830 range. The ability to maintain these elevated levels without a sharp retracement is a sign of underlying strength.\n\n#### Actionable Insights\n1.  **Trend Strength:** The alignment of Price > 50 SMA > 200 SMA is a classic \"Bullish Alignment.\" Investors should treat the 1,618 area (50 SMA) as the primary support level for the current trend.\n2.  **Overbought Caution:** Given the RSI is slightly above 70, short-term traders should exercise caution regarding immediate entries. A consolidation or a minor \"cooling off\" period (sideways movement) is likely to occur before further upside expansion. \n3.  **Entry Strategy:** A pullback toward the 1,750\u20131,770 zone could offer a more favorable risk-to-reward ratio for participants looking to join the trend, provided the RSI reverts toward the 60 level without breaking the uptrend structure.\n\n#### Summary Data Table\n\n| Date | Close Price | 50 SMA | 200 SMA | RSI |\n| :--- | :--- | :--- | :--- | :--- |\n| 2026-11-06 | 1,831.00 | 1,618.66 | 1,498.33 | 70.65 |\n| 2026-10-28 | 1,776.60 | 1,588.40 | 1,489.48 | 66.84 |\n| 2026-10-16 | 1,775.32 | 1,564.04 | 1,480.94 | 75.58 |\n| 2026-10-07 | 1,478.87 | 1,574.10 | 1,480.75 | 36.23 |\n\n***\n\n**Note on Tool Utilization:** I have utilized all available tool rounds for this analysis. Due to the limit, I was unable to retrieve volume-based indicators (like VWMA) or Bollinger Band data. However, the existing SMA and RSI data provide sufficient evidence to conclude that the asset is in a strong uptrend with currently stretched momentum.",
+  "news_report": "Due to technical limitations affecting the data retrieval tools (specifically regarding vendor availability and API configurations as of November 6, 2026), I am unable to provide the standard empirical summary of recent news, macroeconomic indicators, or forward-looking market sentiment.\n\nIn the absence of real-time data for **TECHM.NS** and the broader macroeconomic environment, please consider the following general framework for your assessment:\n\n### Strategic Considerations for TECHM.NS\n*   **Industry Positioning:** As a major player in the Indian IT services sector, Tech Mahindra's performance is heavily correlated with the IT spending budgets of enterprise clients in North America and Europe. Traders should monitor trends in US digital transformation spending and the broader outlook for the global tech sector.\n*   **Currency Sensitivity:** Given its export-oriented business model, fluctuations in the USD/INR exchange rate are a critical factor in margin performance. A strengthening USD generally acts as a tailwind for domestic IT service providers.\n*   **Macroeconomic Context:** Keep a close watch on central bank policy trajectories (Fed funds rate) and inflation data, as these dictate the risk appetite for equity investments and influence the cost of capital for enterprise clients.\n\n### Recommended Steps for Informed Trading\n1.  **Direct News Search:** Manually verify recent regulatory filings or earnings releases for **TECHM.NS** via the National Stock Exchange (NSE) of India portal.\n2.  **Monitor Currency Markets:** Track the USD/INR pair daily, as this is a primary driver for Tech Mahindra's competitive pricing and revenue reporting.\n3.  **Cross-Sector Peer Analysis:** Observe the performance of peer companies in the NIFTY IT index to identify sector-wide trends versus company-specific performance deviations.\n\n| Category | Key Factors to Monitor | Impact on TECHM.NS |\n| :--- | :--- | :--- |\n| **Operational** | Enterprise IT spending, Deal wins | Direct (Revenue growth) |\n| **Currency** | USD/INR exchange rate | Direct (Margin exposure) |\n| **Macro** | Fed interest rate policy | Indirect (Global demand/Risk appetite) |\n| **Sentiment** | Institutional inflows/outflows | Indirect (Price volatility) |\n\n***Disclaimer:** This report is for informational purposes only and does not constitute financial advice. The provided data tools were unable to return live inputs; please consult verified financial data providers for real-time market information.*",
+  "fundamentals_report": "The requested fundamental analysis for **TECHM.NS** (Tech Mahindra Limited) as of November 6, 2026, could not be completed with the current toolset due to restrictions regarding data point-in-time validity.\n\n### Summary of Analysis Limitations\nThe fundamental data tools provided are designed to protect against \"look-ahead bias\"\u2014a critical factor in financial analysis. Because the available databases for Indian equities do not consistently provide the specific **filing dates** (the date information was released to the public) alongside the historical financial statements (income statement, balance sheet, cash flow), the system cannot verify whether specific financial data would have been known to a trader on November 6, 2026.\n\nAs a result:\n*   **Financial Statements:** Data for the income statement, balance sheet, and cash flow were withheld to prevent the inclusion of information that may have been reported *after* the target date.\n*   **Insider Transactions:** Insider trade data was withheld because the exact publication/filing date for those transactions is not available, making it impossible to determine if a trader could have acted upon such information on the target date.\n*   **Fundamentals:** General company profile and valuation metrics were withheld as they represent present-day values rather than the specific state of the company as it existed on November 6, 2026.\n\n### Actionable Advice for Traders\nSince historical financial point-in-time data is restricted via these tools, traders interested in **TECHM.NS** are encouraged to take the following steps to conduct their analysis:\n\n1.  **Consult Official Stock Exchange Filings:** Visit the [National Stock Exchange of India (NSE)](https://www.nseindia.com/) website and search for **TECHM**. Look under the \"Corporate Filings\" or \"Financial Results\" section to view the specific quarterly or annual reports that were released to the public prior to November 6, 2026.\n2.  **Verify Release Dates:** When reviewing historical documents, confirm the \"Date of Filing\" listed on the cover page of the financial results. Only use documents where this date is on or before your target analysis date.\n3.  **Track Corporate Announcements:** Use the official investor relations portal of Tech Mahindra to find the press releases and earnings call transcripts released in late 2026. These provide the narrative context (guidance, major contracts, and operational strategy) that complements the raw financial data.\n\n| Data Category | Status | Reasoning |\n| :--- | :--- | :--- |\n| Income Statement | Withheld | Missing filing date to ensure point-in-time accuracy. |\n| Balance Sheet | Withheld | Missing filing date to ensure point-in-time accuracy. |\n| Cash Flow | Withheld | Missing filing date to ensure point-in-time accuracy. |\n| Insider Transactions | Withheld | Unable to verify if data was public by 2026-11-06. |\n| Company Fundamentals | Withheld | Present-day values do not reflect the state on 2026-11-06. |",
+  "sentiment_report": ""
+ }
 }

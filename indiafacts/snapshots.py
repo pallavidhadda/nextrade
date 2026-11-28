@@ -235,6 +235,17 @@ def _prepare_nse_copy(out: Path) -> Path:
     return d
 
 
+def prune_nse_copy(out: Path, tickers: list[str]) -> list[str]:
+    """Remove <out>/nse/<SYMBOL>.json for symbols no longer in the universe (delisted, renamed, dropped). Returns the removed symbols."""
+    keep = {t.upper().removesuffix(".NS") for t in tickers}
+    gone = []
+    for p in sorted((out / "nse").glob("*.json")):
+        if p.stem not in keep:
+            p.unlink()
+            gone.append(p.stem)
+    return gone
+
+
 def _default_pool_builder() -> Callable[[str], object]:
     """The same member build the live pool path used: Yahoo facts and prices, no per-member NSE filings."""
     from indiafacts.cli import _MemoPrices
@@ -409,6 +420,10 @@ def main(argv: list[str] | None = None, runner: Callable | None = None, sleep=ti
     index = run_snapshots(tickers, Path(a.out), runner, a.delay, sleep)
     if real_runner:
         record_gaps(Path(a.out), tickers, index, prev_gaps)
+        if not given and not a.limit:                    # only a full-universe run knows which copies are orphaned
+            gone = prune_nse_copy(Path(a.out), tickers)
+            if gone:
+                print(f"removed NSE copies no longer in the universe: {', '.join(gone)}", file=sys.stderr)
     rate = failure_rate(index, tickers) * 100
     print(f"{len(tickers)} tickers, {rate:.0f}% failed (limit {a.max_fail_pct:.0f}%)", file=sys.stderr)
     return 1 if rate > a.max_fail_pct else 0

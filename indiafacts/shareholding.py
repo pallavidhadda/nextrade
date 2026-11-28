@@ -241,7 +241,7 @@ def feed_items(opener: Callable = urlopen) -> list[tuple[str, str]]:
     out = []
     for it in root.iter("item"):
         link = (it.findtext("link") or "").strip()
-        if link.startswith("https://nsearchives.nseindia.com/corporate/") and link.endswith(".xml"):
+        if link.startswith(("https://nsearchives.nseindia.com/corporate/", "https://nsearchives.nseindia.in/corporate/")) and link.endswith(".xml"):
             out.append(((it.findtext("title") or "").strip(), link))
     return out
 

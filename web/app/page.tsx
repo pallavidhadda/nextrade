@@ -10,6 +10,7 @@ import { Scrub, ScoreFactors, ScoreNumber, SplitWords } from "@/components/Revea
 import companies from "@/lib/companies.json";
 import { ApiError, poll, reportDownloadUrl, reportUrl, submit } from "@/lib/api";
 import { execView } from "@/lib/exec";
+import { guideSeen, loadSaved, markGuideSeen, toggleSaved, type Saved } from "@/lib/saved";
 import type { Job, PanelResult, Profile, Summary } from "@/lib/types";
 
 const EXAMPLES = ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ITC.NS"];
@@ -121,6 +122,8 @@ function Home() {
   const [fieldError, setFieldError] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [ring, setRing] = useState(0.78);
+  const [saved, setSaved] = useState<Saved[]>([]);
+  useEffect(() => { setSaved(loadSaved()); }, [jobId]);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -250,6 +253,12 @@ function Home() {
             <div className="chips" aria-label="Example tickers">
               {EXAMPLES.map((x, i) => <button key={x} type="button" className="chip mono" style={{ ["--i" as string]: i }} onClick={() => setTicker(x)} onPointerEnter={() => setRing(0.62 + (i % 3) * 0.1)} onPointerLeave={() => setRing(0.78)}>{x}</button>)}
             </div>
+            {saved.length > 0 && (
+              <div className="chips saved" aria-label="Your saved companies">
+                <span className="chips-k">Saved in this browser</span>
+                {saved.map((x, i) => <button key={x.t} type="button" className="chip" style={{ ["--i" as string]: i }} onClick={() => setTicker(x.t)} title={x.t}>{x.n}</button>)}
+              </div>
+            )}
             <ProfileChooser value={profile} onChange={setProfile} />
           </form>
           {failed && <div className="state" role="alert"><h2>That did not work</h2><p>{failed}</p></div>}
@@ -290,6 +299,22 @@ function Home() {
   );
 }
 
+/** Shown once per browser on the first result: how to read the page. */
+function Guide({ onDone }: { onDone: () => void }) {
+  return (
+    <aside className="guide" aria-labelledby="guide-h">
+      <h2 id="guide-h">How to read this page</h2>
+      <ol>
+        <li><b>The score</b> ranks the company inside a comparison pool, usually its own sector. 70 means it did better than most of that pool on these measures; it is not a grade of the business.</li>
+        <li><b>The rating</b> (Buy to Sell) is a fixed rule applied to the score and the checks, shown so you can see how the evidence leans. It is not advice and does not know your situation.</li>
+        <li><b>Gaps</b> lists every figure that was missing or could not be verified. Read it before trusting a conclusion.</li>
+        <li>Tap the <b>i</b> next to a term for its meaning. Every number in the full report shows its period and source.</li>
+      </ol>
+      <button type="button" className="key small" onClick={onDone}><span>Got it</span></button>
+    </aside>
+  );
+}
+
 /** The full report, shown as part of the page: it reports its own height, so the page scrolls and the frame never does. */
 function ReportFrame({ src, ticker }: { src: string; ticker: string }) {
   const ref = useRef<HTMLIFrameElement>(null);
@@ -311,6 +336,9 @@ function ResultView({ s: base, served, servedAsOf, jobId, tab, onTab, onRefresh,
   const [panel, setPanel] = useState<PanelResult[]>([]);
   const s: Summary = own ? { ...base, explanation: own } : base;
   const name = s.name ?? COMPANIES.find((c) => `${c.s}.NS` === s.ticker)?.n ?? s.ticker;
+  const [isSaved, setIsSaved] = useState(false);
+  const [guide, setGuide] = useState(false);
+  useEffect(() => { setIsSaved(loadSaved().some((x) => x.t === s.ticker)); setGuide(!guideSeen()); }, [s.ticker]);
   return (
     <>
       <section className="stage band">
@@ -322,7 +350,11 @@ function ResultView({ s: base, served, servedAsOf, jobId, tab, onTab, onRefresh,
               <p className="sub">{[s.name ? s.ticker : null, s.industry ?? s.sector, s.isin].filter(Boolean).join(", ")}. Profile: {s.profile.horizon}, {s.profile.risk} risk, {s.profile.experience}.</p>
             </div>
             <div className="actions">
-              <a className="key primary" href={reportDownloadUrl(jobId)} download><span>Download report</span></a>            </div>
+              <button type="button" className="key" aria-pressed={isSaved} onClick={() => setIsSaved(toggleSaved({ t: s.ticker, n: name }).some((x) => x.t === s.ticker))}>
+                <span>{isSaved ? "Saved" : "Save"}</span>
+              </button>
+              <a className="key primary" href={reportDownloadUrl(jobId)} download><span>Download report</span></a>
+            </div>
           </div>
           {served === "snapshot" && servedAsOf && (
             <p className="snap-label">
@@ -348,6 +380,7 @@ function ResultView({ s: base, served, servedAsOf, jobId, tab, onTab, onRefresh,
         </div>
       </div>
       <div className="container body-pad" key={tab} hidden={tab === "ai"}>
+        {tab === "summary" && guide && <Guide onDone={() => { markGuideSeen(); setGuide(false); }} />}
         {tab === "summary" && <><AtAGlance s={s} onTab={onTab} /><div className="stack"><Executive s={s} /></div></>}
         {tab === "report" ? (
           <ReportFrame ticker={s.ticker} src={`${reportUrl(jobId)}?embed=1`} />

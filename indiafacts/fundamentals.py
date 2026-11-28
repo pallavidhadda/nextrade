@@ -252,9 +252,11 @@ def ratio_facts(fs: FactSet, now: datetime | None = None) -> list[Fact]:
         out.append(_make(key, "fy_equity_multiplier",
                          float(assets.value) / float(eq.value) if assets and eq and float(eq.value) > 0 else None,
                          "ratio", latest, [f.fact_id for f in (assets, eq) if f], now, "assets or equity unavailable"))
-        for m, why in (("nim", "net interest margin is not in free data; read it in the company's results presentation"),
-                       ("gross_npa_ratio", "gross NPA ratio is not in free data; read it in the company's results presentation")):
-            out.append(_make(key, m, None, "ratio", latest, [], now, why))
+        filed = {f.metric for f in facts if f.value is not None and f.status in (Status.ok, Status.unverified)}
+        for m, why in (("nii_to_assets", "needs the official quarterly results filing (interest earned, interest expended, total assets)"),
+                       ("gross_npa_ratio", "needs the official standalone results filing, where banks report gross NPA")):
+            if m not in filed:
+                out.append(_make(key, m, None, "ratio", latest, [], now, why))
         for m in ("fy_roce", "fy_net_debt_to_ebitda", "fy_interest_cover", "fy_fcf_margin", "fy_fcf_yield", "ev", "ev_ebitda"):
             out.append(_make(key, m, None, "ratio", latest, [], now, LENDER_REASON))
         return out

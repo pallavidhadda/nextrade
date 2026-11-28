@@ -51,6 +51,7 @@ NSE's website API (`indiafacts/nseapi.py`) answers GitHub's runners but answers 
 | --- | --- | --- |
 | `INDIAFACTS_NSE_COPY_BASE` | Render | `https://raw.githubusercontent.com/<owner>/<repo>/snapshots/nse/` (or a `file://` folder). Where `<SYMBOL>.json` is read. |
 | `INDIAFACTS_NSE_COPY_FIRST` | Render | `1` reads the copy before trying NSE live (saves the 403 round trips; needs `INDIAFACTS_NSE_COPY_BASE`). |
+| `INDIAFACTS_NSE_COPY_MAX_AGE_DAYS` | Render | A copy older than this many days is not used (default `10`; the job runs daily, so an older copy means it has been failing). A full-universe run also deletes copies of tickers that left the universe. Bank results also carry the standalone filing's asset quality (gross and net NPA, CET1). |
 | `INDIAFACTS_NSE_API_LIVE` | any | `0` turns only the live NSE calls off; the copy is still read. `INDIAFACTS_NSE_API=0` turns both off. |
 | `INDIAFACTS_NSE_COPY_OUT` | job | Folder the copy is written to. Set by `snapshots.py`; leave unset elsewhere. |
 
