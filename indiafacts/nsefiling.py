@@ -12,6 +12,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 from email import message_from_bytes, policy
 from pathlib import Path
+from typing import Callable
 
 from indiafacts.calendar import fiscal_label
 from indiafacts.models import AvailabilityKind, Basis, Entity, Fact, FactSet, FilingMeta, Identifier, PeriodType, Status
@@ -220,15 +221,26 @@ def facts_from_nse_filing(path: Path, retrieved_at: datetime | None = None) -> F
     return FactSet(entity=entity, facts=facts, retrieved_at=now, filings=[meta])
 
 
-def merge_filings(filings: list[FactSet]) -> tuple[FactSet, list[str]]:
+def _company_key(sym: str) -> str:
+    """BAJAJ-AUTO and BAJAJAUTO are the same NSE symbol written two ways in filings; compare without punctuation."""
+    return re.sub(r"[^A-Z0-9]", "", sym.upper())
+
+
+def merge_filings(filings: list[FactSet], canonical: Callable[[str], str] | None = None) -> tuple[FactSet, list[str]]:
     """Combine several parsed results pages. For one company and period, the latest filing (by its filing date, then input
     order) is the current version. If a figure differs from an earlier version, the current figure is marked restated, the
-    earlier one is kept as a superseded 'stale' fact, and a note cites both filing dates. Identical figures are not flagged."""
+    earlier one is kept as a superseded 'stale' fact, and a note cites both filing dates. Identical figures are not flagged.
+
+    `canonical` maps each filing's symbol to the company's current symbol (renames collapse, demergers do not). Filings whose
+    canonical symbols still differ are refused, never merged by guess."""
     if not filings:
         raise ValueError("no filings given")
-    syms = {f.entity.nse_symbol.value for f in filings}
-    if len(syms) > 1:
-        raise ValueError(f"filings are for different companies: {', '.join(sorted(syms))}")
+    names = {f.entity.nse_symbol.value for f in filings}
+    keys = {_company_key(s) for s in names}
+    if len(keys) > 1 and canonical is not None:          # renames only when the symbols still disagree, so a rename can never
+        keys = {_company_key(canonical(s)) for s in names}   # pull a same-company filing away from its own symbol
+    if len(keys) > 1:
+        raise ValueError(f"filings are for different companies: {', '.join(sorted(names))}")
     groups: dict[tuple, list[tuple[int, FactSet]]] = {}
     for i, fs in enumerate(filings):
         if not fs.facts:

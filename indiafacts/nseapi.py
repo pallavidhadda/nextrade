@@ -19,6 +19,7 @@ import hashlib
 import json
 import os
 import re
+import sys
 import time
 from dataclasses import asdict
 from datetime import date, datetime, timezone
@@ -33,7 +34,8 @@ from indiafacts import published
 BASE = "https://www.nseindia.com/api"
 RESULT_QUARTERS = 8      # year-on-year needs 5 quarters and TTM 4; 8 leaves room for a late, restated or unreadable filing
 HOME = "https://www.nseindia.com/"
-ARCHIVE_HOSTS = ("nsearchives.nseindia.com", "nsearchives.nseindia.in")   # NSE listings link to .in since late 2026
+# NSE serves filing archives from both hosts; the API switched to .in around 13-14 Nov 2026. Both are NSE's own.
+ARCHIVE_HOSTS = ("nsearchives.nseindia.com", "nsearchives.nseindia.in")
 USER_AGENT = "NexTrade-research/0.1 (education; permitted use of NSE data)"
 BROWSER_UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) "
               "Chrome/124.0 Safari/537.36")
@@ -221,7 +223,8 @@ class NseApi:
             return None, self.reasons[-1]
         parsed = urlparse(url)
         if parsed.scheme != "https" or parsed.hostname not in ARCHIVE_HOSTS:
-            return None, "not an NSE archive URL"
+            self.reasons.append(f"not an NSE archive URL ({parsed.hostname})")
+            return None, self.reasons[-1]
         name = re.sub(r"[^A-Za-z0-9._-]", "_", Path(parsed.path).name)[:120] or "file.xml"
         path = self.cache / "files" / f"{self._key(url)[:8]}_{name}"
         if path.exists() and path.stat().st_size > 0:
@@ -500,7 +503,11 @@ class NseApi:
         earlier copy's version of it. Writes nothing when live produced nothing. Never raises."""
         try:
             out = out or copy_out()
-            if out is None or not self._live:
+            if out is None:
+                return None
+            if not self._live:
+                print(f"NSE copy for {symbol} not written: no live NSE results this run ({'; '.join(self.reasons) or 'no reason recorded'})",
+                      file=sys.stderr)
                 return None
             sym = symbol.upper().removesuffix(".NS")
             path = Path(out) / f"{sym}.json"
@@ -525,7 +532,8 @@ class NseApi:
             tmp.write_text(json.dumps(doc, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
             tmp.replace(path)
             return path
-        except Exception:
+        except Exception as exc:
+            print(f"NSE copy for {symbol} not written: {type(exc).__name__}: {exc}", file=sys.stderr)
             return None
 
 

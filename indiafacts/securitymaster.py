@@ -5,11 +5,35 @@ from __future__ import annotations
 import csv
 import json
 from dataclasses import dataclass, field
+import urllib.request
 from datetime import date, datetime
 from pathlib import Path
 
 CURATED_PATH = Path(__file__).parent / "data" / "security_master.json"
 _SUFFIXES = (".NS", ".BO")
+# NSE's public rename list. Served from both NSE archive hosts; fetched at run time, not stored in the repo (README: NSE files keep their own terms).
+SYMBOL_CHANGES_URLS = ("https://nsearchives.nseindia.com/content/equities/symbolchange.csv",
+                       "https://nsearchives.nseindia.in/content/equities/symbolchange.csv")
+SYMBOL_CHANGES_UA = "NexTrade-research/0.1 (education; permitted use of NSE data)"
+
+
+def download_symbol_changes(dest: Path, urls: tuple[str, ...] = SYMBOL_CHANGES_URLS) -> Path | None:
+    """Fetch NSE's symbolchange.csv into dest. Tries each host in turn; returns None (never raises) if none answers with CSV."""
+    for url in urls:
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": SYMBOL_CHANGES_UA, "Referer": "https://www.nseindia.com/"})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                body = r.read(5_000_000)
+            if not body.lstrip().startswith(b"NAME OF THE COMPANY") and b"OLD SYMBOL" not in body[:400]:
+                continue
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            tmp = dest.with_suffix(".part")
+            tmp.write_bytes(body)
+            tmp.replace(dest)
+            return dest
+        except Exception:
+            continue
+    return None
 
 
 @dataclass(frozen=True)

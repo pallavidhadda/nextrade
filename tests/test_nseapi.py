@@ -244,4 +244,5 @@ def test_other_hosts_still_refused(tmp_path):
     a = nseapi.NseApi(opener=FakeNse(), cache=tmp_path, sleep=lambda s: None, clock=lambda: 1000.0)
     for bad in ("https://nsearchives.nseindia.in.evil.example/x.xml", "http://nsearchives.nseindia.in/x.xml",
                 "https://example.com/corporate/xbrl/x.xml"):
-        assert a.get_file(bad) == (None, "not an NSE archive URL")
+        path, reason = a.get_file(bad)
+        assert path is None and reason.startswith("not an NSE archive URL")
